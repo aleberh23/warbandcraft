@@ -73,3 +73,8 @@ Entidades de Recruits útiles: `recruit`, `recruit_shieldman`, `bowman`, `crossb
 H0 base ✔ · H1 Campamento ✔ (a probar) · H2 facciones NPC · H3 raids · H4 castillos y asedios ·
 H5 vista aérea RTS · H6 personalización de tu facción · H7 arte (Blockbench MCP).
 Cada hito termina en algo jugable que Ale prueba antes de seguir.
+
+## Compilar en Windows sin consola
+
+`compilar.bat` (doble click): baja una JDK 17 propia a `.jdk17/`, corre `gradlew build`, copia el jar a
+`%APPDATA%\.minecraft\mods` (o a la carpeta que se le pase como argumento) y baja Recruits 1.15.2 si falta.
