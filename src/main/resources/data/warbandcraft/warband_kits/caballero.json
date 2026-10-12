@@ -1,0 +1,74 @@
+{
+  "name": "Caballero",
+  "entity": "recruits:horseman",
+  "order": 50,
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": "minecraft:iron_sword",
+        "offhand": "minecraft:shield",
+        "head": "minecraft:iron_helmet",
+        "chest": "minecraft:iron_chestplate"
+      },
+      "extra_cost": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1
+        },
+        {
+          "item": "minecraft:hay_block",
+          "count": 2
+        }
+      ],
+      "horse": true
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": "minecraft:iron_sword",
+        "offhand": "minecraft:shield",
+        "head": "minecraft:iron_helmet",
+        "chest": "minecraft:iron_chestplate",
+        "legs": "minecraft:iron_leggings",
+        "feet": "minecraft:iron_boots"
+      },
+      "extra_cost": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1
+        },
+        {
+          "item": "minecraft:hay_block",
+          "count": 2
+        }
+      ],
+      "horse": true
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": "minecraft:diamond_sword",
+        "offhand": "minecraft:shield",
+        "head": "minecraft:iron_helmet",
+        "chest": "minecraft:diamond_chestplate",
+        "legs": "minecraft:iron_leggings",
+        "feet": "minecraft:iron_boots"
+      },
+      "extra_cost": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1
+        },
+        {
+          "item": "minecraft:hay_block",
+          "count": 2
+        }
+      ],
+      "horse": true
+    }
+  ]
+}

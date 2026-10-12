@@ -1,0 +1,39 @@
+{
+  "name": "Abanderado",
+  "entity": "recruits:recruit",
+  "order": 70,
+  "_nota": "El estandarte va en la cabeza, como los capitanes illager. La bonificación de moral llega en H6.",
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "head": "minecraft:white_banner",
+        "mainhand": "minecraft:stone_sword",
+        "chest": "minecraft:leather_chestplate"
+      }
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "head": "minecraft:white_banner",
+        "mainhand": "minecraft:iron_sword",
+        "chest": "minecraft:chainmail_chestplate",
+        "legs": "minecraft:chainmail_leggings"
+      }
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "head": "minecraft:white_banner",
+        "mainhand": "minecraft:iron_sword",
+        "offhand": "minecraft:shield",
+        "chest": "minecraft:iron_chestplate",
+        "legs": "minecraft:iron_leggings",
+        "feet": "minecraft:iron_boots"
+      }
+    }
+  ]
+}

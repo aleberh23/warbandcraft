@@ -1,0 +1,18 @@
+{
+  "block.warbandcraft.camp": "Quartermaster Table",
+  "item.warbandcraft.marshal_baton": "Marshal's Baton",
+  "container.warbandcraft.camp": "Camp",
+  "msg.warbandcraft.no_kits": "No soldier classes loaded (check the warband_kits JSON files).",
+  "msg.warbandcraft.selected": "Selected class: %s",
+  "msg.warbandcraft.pick_first": "Pick a class first: right-click the air with the baton.",
+  "msg.warbandcraft.not_yours": "That soldier is not yours.",
+  "msg.warbandcraft.unknown_class": "The class %s no longer exists.",
+  "msg.warbandcraft.no_camp": "None of your Camps is within %s blocks of the soldier.",
+  "msg.warbandcraft.class_unavailable": "%s can't be equipped: its kits need missing mods.",
+  "msg.warbandcraft.missing": "To equip a %s the Camp is missing: %s",
+  "msg.warbandcraft.assigned": "%s is now a %s (%s).",
+  "tooltip.warbandcraft.baton.selected": "Class: %s",
+  "tooltip.warbandcraft.baton.none": "No class selected",
+  "tooltip.warbandcraft.baton.help1": "Right-click air: change class (sneak: previous)",
+  "tooltip.warbandcraft.baton.help2": "Right-click a soldier near the Camp: equip them"
+}

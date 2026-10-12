@@ -1,0 +1,18 @@
+{
+  "block.warbandcraft.camp": "Mesa de Intendencia",
+  "item.warbandcraft.marshal_baton": "Bastón de Mariscal",
+  "container.warbandcraft.camp": "Campamento",
+  "msg.warbandcraft.no_kits": "No hay clases cargadas (revisá los JSON en warband_kits).",
+  "msg.warbandcraft.selected": "Clase elegida: %s",
+  "msg.warbandcraft.pick_first": "Primero elegí una clase: click derecho al aire con el bastón.",
+  "msg.warbandcraft.not_yours": "Ese soldado no es tuyo.",
+  "msg.warbandcraft.unknown_class": "La clase %s ya no existe.",
+  "msg.warbandcraft.no_camp": "No hay un Campamento tuyo a menos de %s bloques del soldado.",
+  "msg.warbandcraft.class_unavailable": "%s no se puede armar: a sus kits les faltan mods.",
+  "msg.warbandcraft.missing": "Para armar un %s faltan en el Campamento: %s",
+  "msg.warbandcraft.assigned": "%s ahora es %s (%s).",
+  "tooltip.warbandcraft.baton.selected": "Clase: %s",
+  "tooltip.warbandcraft.baton.none": "Sin clase elegida",
+  "tooltip.warbandcraft.baton.help1": "Click derecho al aire: cambiar clase (agachado: anterior)",
+  "tooltip.warbandcraft.baton.help2": "Click derecho a un soldado cerca del Campamento: armarlo"
+}

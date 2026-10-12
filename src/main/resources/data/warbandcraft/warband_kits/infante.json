@@ -1,0 +1,40 @@
+{
+  "name": "Infante",
+  "entity": "recruits:recruit_shieldman",
+  "order": 10,
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": "minecraft:stone_sword",
+        "offhand": "minecraft:shield",
+        "head": "minecraft:leather_helmet",
+        "chest": "minecraft:leather_chestplate"
+      }
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": "minecraft:iron_sword",
+        "offhand": "minecraft:shield",
+        "head": "minecraft:chainmail_helmet",
+        "chest": "minecraft:chainmail_chestplate",
+        "legs": "minecraft:chainmail_leggings"
+      }
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": "minecraft:iron_sword",
+        "offhand": "minecraft:shield",
+        "head": "minecraft:iron_helmet",
+        "chest": "minecraft:iron_chestplate",
+        "legs": "minecraft:iron_leggings",
+        "feet": "minecraft:iron_boots"
+      }
+    }
+  ]
+}
