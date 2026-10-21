@@ -1,0 +1,71 @@
+{
+  "name": "Zapador",
+  "entity": "recruits:siege_engineer",
+  "order": 60,
+  "_nota": "H4: queda como clase de soldado jugable, sin IA de asedio real (Recruits solo abre brechas con un mod de catapultas/ballestas que no es dependencia nuestra). Las puertas y muros del castillo son resistentes y se abren a mano.",
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": "minecraft:iron_pickaxe",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:tnt",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": "minecraft:iron_pickaxe",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:chainmail_chestplate",
+          "minecraft:chainmail_chestplate"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:tnt",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": "minecraft:diamond_pickaxe",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:platemail_chestplate",
+          "minecraft:iron_chestplate"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:tnt",
+          "count": 12
+        }
+      ]
+    }
+  ]
+}

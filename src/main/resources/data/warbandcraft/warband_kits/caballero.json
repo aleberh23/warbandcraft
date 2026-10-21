@@ -1,0 +1,122 @@
+{
+  "name": "Caballero",
+  "entity": "recruits:horseman",
+  "order": 50,
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_bastardsword",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_kiteshield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:greathelm",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:crusader_chestplate",
+          "minecraft:iron_chestplate"
+        ]
+      },
+      "extra_cost": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1
+        },
+        {
+          "item": "minecraft:hay_block",
+          "count": 2
+        }
+      ],
+      "horse": true
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_chivalrylance",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:armet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:knight_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:knight_leggings",
+          "minecraft:iron_leggings"
+        ],
+        "feet": [
+          "magistuarmory:knight_boots",
+          "minecraft:iron_boots"
+        ]
+      },
+      "extra_cost": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1
+        },
+        {
+          "item": "minecraft:hay_block",
+          "count": 2
+        }
+      ],
+      "horse": true
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:steel_chivalrylance",
+          "minecraft:diamond_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:armet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:gothic_chestplate",
+          "minecraft:diamond_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:gothic_leggings",
+          "minecraft:iron_leggings"
+        ],
+        "feet": [
+          "magistuarmory:gothic_boots",
+          "minecraft:iron_boots"
+        ]
+      },
+      "extra_cost": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1
+        },
+        {
+          "item": "minecraft:hay_block",
+          "count": 2
+        }
+      ],
+      "horse": true
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "name": "Arquero",
+  "entity": "recruits:bowman",
+  "order": 30,
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": "minecraft:bow",
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:arrow",
+          "count": 32
+        }
+      ]
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": "minecraft:bow",
+        "head": [
+          "magistuarmory:coif",
+          "minecraft:leather_helmet"
+        ],
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:pantyhose",
+          "minecraft:leather_leggings"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:arrow",
+          "count": 64
+        }
+      ]
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:longbow",
+          "minecraft:bow"
+        ],
+        "head": [
+          "magistuarmory:chainmail_helmet",
+          "minecraft:chainmail_helmet"
+        ],
+        "chest": [
+          "magistuarmory:chainmail_chestplate",
+          "minecraft:chainmail_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:pantyhose",
+          "minecraft:leather_leggings"
+        ],
+        "feet": [
+          "magistuarmory:gambeson_boots",
+          "minecraft:leather_boots"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:arrow",
+          "count": 64
+        },
+        {
+          "item": "minecraft:arrow",
+          "count": 64
+        }
+      ]
+    }
+  ]
+}

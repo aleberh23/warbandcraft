@@ -1,0 +1,83 @@
+{
+  "minecraft:bow": {
+    "value": 6,
+    "armament_only": true
+  },
+  "minecraft:leather_helmet": {
+    "value": 4,
+    "armament_only": true
+  },
+  "minecraft:leather_chestplate": {
+    "value": 6,
+    "armament_only": true
+  },
+  "minecraft:leather_leggings": {
+    "value": 5,
+    "armament_only": true
+  },
+  "minecraft:leather_boots": {
+    "value": 3,
+    "armament_only": true
+  },
+  "minecraft:arrow": {
+    "value": 2,
+    "per": 16,
+    "armament_only": true
+  },
+  "minecraft:stone_sword": {
+    "value": 2,
+    "armament_only": true
+  },
+  "minecraft:stone_axe": {
+    "value": 2,
+    "armament_only": true
+  },
+  "minecraft:saddle": {
+    "value": 6,
+    "armament_only": true
+  },
+  "minecraft:hay_block": {
+    "value": 2,
+    "armament_only": true
+  },
+  "minecraft:white_banner": {
+    "value": 2,
+    "armament_only": true
+  },
+  "magistuarmory:coif": {
+    "value": 4,
+    "armament_only": true
+  },
+  "magistuarmory:gambeson_chestplate": {
+    "value": 6,
+    "armament_only": true
+  },
+  "magistuarmory:pantyhose": {
+    "value": 5,
+    "armament_only": true
+  },
+  "magistuarmory:gambeson_boots": {
+    "value": 3,
+    "armament_only": true
+  },
+  "magistuarmory:stone_shortsword": {
+    "value": 2,
+    "armament_only": true
+  },
+  "magistuarmory:wood_pike": {
+    "value": 2,
+    "armament_only": true
+  },
+  "magistuarmory:longbow": {
+    "value": 8,
+    "armament_only": true
+  },
+  "magistuarmory:club": {
+    "value": 2,
+    "armament_only": true
+  },
+  "magistuarmory:pitchfork": {
+    "value": 2,
+    "armament_only": true
+  }
+}

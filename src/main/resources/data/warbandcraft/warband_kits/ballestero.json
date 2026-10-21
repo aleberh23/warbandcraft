@@ -1,0 +1,77 @@
+{
+  "name": "Ballestero",
+  "entity": "recruits:crossbowman",
+  "order": 40,
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": "minecraft:crossbow",
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:iron_chestplate"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:arrow",
+          "count": 24
+        }
+      ]
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": "minecraft:crossbow",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:iron_chestplate"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:arrow",
+          "count": 48
+        }
+      ]
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:heavy_crossbow",
+          "minecraft:crossbow"
+        ],
+        "offhand": [
+          "magistuarmory:iron_pavese",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:platemail_leggings",
+          "minecraft:iron_leggings"
+        ]
+      },
+      "inventory": [
+        {
+          "item": "minecraft:arrow",
+          "count": 64
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+﻿WARBAND CRAFT - versión 1.0.0
+==============================
+
+Minecraft 1.20.1 convertido en un Mount & Blade: facciones, aldeas, castillos, ejércitos, asedios y mazmorras.
+
+INSTALAR (una sola vez)
+1. Necesitás el launcher oficial de Minecraft (Java Edition) con tu cuenta. Abrilo al menos una vez y CERRALO.
+2. Descomprimí este .zip entero en una carpeta cualquiera (click derecho > Extraer todo).
+3. Doble click en "Instalar Warband Craft.bat". Si Windows avisa ("Windows protegió su PC"), tocá
+   "Más información" > "Ejecutar de todas formas". Tarda unos minutos: baja Java, Forge y los mods.
+4. Abrí el launcher, elegí el perfil "Warband Craft" (abajo a la izquierda, al lado de Jugar) y jugá.
+
+Todo queda en %APPDATA%\.warbandcraft (mundos, mods, configuración). Tus otros mods y mundos no se tocan.
+
+ACTUALIZAR
+Cuando te pasen una versión nueva: descomprimila y volvé a correr "Instalar Warband Craft.bat". Tus mundos quedan.
+
+SHADERS
+Vienen prendidos (Complementary Reimagined). Si anda lento, apagalos: tecla O (o Opciones > Opciones de video >
+Paquetes de shaders) > "Shaders: ON" para que quede en OFF > Listo. Sin shaders anda mucho más rápido.
+
+TECLAS DE WARBAND CRAFT
+V vista aérea · K panel de control · J rutas y viaje · B meterse en una batalla / asediar · M mapa de Recruits
+R órdenes de Recruits · U facción de Recruits · O shaders
+Para que no choquen, el instalador movió: puntos del minimapa (Xaero) a la I, poderes de la armadura de Cataclysm
+a la H (botas) y la N (pechera). Se cambian en Opciones > Controles.
+
+JUGAR CON UN AMIGO
+Ver el LEEME del servidor (WarbandCraft-servidor.zip). Los dos tienen que tener esta misma versión instalada.
+En el juego: Multijugador > Agregar servidor > la dirección que te pase el que lo hospeda.
+
+MODS INCLUIDOS (se bajan de Modrinth, sus autores originales)
+Villager Recruits y Villager Workers (talhanation), Xaero's Minimap, YUNG's Better Dungeons + YUNG's API,
+L_Ender's Cataclysm + Lionfish API + Curios, Dungeon Now Loading, Embeddium, Oculus, ModernFix, FerriteCore,
+Entity Culling, ImmediatelyFast y el shader Complementary Reimagined.

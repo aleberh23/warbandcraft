@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "tag": "minecraft:signs" },
+    { "item": "minecraft:compass" }
+  ],
+  "result": {
+    "item": "warbandcraft:route_post"
+  }
+}

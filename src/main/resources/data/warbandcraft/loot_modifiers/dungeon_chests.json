@@ -1,0 +1,10 @@
+{
+  "type": "warbandcraft:dungeon_chests",
+  "conditions": [],
+  "namespaces": ["betterdungeons", "cataclysm", "dungeonnowloading"],
+  "armament_chance": 0.6,
+  "armament_min": 2,
+  "armament_max": 6,
+  "emerald_chance": 0.4,
+  "emerald_max": 4
+}

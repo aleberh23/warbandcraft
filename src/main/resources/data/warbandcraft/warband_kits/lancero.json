@@ -1,0 +1,63 @@
+{
+  "name": "Lancero",
+  "entity": "recruits:recruit",
+  "order": 20,
+  "_nota": "H26: pica de Epic Knights; sin el mod cae al hacha.",
+  "tiers": [
+    {
+      "name": "Básico",
+      "min_level": 0,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:wood_pike",
+          "minecraft:stone_axe"
+        ],
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ]
+      }
+    },
+    {
+      "name": "Veterano",
+      "min_level": 3,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_pike",
+          "minecraft:iron_axe"
+        ],
+        "head": "minecraft:iron_helmet",
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:chainmail_chestplate"
+        ],
+        "legs": "minecraft:chainmail_leggings"
+      }
+    },
+    {
+      "name": "Élite",
+      "min_level": 6,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:steel_pike",
+          "magistuarmory:iron_pike",
+          "minecraft:diamond_axe"
+        ],
+        "head": [
+          "magistuarmory:sallet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:halfarmor_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": "minecraft:iron_leggings",
+        "feet": "minecraft:iron_boots"
+      }
+    }
+  ]
+}

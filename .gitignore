@@ -1,0 +1,31 @@
+.gradle/
+build/
+out/
+run/
+run-tests/
+runs/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.DS_Store
+.jdk17/
+libs/
+build-log.txt
+test-log.txt
+client-log.txt
+
+dist/
+
+# Logs y basura local (Windows)
+*.log
+test-log*.txt
+hs_err_pid*.log
+replay_pid*.log
+src.zip
+# Clases de Recruits extraídas para consultar: son All Rights Reserved, no van al repo
+/com/
+# Instalador de Mac
+.jdk17-mac/
+.mac-tmp/

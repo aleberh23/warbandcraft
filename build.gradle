@@ -1,0 +1,173 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            // Recruits usa mixins: esto los remapea en el entorno de desarrollo
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            // Nuestro mixin (sin tope de soldados de Recruits); en el jar va por el manifiesto (MixinConfigs).
+            // No va en gameTestServer: ahí Mixin lo busca antes de que estén nuestras clases y no arranca.
+            args '-mixin.config=warbandcraft.mixins.json'
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '-mixin.config=warbandcraft.mixins.json'
+            args '--nogui'
+        }
+
+        // Pruebas automáticas sin pantalla: gradlew runGameTestServer (o probar.bat)
+        gameTestServer {
+            // Carpeta propia: así las pruebas corren aunque el Minecraft de desarrollo (run/) esté abierto
+            workingDirectory project.file('run-tests')
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Villager Recruits se baja directo del CDN de Modrinth a libs/ (una sola vez).
+// Su repo Maven no resuelve "1.15.2" porque ese número se repite en varias versiones de Minecraft.
+def recruitsJar = file("libs/recruits-${recruits_jar_version}.jar")
+if (!recruitsJar.exists()) {
+    recruitsJar.parentFile.mkdirs()
+    logger.lifecycle("Descargando Villager Recruits ${recruits_version} desde Modrinth...")
+    new URL(recruits_url).withInputStream { i -> recruitsJar.withOutputStream { it << i } }
+}
+
+// Villager Workers (H10): trabajadores que producen. Mismo autor y misma licencia que Recruits: se usa
+// como dependencia, no se modifica ni se redistribuye. Lo usamos para crear zonas de almacén.
+def workersJar = file("libs/workers-${workers_jar_version}.jar")
+if (!workersJar.exists()) {
+    workersJar.parentFile.mkdirs()
+    logger.lifecycle("Descargando Villager Workers ${workers_version} desde Modrinth...")
+    new URL(workers_url).withInputStream { i -> workersJar.withOutputStream { it << i } }
+}
+
+// Xaero's Minimap: mod de minimapa aparte para la vista aérea (H5). No llamamos nada de su código,
+// así que no es una dependencia de Gradle — solo se baja a libs/ para que compilar.bat lo copie a la
+// carpeta de mods real. Ponerlo en el classpath de runClient rompía jugar-dev.bat: trae sus propios
+// mixins (parches a Minecraft.class) y el remapeo SRG->MCP que este proyecto usa en el entorno de
+// desarrollo (pensado solo para los mixins de Recruits, ver más abajo) no sabe traducir los suyos.
+// En el juego real no pasa nada de esto: Forge usa el mapeo real, no este truco de desarrollo.
+def minimapJar = file("libs/xaerominimap-${minimap_jar_version}.jar")
+if (!minimapJar.exists()) {
+    minimapJar.parentFile.mkdirs()
+    logger.lifecycle("Descargando Xaero's Minimap ${minimap_version} desde Modrinth...")
+    new URL(minimap_url).withInputStream { i -> minimapJar.withOutputStream { it << i } }
+}
+
+// H25: mods de mazmorras (YUNG's Better Dungeons, L_Ender's Cataclysm, Dungeon Now Loading y lo que piden). Igual que
+// Xaero: no son dependencias de Gradle, solo se bajan a libs/ para que compilar.bat los copie a la carpeta de mods.
+// Traen mixins: en el classpath de runClient/runGameTestServer romperían el entorno de desarrollo.
+dungeon_mods.split(',').each { entry ->
+    def parts = entry.trim().tokenize('|')
+    def jar = file("libs/${parts[0]}")
+    if (!jar.exists()) {
+        jar.parentFile.mkdirs()
+        logger.lifecycle("Descargando ${parts[0]} desde Modrinth...")
+        new URL(parts[1]).withInputStream { i -> jar.withOutputStream { it << i } }
+    }
+}
+
+repositories {
+    flatDir { dirs 'libs' }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Base: Villager Recruits de talhanation. No se modifica ni se redistribuye.
+    implementation fg.deobf("local:recruits:${recruits_jar_version}")
+    // H10: Villager Workers (trabajadores). Tampoco se modifica ni se redistribuye.
+    implementation fg.deobf("local:workers:${workers_jar_version}")
+
+    // H25: los mods de mazmorras en el Minecraft de desarrollo (jugar-dev.bat). Solo en tiempo de ejecución, y no en
+    // las pruebas: el mundo de pruebas es plano a y=-60 y sus mazmorras caerían adentro de las áreas de prueba.
+    def testing = gradle.startParameter.taskNames.any { it.toLowerCase().contains('gametest') }
+    if (!testing) dungeon_mods.split(',').each { entry ->
+        def name = entry.trim().tokenize('|')[0]
+        def base = name.substring(0, name.length() - 4)   // flatDir busca <nombre>-<versión>.jar
+        def cut = base.indexOf('-')
+        runtimeOnly fg.deobf("local:${base.substring(0, cut)}:${base.substring(cut + 1)}")
+    }
+
+    // Xaero's Minimap NO va acá (ver el comentario de minimapJar más arriba): solo vive en libs/
+    // para que compilar.bat lo copie al jugar de verdad; runClient/jugar-dev.bat no lo carga.
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'MixinConfigs'            : 'warbandcraft.mixins.json',
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Recruits trae mixins: en el entorno de desarrollo necesitan el archivo SRG->MCP antes de arrancar
+tasks.matching { it.name.startsWith('prepareRun') }.configureEach {
+    dependsOn 'createSrgToMcp'
+}
