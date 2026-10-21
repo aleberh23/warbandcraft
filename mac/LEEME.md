@@ -29,7 +29,7 @@ Abrí la app **Terminal** (Cmd + Espacio, "Terminal") y pegá esto, una línea p
 
 brew install gh git
 gh auth login          # elegí GitHub.com → HTTPS → Login with a web browser, y seguí los pasos
-gh repo clone OWNER/warbandcraft ~/warbandcraft
+gh repo clone aleberh23/warbandcraft ~/warbandcraft
 ```
 
 Queda en tu carpeta personal, en `warbandcraft`.
