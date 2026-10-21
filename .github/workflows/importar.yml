@@ -1,15 +1,19 @@
 name: Importar código
 
-# Se usó una sola vez para subir el código sin terminal: se sube warbandcraft.bundle (git bundle) por la web,
-# esto lo desempaqueta en main, borra el bundle y lanza la compilación. Se puede borrar sin problema.
+# Se usó una sola vez para subir el código sin terminal: el git bundle se sube por la web partido en bundle/parte-*,
+# y al final bundle/sha256.txt. Esto junta las partes, revisa el sha256, desempaqueta en main, borra bundle/ y
+# lanza la compilación. Se puede borrar sin problema.
 on:
   push:
     branches: [main]
-    paths: [warbandcraft.bundle]
+    paths: ['bundle/**']
 
 permissions:
   contents: write
   actions: write
+
+concurrency:
+  group: importar
 
 jobs:
   importar:
@@ -19,16 +23,22 @@ jobs:
         with:
           fetch-depth: 0
       - name: Desempaquetar el bundle
+        id: imp
         run: |
+          if [ ! -f bundle/sha256.txt ]; then echo "Todavía faltan partes"; echo "listo=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          cat bundle/parte-* > /tmp/warbandcraft.bundle
+          echo "$(cat bundle/sha256.txt)  /tmp/warbandcraft.bundle" | sha256sum -c -
           git config user.name "Ale"
           git config user.email "aledeberhardt@gmail.com"
-          git bundle verify warbandcraft.bundle
-          git fetch ./warbandcraft.bundle main:importado
+          git bundle verify /tmp/warbandcraft.bundle
+          git fetch /tmp/warbandcraft.bundle main:importado
+          git rm -rq bundle
           git checkout importado -- .
-          git rm -q --cached warbandcraft.bundle && rm warbandcraft.bundle
           git commit -q -F <(git log -1 --pretty=%B importado)
           git push origin HEAD:main
+          echo "listo=si" >> "$GITHUB_OUTPUT"
       - name: Compilar
+        if: steps.imp.outputs.listo == 'si'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run build.yml --ref main
