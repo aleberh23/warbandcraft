@@ -1,0 +1,63 @@
+name: Compilar
+
+# Cada push a main compila el mod y deja el .jar en la release "ultima".
+# El instalador de Mac (mac/actualizar.sh) baja ese .jar, así no hace falta compilar en la Mac.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: compilar
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sin código todavía (primer commit del repo): no hay nada que compilar
+      - id: hay
+        run: echo "codigo=$([ -f gradlew ] && echo si || echo no)" >> "$GITHUB_OUTPUT"
+
+      - if: steps.hay.outputs.codigo == 'si'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - if: steps.hay.outputs.codigo == 'si'
+        uses: gradle/actions/setup-gradle@v4
+
+      # build.gradle baja Recruits, Workers y los mods del paquete a libs/ (de Modrinth); se guardan entre corridas
+      - if: steps.hay.outputs.codigo == 'si'
+        uses: actions/cache@v4
+        with:
+          path: libs
+          key: libs-${{ hashFiles('gradle.properties') }}
+
+      - if: steps.hay.outputs.codigo == 'si'
+        name: Compilar
+        run: ./gradlew build --no-daemon
+
+      - if: steps.hay.outputs.codigo == 'si'
+        name: Publicar en la release "ultima"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la build/libs
+          JAR=$(ls build/libs/warbandcraft-*.jar | grep -v -e sources -e slim | head -n1)
+          gh release delete ultima --yes --cleanup-tag || true
+          gh release create ultima "$JAR" --prerelease --target "$GITHUB_SHA" \
+            --title "Última compilación" \
+            --notes "Compilado automáticamente desde ${GITHUB_SHA::7}: $(git log -1 --pretty=%s)"
+
+      - if: steps.hay.outputs.codigo == 'si'
+        uses: actions/upload-artifact@v4
+        with:
+          name: warbandcraft-jar
+          path: build/libs/*.jar
