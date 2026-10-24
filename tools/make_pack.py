@@ -28,6 +28,39 @@ def add(z, path, name):
         z.write(path, name)
 
 
+GUIDE = "GUIA-WARBAND-CRAFT.md"
+
+
+def guide(v):
+    """La guía para preguntarle a una IA: los libros del salón del tutorial (warband_tutorial/*.txt) en un solo .md."""
+    books = sorted((ROOT / "src/main/resources/data/warbandcraft/warband_tutorial").glob("*.txt"))
+    out = [f"# Warband Craft {v}: guía completa", "",
+           "Mod de Minecraft 1.20.1 (Forge) que convierte el juego en un Mount & Blade. Esta guía tiene todo lo que explican",
+           "los libros del salón del tutorial (el que aparece en el spawn de cada mundo nuevo).", "",
+           "**Para la IA que lea esto:** respondé las preguntas del jugador con lo que dice esta guía. Los números exactos",
+           "(costos, tiempos, chances) se pueden cambiar en `config/warbandcraft-common.toml`, en esta misma carpeta; cada",
+           "número tiene un comentario que dice qué es. Si algo no está acá, decilo en vez de inventarlo.", ""]
+    for i, p in enumerate(books):
+        title, body = p.stem, []
+        for line in p.read_text(encoding="utf-8-sig").splitlines():
+            if not body and line.startswith("titulo:"):
+                title = line[7:].strip()
+            elif not body and line.startswith("cartel:"):
+                continue
+            elif line.strip() == "---":   # página nueva del libro = párrafo nuevo
+                body.append("")
+            elif line.startswith("## "):
+                body += ["", "### " + line[3:].strip(), ""]
+            elif body or line.strip():
+                body.append(line.rstrip())
+        out += ["", f"## {i}. {title}" if i else f"## {title}", ""]
+        text = LF.join(body)
+        while LF * 3 in text:
+            text = text.replace(LF * 3, LF * 2)
+        out.append(text.strip())
+    return (LF.join(out) + LF).encode("utf-8")
+
+
 def main():
     v = version()
     jar = ROOT / "build" / "libs" / f"warbandcraft-{v}.jar"
@@ -48,6 +81,7 @@ def main():
             add(z, PACK / "comun.ps1", top + "comun.ps1")
             z.write(PACK / "mods.json", top + "mods.json")
             z.write(jar, top + jar.name)
+            z.writestr(top + GUIDE, guide(v))
         print(f"{out.relative_to(ROOT)}  ({out.stat().st_size // 1024} KB)")
 
     # Instancia de Prism Launcher: Minecraft + Forge, y antes de abrir corre actualizar.ps1 (baja mods y mod nuestro).

@@ -27,6 +27,11 @@ SHADERS
 Vienen prendidos (Complementary Reimagined). Si anda lento, apagalos: tecla O (o Opciones > Opciones de video >
 Paquetes de shaders) > "Shaders: ON" para que quede en OFF > Listo. Sin shaders anda mucho más rápido.
 
+GUÍA
+El juego explica todo en el salón del tutorial (aparecés adentro en cada mundo nuevo; /spawn para volver).
+Si te da paja leer todo: en la carpeta del juego (%APPDATA%\.warbandcraft, o la de la instancia en Prism) queda
+GUIA-WARBAND-CRAFT.md. Pasásela a Claude o a la IA que uses y preguntale lo que necesites.
+
 TECLAS DE WARBAND CRAFT
 V vista aérea · K panel de control · J rutas y viaje · B meterse en una batalla / asediar · M mapa de Recruits
 R órdenes de Recruits · U facción de Recruits · O shaders

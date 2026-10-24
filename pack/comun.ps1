@@ -66,6 +66,12 @@ function PonerArchivos($lista, $lado, $base, $aquiDir) {
     Copy-Item -LiteralPath $jar.FullName -Destination (Join-Path $mods $jar.Name) -Force
     $quiero[$jar.Name] = $true
     Ok "Warband Craft: $($jar.Name)"
+    # La guía para preguntarle a una IA (sale de los libros del tutorial)
+    $guia = Join-Path $aquiDir 'GUIA-WARBAND-CRAFT.md'
+    if (Test-Path -LiteralPath $guia) {
+        Copy-Item -LiteralPath $guia -Destination (Join-Path $base 'GUIA-WARBAND-CRAFT.md') -Force
+        Ok "Guía: $(Join-Path $base 'GUIA-WARBAND-CRAFT.md')"
+    }
     # Solo versiones viejas de los mods del paquete (mismo nombre antes del primer guion): los que agregues vos quedan
     $prefijos = @{}
     foreach ($n in $quiero.Keys) { $prefijos[($n -split '-')[0].ToLower()] = $true }

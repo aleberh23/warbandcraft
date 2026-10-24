@@ -15,6 +15,18 @@ Si te morís sin cama, volvés a aparecer acá.
 
 Para volver a leer algo: /spawn te trae de vuelta desde donde estés. No anda en medio de una pelea.
 ---
+## ¿Paja de leer?
+Si te da paja leer todo: en la carpeta del juego hay un archivo GUIA-WARBAND-CRAFT.md con todo lo de estos libros.
+
+Pasáselo a Claude o a la IA que uses y preguntale puntualmente lo que necesites.
+---
+## Dónde está
+Con el instalador: escribí esto en la barra del Explorador de Windows:
+%APPDATA%
+\.warbandcraft
+
+Con Prism: la carpeta de la instancia (Carpeta en el menú de la instancia).
+---
 ## Primeros pasos
 1. Conseguí madera, un cofre y una mesa de herrería y fabricá un Campamento (libro 2). Ponelo donde quieras tu base.
 

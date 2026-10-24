@@ -564,6 +564,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 - `/spawn` (todos, `command/SpawnCommand`): te lleva al spawn del overworld (corta el viaje, te baja del caballo; tus soldados quedan). No para zafar:
   no anda a `COMBAT_SECONDS` (15) de un golpe recibido o dado (`LivingHurtEvent`, en memoria) ni con un `Mob` a `ENEMY_RANGE`
   (32) que te tiene de objetivo. Creativo/espectador, sí.
+- `GUIA-WARBAND-CRAFT.md` (pedido de Ale, para preguntarle a una IA): `tools/make_pack.py` (`guide`) junta los libros en un .md, va en
+  los zips y `PonerArchivos` (`pack/comun.ps1`) lo copia a la carpeta del juego / del servidor en cada instalación y actualización.
 - Mundos viejos: `/warband tutorial construir` (operador) lo arma en el spawn (pisa lo que haya); `/warband tutorial` dice dónde.
 - Prueba: `TutorialGameTests` (arma con `build(..., true)` a 7000 sin tocar spawn ni protección).
 
