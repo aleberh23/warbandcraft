@@ -116,7 +116,7 @@ public final class VillageManagement {
     @Nullable
     public static VillageData.Village access(ServerPlayer player, BlockPos center) {
         VillageData.Village v = VillageData.get(player.serverLevel()).at(center);
-        if (v == null || !player.getUUID().equals(v.owner())) return null;
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) return null;
         if (VillageData.horizontalDistSq(player.blockPosition(), center) > (double) REACH * REACH) return null;
         return v;
     }
@@ -126,7 +126,7 @@ public final class VillageManagement {
     public static VillageData.Village near(ServerPlayer player) {
         for (VillageData.Village v : VillageData.get(player.serverLevel()).byDistance(player.blockPosition())) {
             if (VillageData.horizontalDistSq(v.center(), player.blockPosition()) > (double) VillageCamps.MANAGE_RADIUS * VillageCamps.MANAGE_RADIUS) return null;
-            if (player.getUUID().equals(v.owner())) return v;
+            if (com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) return v;
         }
         return null;
     }
@@ -209,7 +209,7 @@ public final class VillageManagement {
     /** Tus trabajadores de Villager Workers cerca del centro. */
     public static List<AbstractWorkerEntity> workers(ServerLevel level, BlockPos center, UUID owner) {
         return level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(center).inflate(RADIUS, 32, RADIUS),
-                w -> w.isAlive() && Objects.equals(w.getOwnerUUID(), owner));
+                w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner));
     }
 
     // ------------------------------------------------------------------ órdenes

@@ -304,7 +304,7 @@ public final class Invasions {
         if (p != null && p.level() == level && p.isAlive() && !p.isSpectator()
                 && VillageData.horizontalDistSq(p.blockPosition(), inv.target) <= (double) DEFENDER_RANGE * DEFENDER_RANGE) n++;
         n += level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(inv.target).inflate(DEFENDER_RANGE, 48, DEFENDER_RANGE),
-                e -> e.isAlive() && Objects.equals(e.getOwnerUUID(), inv.owner) && Soldiers.isSoldier(e) && !Surrender.is(e)).size();
+                e -> e.isAlive() && com.ale.warbandcraft.faction.Allies.same(e.getOwnerUUID(), inv.owner) && Soldiers.isSoldier(e) && !Surrender.is(e)).size();
         return n;
     }
 

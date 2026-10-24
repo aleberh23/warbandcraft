@@ -64,7 +64,7 @@ public class MerchantEntity extends AbstractWorkerEntity {
             return InteractionResult.SUCCESS;
         }
         if (player instanceof ServerPlayer sp && hand == InteractionHand.MAIN_HAND) {
-            boolean owner = java.util.Objects.equals(getOwnerUUID(), player.getUUID());
+            boolean owner = com.ale.warbandcraft.faction.Allies.same(getOwnerUUID(), player.getUUID());
             if (!owner || !player.isShiftKeyDown()) {
                 Market.interact(sp, this);
                 return InteractionResult.SUCCESS;

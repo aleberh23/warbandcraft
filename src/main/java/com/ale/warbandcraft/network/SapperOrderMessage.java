@@ -64,7 +64,7 @@ public class SapperOrderMessage {
         for (UUID id : ids) {
             Entity found = level.getEntity(id);
             if (!(found instanceof AbstractRecruitEntity r) || !r.isAlive()) continue;
-            if (!Objects.equals(r.getOwnerUUID(), player) || !SapperRules.isSapper(r)) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player) || !SapperRules.isSapper(r)) continue;
             sappers++;
             CompoundTag data = r.getPersistentData();
             if (!cannon) {

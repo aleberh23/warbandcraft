@@ -215,16 +215,27 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   cargarse el Campamento. 2º día sin comer: se va el 10% (mín. 1), menor nivel primero. Constantes en `BarracksData`.
 - Automático: dueño a >96 bloques de un soldado que no lo sigue ni pelea → se guarda. Guardias vuelven a su puesto
   con el dueño a <80 del puesto. `BarracksEvents` no corre en `GameTestServer`: las pruebas llaman a `Barracks` a mano.
-- Compañeros de facción (pedido de Ale, a probar): mismo equipo de Recruits que el dueño (`faction/Allies.same`, por
-  `Territory.factionOf`) → `CampBlockEntity.barracksUsableBy`: la pestaña Barracón entera (renombrar, entrenamiento, presos,
-  ejércitos: los suyos); de las pestañas, solo Cofre + Barracón. Sacar = el soldado pasa a ser del que lo saca (`Barracks.deploy(..., to)` / `handTo`);
-  guardar = sus soldados al barracón del dueño (`store` usa el dueño del Campamento). `campOf` acepta el Campamento de un
-  compañero. Envíos, rutas y Panel siguen siendo solo del dueño.
+- **Lo de la facción es de todos** (pedido de Ale, a probar): ver "Compañeros de facción" más abajo.
 - Jurisdicción = `CampBlockEntity.WORK_RADIUS` (24): armar, vincular cofres y "Guardar a los de cerca" usan ese radio.
 - Vista aérea: `AerialCampsMessage` (lista de tus Campamentos, se pide al entrar y al abrir la lista) dibuja nombre +
   barracón sobre cada uno; click izquierdo en uno = seleccionado, se dibuja su jurisdicción. Click derecho en uno con
   soldados elegidos, o botón Barracón → lista, = `ToBarracksMessage` (null = cada uno al suyo; si no, los ata a ese).
 - En la estructura `empty` de los GameTests el piso de piedra está en y=1 relativo: un puesto en y=1 queda adentro.
+
+## Compañeros de facción (pedido de Ale, a probar: "todos los campamentos, aldeas y soldados de una facción tienen que ser manejables por todos los miembros por igual")
+
+- `faction/Allies`: misma facción de Recruits = mismo equipo del marcador (por nombre; desconectado: `ProfileCache`). `same(a, b)`
+  (mismo jugador o misma facción; null → false), `members(p)` (él + los del equipo), `factionOf` (cache 5 s; el servidor se anota
+  en `ServerAboutToStart`). Cliente: `sameTeam(player, owner, entity)` (equipo del soldado = el tuyo).
+- **Todo "¿es tuyo?" pasa por ahí**: `CampBlockEntity.canBeUsedBy` (todas las pestañas), `CampRegistry.campsOf/isCampOf/hasCamp/
+  nearestCamp` (lo de todos los miembros), aldeas (`Allies.same(player, v.owner())`: Gestión, mejoras, Panel, mercado, taberna,
+  almacén, rutas, mapa, vista aérea), rutas/envíos (`RouteData`), ejércitos (`ArmyData.of`, `Armies.get`), órdenes a soldados
+  (vista aérea, Batalla, zapadores, al barracón; el cliente elige también a los de tu equipo), quién es amigo en peleas
+  (`Quarters`, `Morale`, `Escort`). Al **sacar** del barracón, **armar** con el Bastón u ordenar **seguir/proteger** (estados
+  1/4/5) a un soldado de un compañero, pasa a ser del que lo pidió (`Barracks.handTo`: Recruits sigue siempre a su dueño).
+- No compartido: kits y doctrinas (cada jugador tiene los suyos), datos internos del Mercado (`MarketData.owner`), qué aldea elige
+  la IA para invadir, la Hueste (es contra un dueño, aunque el aviso y el mapa los ven todos), `VillageData` al cambiar de dueño
+  (cambiar entre compañeros también vacía el almacén de números).
 
 ## Rutas y viaje (H13, a probar — plan en `plan-h13-rutas.md`)
 

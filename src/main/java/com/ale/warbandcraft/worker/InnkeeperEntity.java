@@ -54,7 +54,7 @@ public class InnkeeperEntity extends AbstractWorkerEntity {
     /** H25: click (el dueño, sin agacharse; o cualquier otro) = rumores y trabajos. Agachado, el dueño ve la pantalla de Workers. */
     @Override
     public net.minecraft.world.InteractionResult mobInteract(net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
-        boolean owner = java.util.Objects.equals(getOwnerUUID(), player.getUUID());
+        boolean owner = com.ale.warbandcraft.faction.Allies.same(getOwnerUUID(), player.getUUID());
         if (owner && player.isShiftKeyDown()) return super.mobInteract(player, hand);
         if (player instanceof net.minecraft.server.level.ServerPlayer sp && hand == net.minecraft.world.InteractionHand.MAIN_HAND) {
             com.ale.warbandcraft.dungeon.Rumors.interact(sp, this);

@@ -68,7 +68,7 @@ public class MarketActionMessage {
     private static void apply(ServerPlayer player, MarketActionMessage msg) {
         ServerLevel level = player.serverLevel();
         VillageData.Village v = VillageData.get(level).at(msg.center);
-        if (v == null || !player.getUUID().equals(v.owner())) {
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) {
             player.sendSystemMessage(Component.translatable("msg.warbandcraft.stock.not_yours").withStyle(ChatFormatting.RED));
             return;
         }

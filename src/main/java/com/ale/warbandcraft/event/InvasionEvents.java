@@ -95,10 +95,10 @@ public class InvasionEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         for (ServerLevel level : player.getServer().getAllLevels()) {
             for (InvasionData.Invasion inv : InvasionData.get(level).all()) {
-                if (inv.owner.equals(player.getUUID()) && inv.state == InvasionData.State.MARCHING) Invasions.warn(level, inv);
+                if (com.ale.warbandcraft.faction.Allies.same(inv.owner, player.getUUID()) && inv.state == InvasionData.State.MARCHING) Invasions.warn(level, inv);
             }
             for (InvasionData.Host h : InvasionData.get(level).hosts()) {   // H23
-                if (h.owner.equals(player.getUUID())) com.ale.warbandcraft.invasion.Hosts.warn(level, h);
+                if (com.ale.warbandcraft.faction.Allies.same(h.owner, player.getUUID())) com.ale.warbandcraft.invasion.Hosts.warn(level, h);
             }
         }
     }

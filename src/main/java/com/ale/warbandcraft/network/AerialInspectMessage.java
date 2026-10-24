@@ -35,7 +35,7 @@ public class AerialInspectMessage {
         ctx.get().enqueueWork(() -> {
             if (player == null) return;
             Entity found = player.serverLevel().getEntity(msg.recruitId);
-            if (found instanceof AbstractRecruitEntity r && r.isAlive() && Objects.equals(r.getOwnerUUID(), player.getUUID())) {
+            if (found instanceof AbstractRecruitEntity r && r.isAlive() && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player.getUUID())) {
                 r.openGUI(player);
             }
         });

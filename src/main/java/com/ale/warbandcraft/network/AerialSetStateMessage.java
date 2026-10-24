@@ -70,12 +70,14 @@ public class AerialSetStateMessage {
         for (UUID id : msg.recruitIds) {
             Entity found = level.getEntity(id);
             if (!(found instanceof AbstractRecruitEntity r)) continue;
-            if (!r.isAlive() || !r.getListen() || !Objects.equals(r.getOwnerUUID(), player.getUUID())) continue;
+            if (!r.isAlive() || !r.getListen() || !com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player.getUUID())) continue;
 
             switch (msg.kind) {
                 case FOLLOW -> {
                     BattleGeneral.setBattle(r, false);
                     r.setTarget(null);
+                    // Seguir / proteger / quedarse donde está el dueño: si lo ordena un compañero de facción, pasa a ser suyo
+                    if (msg.value == 1 || msg.value == 4 || msg.value == 5) com.ale.warbandcraft.camp.Barracks.handTo(level, r, player.getUUID());
                     r.setFollowState(msg.value);
                 }
                 case HOLD_HERE -> {

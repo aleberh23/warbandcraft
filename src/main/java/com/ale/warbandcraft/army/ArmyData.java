@@ -177,7 +177,7 @@ public class ArmyData extends SavedData {
 
     public List<Army> of(UUID owner) {
         List<Army> out = new ArrayList<>();
-        for (Army a : armies.values()) if (a.owner.equals(owner)) out.add(a);
+        for (Army a : armies.values()) if (com.ale.warbandcraft.faction.Allies.same(a.owner, owner)) out.add(a);
         return out;
     }
 

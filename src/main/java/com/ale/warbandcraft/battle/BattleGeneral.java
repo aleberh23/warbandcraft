@@ -395,7 +395,7 @@ public final class BattleGeneral {
     public static List<AbstractRecruitEntity> attackerSoldiers(ServerLevel level, RaidManager.Raid raid) {
         double r = RaidManager.REINFORCE_RANGE;
         return level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(raid.center).inflate(r, 64, r),
-                s -> s.isAlive() && s.getIsOwned() && Objects.equals(s.getOwnerUUID(), raid.attacker) && !Surrender.is(s)
+                s -> s.isAlive() && s.getIsOwned() && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), raid.attacker) && !Surrender.is(s)
                         && Soldiers.isSoldier(s));
     }
 

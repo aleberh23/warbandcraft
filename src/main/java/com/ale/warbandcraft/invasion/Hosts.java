@@ -183,7 +183,7 @@ public final class Hosts {
             if (b != null) n += b.soldiers.size() + b.quarters.size();
         }
         for (Entity e : level.getAllEntities()) {
-            if (e instanceof AbstractRecruitEntity s && s.isAlive() && Objects.equals(s.getOwnerUUID(), owner) && Soldiers.isSoldier(s)) n++;
+            if (e instanceof AbstractRecruitEntity s && s.isAlive() && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), owner) && Soldiers.isSoldier(s)) n++;
         }
         return n;
     }
@@ -610,7 +610,7 @@ public final class Hosts {
     private static List<LivingEntity> enemies(ServerLevel level, InvasionData.Host h, @Nullable ServerPlayer p) {
         double r = LEAVE_DISTANCE;
         List<LivingEntity> out = new ArrayList<>(level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(h.front).inflate(r, 48, r),
-                e -> e.isAlive() && Objects.equals(e.getOwnerUUID(), h.owner) && Soldiers.isSoldier(e) && !Surrender.is(e)));
+                e -> e.isAlive() && com.ale.warbandcraft.faction.Allies.same(e.getOwnerUUID(), h.owner) && Soldiers.isSoldier(e) && !Surrender.is(e)));
         if (p != null && p.level() == level && p.isAlive() && !p.isSpectator() && !p.isCreative()
                 && horizontalDist(p.position(), Vec3.atBottomCenterOf(h.front)) <= r) out.add(p);
         return out;
@@ -755,7 +755,7 @@ public final class Hosts {
         int veterans = 0;
         double r = LEAVE_DISTANCE;
         for (AbstractRecruitEntity s : level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(h.front).inflate(r, 48, r),
-                e -> e.isAlive() && Objects.equals(e.getOwnerUUID(), h.owner) && Soldiers.isSoldier(e))) {
+                e -> e.isAlive() && com.ale.warbandcraft.faction.Allies.same(e.getOwnerUUID(), h.owner) && Soldiers.isSoldier(e))) {
             s.addXp(Armies.VICTORY_XP);
             s.checkLevel();
             veterans++;

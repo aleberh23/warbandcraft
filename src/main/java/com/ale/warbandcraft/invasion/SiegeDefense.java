@@ -99,7 +99,7 @@ public final class SiegeDefense {
         double r = Invasions.DEFENDER_RANGE;
         List<AbstractRecruitEntity> out = new ArrayList<>();
         for (AbstractRecruitEntity s : level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(center).inflate(r, 48, r),
-                e -> e.isAlive() && Objects.equals(e.getOwnerUUID(), owner) && Soldiers.isSoldier(e) && !Surrender.is(e))) {
+                e -> e.isAlive() && com.ale.warbandcraft.faction.Allies.same(e.getOwnerUUID(), owner) && Soldiers.isSoldier(e) && !Surrender.is(e))) {
             CompoundTag d = s.getPersistentData();
             if (d.contains(Quarters.TAG_QUARTERS)) continue;
             CompoundTag tag = d.getCompound(TAG_HELPER);

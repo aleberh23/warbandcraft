@@ -141,14 +141,14 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
         return owner;
     }
 
-    /** Un Campamento sin dueño (p. ej. puesto con comandos) lo puede usar cualquiera. */
+    /** Un Campamento sin dueño (p. ej. puesto con comandos) lo puede usar cualquiera; uno con dueño, él y los de su facción. */
     public boolean canBeUsedBy(UUID player) {
-        return owner == null || owner.equals(player);
+        return owner == null || com.ale.warbandcraft.faction.Allies.same(owner, player);
     }
 
-    /** Pedido de Ale: además del dueño, los de su facción de Recruits pueden sacar y guardar soldados del barracón. */
+    /** Lo mismo que {@link #canBeUsedBy} (antes el barracón era lo único compartido). */
     public boolean barracksUsableBy(UUID player) {
-        return canBeUsedBy(player) || level instanceof ServerLevel server && com.ale.warbandcraft.faction.Allies.same(server, owner, player);
+        return canBeUsedBy(player);
     }
 
     // ---------- Cofres vinculados ----------

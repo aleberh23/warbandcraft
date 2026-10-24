@@ -356,7 +356,7 @@ public final class Popularity {
             }
         }
         for (AbstractWorkerEntity w : level.getEntitiesOfClass(AbstractWorkerEntity.class, box,
-                x -> x.isAlive() && Objects.equals(x.getOwnerUUID(), v.owner()) && !WorkZones.hasPlace(x))) {
+                x -> x.isAlive() && com.ale.warbandcraft.faction.Allies.same(x.getOwnerUUID(), v.owner()) && !WorkZones.hasPlace(x))) {
             gone(level, w);
             return true;
         }

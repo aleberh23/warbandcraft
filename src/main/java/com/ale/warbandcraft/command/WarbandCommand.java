@@ -271,7 +271,7 @@ public final class WarbandCommand {
         }
         List<AbstractRecruitEntity> soldiers = player.serverLevel().getEntitiesOfClass(AbstractRecruitEntity.class,
                 player.getBoundingBox().inflate(UNIFORM_RADIUS),
-                r -> r.isAlive() && Objects.equals(r.getOwnerUUID(), player.getUUID()) && Soldiers.isSoldier(r));
+                r -> r.isAlive() && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player.getUUID()) && Soldiers.isSoldier(r));
         soldiers.forEach(style::applyTo);
         ctx.getSource().sendSuccess(() -> Component.translatable("cmd.warbandcraft.uniform.done", soldiers.size())
                 .withStyle(ChatFormatting.GREEN), false);

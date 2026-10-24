@@ -67,7 +67,7 @@ public class ToBarracksMessage {
         for (UUID id : ids) {
             Entity found = level.getEntity(id);
             if (!(found instanceof AbstractRecruitEntity r) || !r.isAlive()) continue;
-            if (!Objects.equals(r.getOwnerUUID(), player)) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player)) continue;
             if (Barracks.sendHome(level, r, camp)) sent++;
         }
         if (sent == 0) return Component.translatable("msg.warbandcraft.barracks.none_sent").withStyle(ChatFormatting.RED);

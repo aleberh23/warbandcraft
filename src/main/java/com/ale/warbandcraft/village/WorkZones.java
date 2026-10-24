@@ -96,7 +96,7 @@ public final class WorkZones {
         if (job == null || job == VillageManagement.Job.SMITH || job == VillageManagement.Job.INNKEEPER
                 || job == VillageManagement.Job.MERCHANT) return null;
         List<AbstractWorkAreaEntity> near = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, w.getBoundingBox().inflate(REACH, 48, REACH),
-                x -> x.isAlive() && jobOfArea(x) == job && Objects.equals(w.getOwnerUUID(), x.getPlayerUUID()));
+                x -> x.isAlive() && jobOfArea(x) == job && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), x.getPlayerUUID()));
         near.sort(Comparator.comparingDouble(x -> x.distanceToSqr(w)));
         return near.isEmpty() ? null : near.get(0);
     }
@@ -142,7 +142,7 @@ public final class WorkZones {
         // H18: el estado de cada trabajador va sobre su zona (cartelito del modo Gestión)
         Map<UUID, WorkerSupply.Status> byArea = new HashMap<>();
         for (AbstractWorkerEntity w : level.getEntitiesOfClass(AbstractWorkerEntity.class, around,
-                w -> w.isAlive() && Objects.equals(w.getOwnerUUID(), owner) && !(w instanceof SmithEntity))) {
+                w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner) && !(w instanceof SmithEntity))) {
             AbstractWorkAreaEntity a = areaFor(level, w);
             if (a != null) byArea.putIfAbsent(a.getUUID(), WorkerSupply.status(level, w));
         }
@@ -158,7 +158,7 @@ public final class WorkZones {
                     st.text(), st.color()));
         }
         for (SmithEntity s : level.getEntitiesOfClass(SmithEntity.class, around,
-                s -> s.isAlive() && s.getWorkplace() != null && Objects.equals(s.getOwnerUUID(), owner))) {
+                s -> s.isAlive() && s.getWorkplace() != null && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), owner))) {
             BlockPos p = s.getWorkplace();
             WorkerSupply.Status st = WorkerSupply.status(level, s);
             out.add(new AreaRow(s.getUUID(), Component.translatable("gui.warbandcraft.manage.smithy"), p, p.above(), color(VillageManagement.Job.SMITH),
@@ -179,7 +179,7 @@ public final class WorkZones {
         AABB around = new AABB(v.center()).inflate(REACH, 48, REACH);
         java.util.Set<UUID> used = new java.util.HashSet<>();
         for (AbstractWorkerEntity w : level.getEntitiesOfClass(AbstractWorkerEntity.class, around,
-                w -> w.isAlive() && Objects.equals(w.getOwnerUUID(), owner))) {
+                w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner))) {
             AbstractWorkAreaEntity a = areaFor(level, w);
             if (a != null) used.add(a.getUUID());
         }
@@ -209,7 +209,7 @@ public final class WorkZones {
     @Nullable
     private static AbstractWorkerEntity worker(ServerPlayer player, VillageData.Village v, UUID id) {
         Entity e = player.serverLevel().getEntity(id);
-        if (!(e instanceof AbstractWorkerEntity w) || !w.isAlive() || !Objects.equals(w.getOwnerUUID(), player.getUUID())) return null;
+        if (!(e instanceof AbstractWorkerEntity w) || !w.isAlive() || !com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), player.getUUID())) return null;
         return VillageData.horizontalDistSq(w.blockPosition(), v.center()) <= (double) REACH * REACH ? w : null;
     }
 
@@ -323,7 +323,7 @@ public final class WorkZones {
     /** Borrar una zona tuya (o el lugar de un herrero). */
     public static Component delete(ServerPlayer player, VillageData.Village v, UUID id) {
         Entity e = player.serverLevel().getEntity(id);
-        if (e instanceof SmithEntity s && Objects.equals(s.getOwnerUUID(), player.getUUID())) {
+        if (e instanceof SmithEntity s && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), player.getUUID())) {
             s.setWorkplace(null);
             return Component.translatable("msg.warbandcraft.zone.deleted").withStyle(ChatFormatting.YELLOW);
         }

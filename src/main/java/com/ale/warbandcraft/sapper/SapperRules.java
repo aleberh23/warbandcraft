@@ -68,7 +68,7 @@ public final class SapperRules {
     @Nullable
     public static VillageData.Village enemyTarget(ServerLevel level, BlockPos pos, UUID player) {
         VillageData.Village v = VillageData.get(level).nearest(pos, TARGET_RADIUS);
-        if (v == null || player.equals(v.owner())) return null;
+        if (v == null || com.ale.warbandcraft.faction.Allies.same(player, v.owner())) return null;
         return v;
     }
 

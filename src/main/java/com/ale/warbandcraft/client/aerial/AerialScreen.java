@@ -990,7 +990,7 @@ public final class AerialScreen extends Screen {
             double bestDist = Double.MAX_VALUE;
             for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, new AABB(origin, far).inflate(1.0))) {
                 if (living == player || !living.isAlive()) continue;
-                if (living instanceof AbstractRecruitEntity r && Objects.equals(r.getOwnerUUID(), player.getUUID())) continue;
+                if (living instanceof AbstractRecruitEntity r && com.ale.warbandcraft.faction.Allies.sameTeam(player, r.getOwnerUUID(), r)) continue;
 
                 Vec3 center = living.getBoundingBox().getCenter();
                 double t = center.subtract(origin).dot(dir);
@@ -1095,7 +1095,7 @@ public final class AerialScreen extends Screen {
         if (player == null || mc.level == null) return List.of();
         List<AbstractRecruitEntity> list = new ArrayList<>();
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (e instanceof AbstractRecruitEntity r && r.isAlive() && Objects.equals(r.getOwnerUUID(), player.getUUID())
+            if (e instanceof AbstractRecruitEntity r && r.isAlive() && com.ale.warbandcraft.faction.Allies.sameTeam(player, r.getOwnerUUID(), r)   // también los de tu facción
                     && Soldiers.isSoldier(r)) {
                 list.add(r);
             }

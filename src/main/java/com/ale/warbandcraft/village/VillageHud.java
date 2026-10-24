@@ -47,7 +47,7 @@ public final class VillageHud {
     public static Info info(ServerPlayer player, VillageData.Village v, Component ownerName) {
         ServerLevel level = player.serverLevel();
         Faction faction = FactionManager.INSTANCE.get(v.faction());
-        boolean mine = player.getUUID().equals(v.owner());
+        boolean mine = com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner());
         int relation = mine ? MINE : v.isConquered() ? OTHER : v.isLooted(level.getGameTime()) ? LOOTED : FACTION;
 
         // El nombre de su Campamento si le pusiste uno; si no, "Aldea de ..." con el color de la facción

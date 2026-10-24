@@ -49,7 +49,7 @@ public final class Ambush {
         long now = level.getGameTime();
         double r2 = (double) RADIUS * RADIUS;
         for (InvasionData.Invasion inv : data.all()) {
-            if (!inv.owner.equals(player) || inv.state != InvasionData.State.MARCHING) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(inv.owner, player) || inv.state != InvasionData.State.MARCHING) continue;
             Vec3 p = AiWars.position(inv.from, inv.target, inv.startTick, inv.arriveTick, now);
             if (horizontalDistSq(p, at) <= r2) return new Target(inv.faction, inv.size, p, inv.target, null);
         }
@@ -111,7 +111,7 @@ public final class Ambush {
             net.minecraft.world.entity.player.Player p = level.getNearestPlayer(c.x, c.y, c.z, 96, false);
             if (!(p instanceof ServerPlayer sp) || sp.isSpectator()) continue;
             List<net.minecraft.world.entity.LivingEntity> enemies = new ArrayList<>(level.getEntitiesOfClass(AbstractRecruitEntity.class,
-                    new AABB(c, c).inflate(64, 32, 64), r -> r.isAlive() && java.util.Objects.equals(r.getOwnerUUID(), sp.getUUID())
+                    new AABB(c, c).inflate(64, 32, 64), r -> r.isAlive() && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), sp.getUUID())
                             && com.ale.warbandcraft.ai.Soldiers.isSoldier(r) && !com.ale.warbandcraft.battle.Surrender.is(r)));
             if (!sp.isCreative()) enemies.add(sp);
             Vec3 away = c.subtract(sp.position());

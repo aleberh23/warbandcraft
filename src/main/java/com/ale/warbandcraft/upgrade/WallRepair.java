@@ -107,7 +107,7 @@ public final class WallRepair {
     public static Component order(ServerPlayer player, BlockPos center) {
         ServerLevel level = player.serverLevel();
         VillageData.Village v = VillageData.get(level).at(center);
-        if (v == null || !player.getUUID().equals(v.owner())) return error("upgrade.warbandcraft.not_yours");
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) return error("upgrade.warbandcraft.not_yours");
         TownData.Town t = TownData.get(level).at(center);
         if (v.castle() || !hasWalls(t)) return error("upgrade.warbandcraft.repair.no_walls");
         if (!level.isPositionEntityTicking(center)) return error("upgrade.warbandcraft.not_loaded");

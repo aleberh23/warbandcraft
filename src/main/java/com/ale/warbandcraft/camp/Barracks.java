@@ -101,7 +101,7 @@ public final class Barracks {
             BlockPos pos = BlockPos.of(data.getLong(TAG_CAMP));
             if (registry.isCampOf(owner, pos)) return pos;
             // Pedido de Ale: guardado en el barracón de un compañero de facción, sigue siendo de ese barracón
-            if (com.ale.warbandcraft.faction.Allies.same(level, owner, registry.ownerOf(pos))) return pos;
+            if (com.ale.warbandcraft.faction.Allies.same(owner, registry.ownerOf(pos))) return pos;
         }
         BlockPos nearest = registry.nearestCamp(owner, soldier.blockPosition());
         if (nearest != null) attach(soldier, nearest);
@@ -196,7 +196,7 @@ public final class Barracks {
 
     public static List<AbstractRecruitEntity> storableNear(ServerLevel level, BlockPos camp, UUID owner) {
         return level.getEntitiesOfClass(AbstractRecruitEntity.class, CampBlockEntity.area(level, camp),   // H16: aldea = su territorio
-                r -> r.isAlive() && Objects.equals(r.getOwnerUUID(), owner) && !isFighting(r) && !Surrender.is(r) && Soldiers.isSoldier(r)
+                r -> r.isAlive() && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner) && !isFighting(r) && !Surrender.is(r) && Soldiers.isSoldier(r)
                         && CampBlockEntity.covers(level, camp, r.blockPosition()));
     }
 
@@ -260,8 +260,8 @@ public final class Barracks {
         return out;
     }
 
-    /** El soldado pasa a ser de {@code to} (compañero de facción que lo sacó del barracón). */
-    private static void handTo(ServerLevel level, AbstractRecruitEntity soldier, @Nullable UUID to) {
+    /** El soldado pasa a ser de {@code to} (compañero de facción que lo sacó del barracón o le ordenó seguirlo). */
+    public static void handTo(ServerLevel level, AbstractRecruitEntity soldier, @Nullable UUID to) {
         UUID before = soldier.getOwnerUUID();
         if (to == null || to.equals(before)) return;
         soldier.setOwnerUUID(java.util.Optional.of(to));
@@ -515,7 +515,7 @@ public final class Barracks {
         BarracksData data = BarracksData.get(level);
         for (Map.Entry<Long, BarracksData.Barracks> e : new ArrayList<>(data.all().entrySet())) {
             BarracksData.Barracks b = e.getValue();
-            if (!owner.equals(b.owner)) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(owner, b.owner)) continue;
             BlockPos camp = BlockPos.of(e.getKey());
             for (BarracksData.Soldier s : new ArrayList<>(b.soldiers)) {
                 if (!s.guard || s.post == null) continue;

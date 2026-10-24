@@ -116,7 +116,7 @@ public final class Morale {
 
     /** ¿Del mismo bando? Tuyos con tuyos (mismo dueño), de la IA con su facción. */
     public static boolean sameSide(AbstractRecruitEntity a, AbstractRecruitEntity b) {
-        if (a.getIsOwned() || b.getIsOwned()) return a.getIsOwned() && b.getIsOwned() && Objects.equals(a.getOwnerUUID(), b.getOwnerUUID());
+        if (a.getIsOwned() || b.getIsOwned()) return a.getIsOwned() && b.getIsOwned() && com.ale.warbandcraft.faction.Allies.same(a.getOwnerUUID(), b.getOwnerUUID());
         return a.getPersistentData().getString(VillageManager.TAG_FACTION).equals(b.getPersistentData().getString(VillageManager.TAG_FACTION));
     }
 

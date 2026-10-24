@@ -114,7 +114,7 @@ public final class BattleChoices {
     private static List<AbstractRecruitEntity> soldiersNear(ServerPlayer player) {
         double r = SIEGE_SOLDIER_RADIUS;
         return player.serverLevel().getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(player.blockPosition()).inflate(r),
-                s -> s.isAlive() && Objects.equals(s.getOwnerUUID(), player.getUUID()) && s.getListen() && Soldiers.isSoldier(s));
+                s -> s.isAlive() && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), player.getUUID()) && s.getListen() && Soldiers.isSoldier(s));
     }
 
     /**

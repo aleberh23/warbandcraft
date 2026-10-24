@@ -99,7 +99,7 @@ public class AerialOrderMessage {
         for (int i = 0; i < msg.recruitIds.size(); i++) {
             Entity found = level.getEntity(msg.recruitIds.get(i));
             if (!(found instanceof AbstractRecruitEntity recruit)) continue;
-            if (!recruit.isAlive() || !recruit.getListen() || !Objects.equals(recruit.getOwnerUUID(), player.getUUID())) continue;
+            if (!recruit.isAlive() || !recruit.getListen() || !com.ale.warbandcraft.faction.Allies.same(recruit.getOwnerUUID(), player.getUUID())) continue;
 
             Vec3 pos = targets.get(i);
             BattleGeneral.setBattle(recruit, false);   // H9: una orden a mano manda más que el general

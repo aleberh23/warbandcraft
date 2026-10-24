@@ -74,7 +74,10 @@ public class WarbandCraft {
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.TutorialEvents());   // salón del tutorial en el spawn
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.kit.WeaponRules());   // H26: peso de la armadura
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.ShutdownGuard());   // servidor dedicado: que el proceso termine al apagar
-        MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.LoginPositionEvents());   // login con contraseña: volver a donde estabas
+        MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.LoginPositionEvents());
+        // Compañeros de facción: lo de la facción es de todos sus miembros (faction/Allies)
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerAboutToStartEvent e) -> com.ale.warbandcraft.faction.Allies.setServer(e.getServer()));
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.ale.warbandcraft.faction.Allies.setServer(null));   // login con contraseña: volver a donde estabas
 
         // Vista aérea (H5): registro cliente-only. Un servidor dedicado nunca debe cargar estas clases
         // (KeyMapping, Minecraft, ...), por eso va detrás de DistExecutor, igual que en network/.

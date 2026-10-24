@@ -168,7 +168,7 @@ public final class Upgrades {
     /** Lo que se revisa para cualquier obra: que la aldea sea tuya, se pueda y esté cargada. Null = se puede. */
     @Nullable
     private static Component check(ServerLevel level, ServerPlayer player, @Nullable VillageData.Village v, Upgrade u) {
-        if (v == null || !player.getUUID().equals(v.owner())) return error("upgrade.warbandcraft.not_yours");
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) return error("upgrade.warbandcraft.not_yours");
         if (!u.appliesTo(v.castle())) return error("upgrade.warbandcraft.not_here");
         TownData.Town existing = TownData.get(level).at(v.center());
         if (existing != null && u.listed() && existing.has(u)) return error("upgrade.warbandcraft.done");
@@ -280,7 +280,7 @@ public final class Upgrades {
     public static Component cancel(ServerPlayer player, BlockPos center) {
         ServerLevel level = player.serverLevel();
         VillageData.Village v = VillageData.get(level).at(center);
-        if (v == null || !player.getUUID().equals(v.owner())) return error("upgrade.warbandcraft.not_yours");
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) return error("upgrade.warbandcraft.not_yours");
         TownData data = TownData.get(level);
         TownData.Town t = data.at(center);
         if (t == null || t.job == null) return Component.literal("No hay ninguna obra.").withStyle(ChatFormatting.RED);
@@ -567,7 +567,7 @@ public final class Upgrades {
         int bonus = 0;
         TownData data = TownData.get(level);
         for (VillageData.Village v : VillageData.get(level).all()) {
-            if (!owner.equals(v.owner())) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(owner, v.owner())) continue;
             if (VillageData.horizontalDistSq(v.center(), camp) > (double) BARRACKS_RANGE * BARRACKS_RANGE) continue;
             TownData.Town t = data.at(v.center());
             if (t != null && t.has(Upgrade.BARRACKS)) bonus += v.castle() ? CASTLE_BARRACKS_BONUS : BARRACKS_BONUS;

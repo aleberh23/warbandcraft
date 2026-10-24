@@ -236,7 +236,7 @@ public class RouteData extends SavedData {
 
     public boolean remove(UUID id, UUID owner) {
         Route r = routes.get(id);
-        if (r == null || !r.owner().equals(owner)) return false;
+        if (r == null || !com.ale.warbandcraft.faction.Allies.same(r.owner(), owner)) return false;
         routes.remove(id);
         setDirty();
         return true;
@@ -244,7 +244,7 @@ public class RouteData extends SavedData {
 
     public List<Route> routesOf(UUID owner) {
         List<Route> out = new ArrayList<>();
-        for (Route r : routes.values()) if (r.owner().equals(owner)) out.add(r);
+        for (Route r : routes.values()) if (com.ale.warbandcraft.faction.Allies.same(r.owner(), owner)) out.add(r);
         return out;
     }
 
@@ -269,7 +269,7 @@ public class RouteData extends SavedData {
 
     public List<Shipment> shipmentsOf(UUID owner) {
         List<Shipment> out = new ArrayList<>();
-        for (Shipment s : shipments.values()) if (s.owner().equals(owner)) out.add(s);
+        for (Shipment s : shipments.values()) if (com.ale.warbandcraft.faction.Allies.same(s.owner(), owner)) out.add(s);
         return out;
     }
 

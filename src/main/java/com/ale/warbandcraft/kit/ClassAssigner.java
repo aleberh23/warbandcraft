@@ -85,7 +85,7 @@ public final class ClassAssigner {
 
     /** Lógica pura (sin jugador real): la usan el juego y los GameTests. */
     public static Result assign(ServerLevel level, UUID playerId, AbstractRecruitEntity recruit, ResourceLocation kitId) {
-        if (!Objects.equals(recruit.getOwnerUUID(), playerId)) {
+        if (!com.ale.warbandcraft.faction.Allies.same(recruit.getOwnerUUID(), playerId)) {
             return Result.fail(Component.translatable("msg.warbandcraft.not_yours"));
         }
         // H6: la clase como la ve este jugador (nombre propio y kits propios encima del JSON)
@@ -121,7 +121,9 @@ public final class ClassAssigner {
 
         AbstractRecruitEntity soldier = outfit(level, playerId, camp, recruit, kit, chosen, chosenIndex);
 
-        // Recruits deja a los recién contratados en "mantener posición": armado, el soldado pasa a seguirte.
+        // Recruits deja a los recién contratados en "mantener posición": armado, el soldado pasa a seguirte
+        // (si era de un compañero de facción, ahora es tuyo).
+        com.ale.warbandcraft.camp.Barracks.handTo(level, soldier, playerId);
         soldier.setFollowState(FOLLOW_OWNER);
 
         level.playSound(null, soldier.blockPosition(), SoundEvents.ARMOR_EQUIP_IRON, SoundSource.NEUTRAL, 1.0F, 1.0F);

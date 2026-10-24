@@ -112,9 +112,13 @@ public class CampRegistry extends SavedData {
         return best;
     }
 
+    /** Es de {@code owner} o de alguien de su facción (pedido de Ale: lo de la facción es de todos). */
     public boolean isCampOf(UUID owner, BlockPos pos) {
-        Set<Long> set = camps.get(owner);
-        return set != null && set.contains(pos.asLong());
+        for (UUID m : com.ale.warbandcraft.faction.Allies.members(owner)) {
+            Set<Long> set = camps.get(m);
+            if (set != null && set.contains(pos.asLong())) return true;
+        }
+        return false;
     }
 
     /** H12: de quién es el Campamento en {@code pos}, o null. */
@@ -125,12 +129,13 @@ public class CampRegistry extends SavedData {
         return null;
     }
 
-    /** Dónde están los Campamentos de {@code owner} en este mundo (cargados o no). */
+    /** Dónde están los Campamentos de {@code owner} y de los de su facción en este mundo (cargados o no). */
     public List<BlockPos> campsOf(UUID owner) {
-        Set<Long> set = camps.get(owner);
-        if (set == null) return List.of();
-        List<BlockPos> out = new ArrayList<>(set.size());
-        for (long l : set) out.add(BlockPos.of(l));
+        List<BlockPos> out = new ArrayList<>();
+        for (UUID m : com.ale.warbandcraft.faction.Allies.members(owner)) {
+            Set<Long> set = camps.get(m);
+            if (set != null) for (long l : set) out.add(BlockPos.of(l));
+        }
         return out;
     }
 
@@ -142,8 +147,7 @@ public class CampRegistry extends SavedData {
     }
 
     public boolean hasCamp(UUID owner) {
-        Set<Long> set = camps.get(owner);
-        return set != null && !set.isEmpty();
+        return !campsOf(owner).isEmpty();
     }
 
     /** Lo que espera ser entregado a {@code owner}. */

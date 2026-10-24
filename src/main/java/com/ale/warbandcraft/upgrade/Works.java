@@ -493,7 +493,7 @@ public final class Works {
     private static boolean friendly(LivingEntity e, UUID owner) {
         if (!e.isAlive()) return false;
         if (e instanceof Player p) return owner.equals(p.getUUID());
-        if (e instanceof AbstractRecruitEntity r) return Objects.equals(r.getOwnerUUID(), owner);
+        if (e instanceof AbstractRecruitEntity r) return com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner);
         return e instanceof AbstractVillager;
     }
 

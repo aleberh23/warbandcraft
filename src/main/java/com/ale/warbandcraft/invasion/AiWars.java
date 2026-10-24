@@ -755,7 +755,7 @@ public final class AiWars {
         int n = 0;
         String id = m.id.toString();
         for (AbstractRecruitEntity s : level.getEntitiesOfClass(AbstractRecruitEntity.class, p.getBoundingBox().inflate(JOIN_RADIUS),
-                s -> s.isAlive() && java.util.Objects.equals(s.getOwnerUUID(), p.getUUID()) && com.ale.warbandcraft.ai.Soldiers.isSoldier(s)
+                s -> s.isAlive() && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), p.getUUID()) && com.ale.warbandcraft.ai.Soldiers.isSoldier(s)
                         && !com.ale.warbandcraft.battle.Surrender.is(s) && !com.ale.warbandcraft.army.Armies.inArmy(s)
                         && !s.getPersistentData().contains(com.ale.warbandcraft.village.Quarters.TAG_QUARTERS))) {
             var pd = s.getPersistentData();

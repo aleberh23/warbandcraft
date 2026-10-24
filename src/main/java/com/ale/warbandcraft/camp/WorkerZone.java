@@ -142,7 +142,7 @@ public final class WorkerZone {
     /** Trabajadores de Workers del jugador dentro de la jurisdicción del Campamento. */
     public static int workersNear(ServerLevel level, BlockPos camp, @Nullable UUID owner) {
         return level.getEntitiesOfClass(AbstractRecruitEntity.class, CampBlockEntity.area(level, camp),
-                w -> w.isAlive() && Soldiers.isWorker(w) && (owner == null || Objects.equals(w.getOwnerUUID(), owner))
+                w -> w.isAlive() && Soldiers.isWorker(w) && (owner == null || com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner))
                         && CampBlockEntity.covers(level, camp, w.blockPosition())).size();
     }
 }

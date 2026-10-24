@@ -50,7 +50,7 @@ public class MapPointsMessage {
             if (com.ale.warbandcraft.village.VillageCamps.villageOf(level, p) == null) out.add(new Point(p, Routes.Kind.CAMP, camps.displayName(p)));
         }
         for (VillageData.Village v : VillageData.get(level).all()) {
-            if (!player.getUUID().equals(v.owner())) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) continue;
             Faction f = FactionManager.INSTANCE.get(v.faction());
             String of = f == null ? v.faction().getPath() : f.ofName();
             out.add(new Point(v.center(), v.castle() ? Routes.Kind.CASTLE : Routes.Kind.VILLAGE,
@@ -59,7 +59,7 @@ public class MapPointsMessage {
         }
         List<Muster> musters = new ArrayList<>();
         for (com.ale.warbandcraft.invasion.InvasionData.Host h : com.ale.warbandcraft.invasion.InvasionData.get(level).hosts()) {
-            if (h.owner.equals(player.getUUID()) && h.state == com.ale.warbandcraft.invasion.InvasionData.Host.State.CAMPED) {
+            if (com.ale.warbandcraft.faction.Allies.same(h.owner, player.getUUID()) && h.state == com.ale.warbandcraft.invasion.InvasionData.Host.State.CAMPED) {
                 musters.add(new Muster(h.camp, com.ale.warbandcraft.invasion.Hosts.ARMY_RANGE, Component.translatable("gui.warbandcraft.map.muster")));
             }
         }
@@ -85,14 +85,14 @@ public class MapPointsMessage {
         for (com.ale.warbandcraft.invasion.InvasionData.Invasion inv : data.all()) {
             if (inv.state != com.ale.warbandcraft.invasion.InvasionData.State.MARCHING) continue;
             out.add(new Army(inv.from, inv.target, inv.startTick, inv.arriveTick, armyLabel(inv.faction, inv.size),
-                    inv.owner.equals(player.getUUID())));
+                    com.ale.warbandcraft.faction.Allies.same(inv.owner, player.getUUID())));
         }
         for (com.ale.warbandcraft.invasion.InvasionData.March m : data.marches()) {
             out.add(new Army(m.from, m.target, m.startTick, m.arriveTick, armyLabel(m.attacker, m.size),
                     rel.atWar(player.getUUID(), m.attacker)));
         }
         for (com.ale.warbandcraft.invasion.InvasionData.Host h : data.hosts()) {   // H23: la hueste acampada (rombo quieto)
-            if (!h.owner.equals(player.getUUID()) || h.state != com.ale.warbandcraft.invasion.InvasionData.Host.State.CAMPED) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(h.owner, player.getUUID()) || h.state != com.ale.warbandcraft.invasion.InvasionData.Host.State.CAMPED) continue;
             Faction f = FactionManager.INSTANCE.get(h.faction);
             BlockPos tents = com.ale.warbandcraft.invasion.Hosts.tents(h);
             out.add(new Army(tents, tents, h.createdTick, h.deadline,

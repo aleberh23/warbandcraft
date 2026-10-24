@@ -65,12 +65,12 @@ public class BattleOrderMessage {
         List<AbstractRecruitEntity> soldiers = new ArrayList<>();
         if (ids.isEmpty()) {
             soldiers.addAll(level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
-                    r -> r.isAlive() && Objects.equals(r.getOwnerUUID(), player.getUUID()) && r.getListen() && Soldiers.isSoldier(r)));
+                    r -> r.isAlive() && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player.getUUID()) && r.getListen() && Soldiers.isSoldier(r)));
         } else {
             for (UUID id : ids) {
                 Entity e = level.getEntity(id);
                 if (e instanceof AbstractRecruitEntity r && r.isAlive() && r.getListen() && Soldiers.isSoldier(r)
-                        && Objects.equals(r.getOwnerUUID(), player.getUUID())) soldiers.add(r);
+                        && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player.getUUID())) soldiers.add(r);
             }
         }
         if (soldiers.isEmpty()) return Component.translatable("msg.warbandcraft.battle.none").withStyle(ChatFormatting.YELLOW);

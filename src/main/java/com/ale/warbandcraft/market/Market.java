@@ -119,7 +119,7 @@ public final class Market {
         BlockPos camp = VillageCamps.campOf(level, v);
         if (camp == null) return List.of();
         return level.getEntitiesOfClass(MerchantEntity.class, new AABB(v.center()).inflate(VillageCamps.MANAGE_RADIUS, 32, VillageCamps.MANAGE_RADIUS),
-                m -> m.isAlive() && camp.equals(m.getCamp()) && Objects.equals(m.getOwnerUUID(), v.owner()));
+                m -> m.isAlive() && camp.equals(m.getCamp()) && com.ale.warbandcraft.faction.Allies.same(m.getOwnerUUID(), v.owner()));
     }
 
     /** Null si se puede sumar otro mercader; si no, el motivo. */
@@ -137,11 +137,11 @@ public final class Market {
     public static void interact(ServerPlayer player, MerchantEntity merchant) {
         ServerLevel level = player.serverLevel();
         VillageData.Village v = merchant.getCamp() == null ? null : VillageCamps.villageOf(level, merchant.getCamp());
-        if (v == null || !Objects.equals(v.owner(), merchant.getOwnerUUID())) {
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(v.owner(), merchant.getOwnerUUID())) {
             player.sendSystemMessage(Component.translatable("msg.warbandcraft.market.closed").withStyle(ChatFormatting.RED));
             return;
         }
-        if (player.getUUID().equals(v.owner())) {
+        if (com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) {
             OpenMarketMessage.send(player, view(level, v), Component.empty());
             return;
         }
@@ -162,7 +162,7 @@ public final class Market {
     /** Null si {@code buyer} le puede comprar al mercado de la aldea; si no, el motivo. */
     @Nullable
     public static Component buyerProblem(ServerLevel level, VillageData.Village v, ServerPlayer buyer) {
-        if (buyer.getUUID().equals(v.owner())) return Component.translatable("msg.warbandcraft.market.own_faction");
+        if (com.ale.warbandcraft.faction.Allies.same(buyer.getUUID(), v.owner())) return Component.translatable("msg.warbandcraft.market.own_faction");
         String ownerTeam = Territory.factionOf(level, v.owner());
         String buyerTeam = buyer.getTeam() == null ? null : buyer.getTeam().getName();
         if (ownerTeam != null && ownerTeam.equals(buyerTeam) && OWN_FACTION_BUYS == 0) {

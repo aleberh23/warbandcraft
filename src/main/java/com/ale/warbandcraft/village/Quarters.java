@@ -263,7 +263,7 @@ public final class Quarters {
             VillageData.Village v = VillageData.get(level).at(center);
             List<AbstractRecruitEntity> mine = new ArrayList<>();
             for (AbstractRecruitEntity s : e.getValue()) {
-                if (v == null || !Objects.equals(v.owner(), s.getOwnerUUID()) || VillageCamps.campOf(level, v) == null) {
+                if (v == null || !com.ale.warbandcraft.faction.Allies.same(v.owner(), s.getOwnerUUID()) || VillageCamps.campOf(level, v) == null) {
                     leave(s);   // la aldea ya no es tuya: queda quieto donde está, como un soldado común
                     s.setFollowState(HOLD);
                 } else {
@@ -406,7 +406,7 @@ public final class Quarters {
                     && p.tickCount - p.getLastHurtMobTimestamp() < ATTACKER_MEMORY;
         }
         if (e instanceof AbstractRecruitEntity r) {
-            if (Objects.equals(r.getOwnerUUID(), owner)) return false;
+            if (com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner)) return false;
             CompoundTag pd = r.getPersistentData();
             if (pd.contains(com.ale.warbandcraft.invasion.Invasions.TAG_INVADER) || pd.contains(com.ale.warbandcraft.invasion.AiWars.TAG_AI_ATTACK)) return true;
             ResourceLocation f = ResourceLocation.tryParse(pd.getString(VillageManager.TAG_FACTION));
@@ -419,7 +419,7 @@ public final class Quarters {
     private static boolean isOurs(UUID owner, LivingEntity t) {
         if (t instanceof net.minecraft.world.entity.player.Player p) return p.getUUID().equals(owner);
         if (t instanceof net.minecraft.world.entity.npc.AbstractVillager) return true;
-        return t instanceof AbstractRecruitEntity r && Objects.equals(r.getOwnerUUID(), owner);
+        return t instanceof AbstractRecruitEntity r && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner);
     }
 
     /** Hay una invasión peleándose en la aldea: el cuartel queda a tus órdenes. */

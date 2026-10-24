@@ -143,13 +143,13 @@ public class VillageEvents {
         Component of = Component.literal(faction.ofName()).withStyle(faction.color(), ChatFormatting.BOLD);
         String kind = village.castle() ? "castle" : "village";
         if (village.isConquered()) {
-            Component msg = player.getUUID().equals(village.owner())
+            Component msg = com.ale.warbandcraft.faction.Allies.same(player.getUUID(), village.owner())
                     ? Component.translatable("msg.warbandcraft.enter_own_" + kind, VillageEconomy.taxOf(level, village)).withStyle(ChatFormatting.AQUA)
                     : Component.translatable("msg.warbandcraft.enter_other_" + kind, ownerName(level, village)).withStyle(ChatFormatting.GRAY);
             player.displayClientMessage(msg, true);
             // H10: si su almacén tiene algo, botón para retirarlo
             VillageStock.Stock stock = VillageStock.total(level, village);
-            if (player.getUUID().equals(village.owner()) && !stock.isEmpty()) {
+            if (com.ale.warbandcraft.faction.Allies.same(player.getUUID(), village.owner()) && !stock.isEmpty()) {
                 player.sendSystemMessage(Component.translatable("msg.warbandcraft.stock.waiting", stock.describe(),
                                 VillageStock.where(level, village))
                         .withStyle(ChatFormatting.AQUA).append(" ").append(VillageStock.withdrawButton()));
@@ -177,7 +177,7 @@ public class VillageEvents {
         }
         Long shown = hudShown.put(player.getUUID(), v.center().asLong());
         if (shown != null && shown == v.center().asLong() && player.tickCount % HUD_EVERY_TICKS != 0) return;
-        Component owner = v.isConquered() && !player.getUUID().equals(v.owner()) ? Component.literal(ownerName(level, v)) : Component.empty();
+        Component owner = v.isConquered() && !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner()) ? Component.literal(ownerName(level, v)) : Component.empty();
         ModNetworking.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new VillageHudMessage(VillageHud.info(player, v, owner)));
     }
 

@@ -98,7 +98,7 @@ public final class Tavern {
         BlockPos camp = VillageCamps.campOf(level, v);
         if (camp == null) return false;
         return !level.getEntitiesOfClass(InnkeeperEntity.class, new AABB(v.center()).inflate(VillageCamps.MANAGE_RADIUS, 32, VillageCamps.MANAGE_RADIUS),
-                k -> k.isAlive() && camp.equals(k.getCamp()) && Objects.equals(k.getOwnerUUID(), v.owner())).isEmpty();
+                k -> k.isAlive() && camp.equals(k.getCamp()) && com.ale.warbandcraft.faction.Allies.same(k.getOwnerUUID(), v.owner())).isEmpty();
     }
 
     // ------------------------------------------------------------------ cada día
@@ -475,7 +475,7 @@ public final class Tavern {
         BlockPos center = BlockPos.of(r.getPersistentData().getLong(TAG));
         VillageData.Village v = VillageData.get(level).at(center);
         TownData.Town t = TownData.get(level).at(center);
-        if (v == null || t == null || !player.getUUID().equals(v.owner())) {
+        if (v == null || t == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) {
             return Component.translatable("msg.warbandcraft.tavern.not_yours").withStyle(ChatFormatting.RED);
         }
         int lvl = r.getPersistentData().getInt(TAG_LEVEL);

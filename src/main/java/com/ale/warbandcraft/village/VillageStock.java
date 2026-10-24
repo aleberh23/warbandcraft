@@ -185,7 +185,7 @@ public final class VillageStock {
     public static VillageData.Village ownedNear(ServerLevel level, UUID owner, BlockPos pos) {
         for (VillageData.Village v : VillageData.get(level).byDistance(pos)) {
             if (VillageData.horizontalDistSq(v.center(), pos) > (double) WITHDRAW_RADIUS * WITHDRAW_RADIUS) return null;
-            if (owner.equals(v.owner())) return v;
+            if (com.ale.warbandcraft.faction.Allies.same(owner, v.owner())) return v;
         }
         return null;
     }
@@ -222,7 +222,7 @@ public final class VillageStock {
     public static Component send(ServerLevel level, UUID owner, BlockPos from, BlockPos to) {
         VillageData data = VillageData.get(level);
         VillageData.Village v = data.at(from);
-        if (v == null || !owner.equals(v.owner())) return Component.translatable("msg.warbandcraft.stock.not_yours");
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(owner, v.owner())) return Component.translatable("msg.warbandcraft.stock.not_yours");
         if (!CampRegistry.get(level).isCampOf(owner, to)) return Component.translatable("msg.warbandcraft.stock.only_camps");
         Routes.Destination dest = Routes.destination(level, owner, from, to);
         if (dest == null) return Component.translatable("msg.warbandcraft.shipments.no_route");

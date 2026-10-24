@@ -255,7 +255,7 @@ public final class Escort {
 
     private static boolean isOurs(UUID owner, LivingEntity t) {
         if (t instanceof Player p) return p.getUUID().equals(owner);
-        return t instanceof AbstractRecruitEntity r && Objects.equals(r.getOwnerUUID(), owner);
+        return t instanceof AbstractRecruitEntity r && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner);
     }
 
     private static boolean ignored(AbstractRecruitEntity r, LivingEntity e, long now) {

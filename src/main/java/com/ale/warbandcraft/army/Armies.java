@@ -119,7 +119,7 @@ public final class Armies {
     public static ArmyData.Army mine(ServerLevel level, UUID owner, @Nullable UUID id) {
         if (id == null) return null;
         ArmyData.Army a = ArmyData.get(level).get(id);
-        return a != null && a.owner.equals(owner) ? a : null;
+        return a != null && com.ale.warbandcraft.faction.Allies.same(a.owner, owner) ? a : null;
     }
 
     public static Component rename(ServerLevel level, ArmyData.Army a, String name) {
@@ -763,7 +763,7 @@ public final class Armies {
         return level.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(reach, 24, reach),
                 e -> e.isAlive() && !Surrender.is(e) && !(e instanceof net.minecraft.world.entity.monster.Creeper)
                         && (a.foes.contains(e.getUUID()) || e.getPersistentData().getBoolean(Ambush.TAG_FIELD)
-                        && !(e instanceof AbstractRecruitEntity r && Objects.equals(r.getOwnerUUID(), a.owner))
+                        && !(e instanceof AbstractRecruitEntity r && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), a.owner))
                         || Quarters.isEnemy(level, a.owner, e) || com.ale.warbandcraft.invasion.AiWars.isFoe(level, a.owner, e)));
     }
 

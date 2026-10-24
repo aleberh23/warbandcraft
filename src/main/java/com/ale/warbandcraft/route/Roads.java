@@ -61,7 +61,7 @@ public final class Roads {
         ServerLevel level = player.serverLevel();
         RouteData data = RouteData.get(level);
         RouteData.Route r = data.route(id);
-        if (r == null || !r.owner().equals(player.getUUID())) return error("msg.warbandcraft.road.not_yours");
+        if (r == null || !com.ale.warbandcraft.faction.Allies.same(r.owner(), player.getUUID())) return error("msg.warbandcraft.road.not_yours");
         if (from != null && !touches(level, r, from)) return error("msg.warbandcraft.road.not_here");
         if (r.road()) return error("msg.warbandcraft.road.done");
         if (data.roadJob(id) != null) return error("msg.warbandcraft.road.busy");

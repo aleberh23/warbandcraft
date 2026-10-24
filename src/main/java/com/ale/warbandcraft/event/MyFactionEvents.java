@@ -94,7 +94,7 @@ public class MyFactionEvents {
         Doctrine d = doctrine(server, player);
         for (ServerLevel level : server.getAllLevels()) {
             for (AbstractRecruitEntity soldier : level.getEntities(EntityTypeTest.forClass(AbstractRecruitEntity.class),
-                    r -> Objects.equals(r.getOwnerUUID(), player) && Soldiers.isSoldier(r))) {
+                    r -> com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player) && Soldiers.isSoldier(r))) {
                 Doctrine.apply(soldier, d);
             }
             for (AbstractHorse horse : level.getEntities(EntityTypeTest.forClass(AbstractHorse.class),

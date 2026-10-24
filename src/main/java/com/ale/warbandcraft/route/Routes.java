@@ -70,7 +70,7 @@ public final class Routes {
             if (VillageCamps.villageOf(level, p) == null) out.add(new Node(p, Kind.CAMP, camps.displayName(p)));   // H16: el de una aldea es la aldea
         }
         for (VillageData.Village v : VillageData.get(level).all()) {
-            if (owner.equals(v.owner())) out.add(villageNode(level, v));
+            if (com.ale.warbandcraft.faction.Allies.same(owner, v.owner())) out.add(villageNode(level, v));
         }
         return out;
     }
@@ -87,18 +87,18 @@ public final class Routes {
     @Nullable
     public static Node node(ServerLevel level, UUID owner, BlockPos pos) {
         VillageData.Village vc = VillageCamps.villageOf(level, pos);   // H16
-        if (vc != null) return owner.equals(vc.owner()) ? villageNode(level, vc) : null;
+        if (vc != null) return com.ale.warbandcraft.faction.Allies.same(owner, vc.owner()) ? villageNode(level, vc) : null;
         CampRegistry camps = CampRegistry.get(level);
         if (camps.isCampOf(owner, pos)) return new Node(pos, Kind.CAMP, camps.displayName(pos));
         VillageData.Village v = VillageData.get(level).at(pos);
-        return v != null && owner.equals(v.owner()) ? villageNode(level, v) : null;
+        return v != null && com.ale.warbandcraft.faction.Allies.same(owner, v.owner()) ? villageNode(level, v) : null;
     }
 
     /** El punto tuyo más cercano a {@code pos} a ≤ {@link #ENDPOINT_RADIUS} bloques (en horizontal), o null. */
     @Nullable
     public static Node nodeNear(ServerLevel level, UUID owner, BlockPos pos) {
         VillageData.Village vc = VillageCamps.villageOf(level, pos);   // H16: desde el Campamento de una aldea, la aldea
-        if (vc != null && owner.equals(vc.owner())) return villageNode(level, vc);
+        if (vc != null && com.ale.warbandcraft.faction.Allies.same(owner, vc.owner())) return villageNode(level, vc);
         Node best = null;
         double bestSq = (double) ENDPOINT_RADIUS * ENDPOINT_RADIUS;
         for (Node n : nodes(level, owner)) {

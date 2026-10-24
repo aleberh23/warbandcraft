@@ -58,7 +58,7 @@ public final class Placement {
         if (v.owner() != null) {   // las zonas de trabajo (huerta, mina, corral...) no se pisan
             net.minecraft.world.phys.AABB foot = new net.minecraft.world.phys.AABB(x0, level.getMinBuildHeight(), z0, x1 + 1, level.getMaxBuildHeight(), z1 + 1);
             boolean zone = !level.getEntitiesOfClass(com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity.class, foot.inflate(WorkZones.MAX_SIDE),
-                    a -> a.isAlive() && v.owner().equals(a.getPlayerUUID()) && a.getArea() != null
+                    a -> a.isAlive() && com.ale.warbandcraft.faction.Allies.same(v.owner(), a.getPlayerUUID()) && a.getArea() != null
                             && !(a instanceof com.talhanation.workers.entities.workarea.HomeArea) && a.getArea().intersects(foot)).isEmpty();
             if (zone) return Spot.no("Pisa una zona de trabajo");
         }

@@ -418,7 +418,7 @@ public final class Assault {
     private static List<LivingEntity> defenders(ServerLevel level, InvasionData.Invasion inv, Breach.Walls w) {
         double r = w.radius() + 64;
         List<LivingEntity> out = new ArrayList<>(level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(inv.target).inflate(r, 48, r),
-                e -> e.isAlive() && Objects.equals(e.getOwnerUUID(), inv.owner) && Soldiers.isSoldier(e) && !Surrender.is(e)));
+                e -> e.isAlive() && com.ale.warbandcraft.faction.Allies.same(e.getOwnerUUID(), inv.owner) && Soldiers.isSoldier(e) && !Surrender.is(e)));
         ServerPlayer p = level.getServer().getPlayerList().getPlayer(inv.owner);
         if (p != null && p.level() == level && p.isAlive() && !p.isSpectator() && !p.isCreative()
                 && VillageData.horizontalDistSq(p.blockPosition(), inv.target) <= r * r) out.add(p);

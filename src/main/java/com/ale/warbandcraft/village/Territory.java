@@ -78,7 +78,7 @@ public class Territory extends SavedData {
         BlockPos center = get(level).centerAt(new ChunkPos(pos));
         if (center == null) return null;
         VillageData.Village v = VillageData.get(level).at(center);
-        return v != null && owner.equals(v.owner()) ? v : null;
+        return v != null && com.ale.warbandcraft.faction.Allies.same(owner, v.owner()) ? v : null;
     }
 
     // ------------------------------------------------------------------ crear, agrandar, sacar

@@ -117,7 +117,7 @@ public final class Panel {
         UUID owner = player.getUUID();
         List<VillageInfo> out = new ArrayList<>();
         for (VillageData.Village v : VillageData.get(level).byDistance(player.blockPosition())) {
-            if (!owner.equals(v.owner())) continue;
+            if (!com.ale.warbandcraft.faction.Allies.same(owner, v.owner())) continue;
             Routes.Node node = Routes.node(level, owner, v.center());
             Routes.Destination to = nearestCamp(level, owner, v.center());
             TownData.Town town = Upgrades.town(level, v.center());
@@ -200,7 +200,7 @@ public final class Panel {
     public static VillageDetail villageDetail(ServerPlayer player, BlockPos center) {
         ServerLevel level = player.serverLevel();
         VillageData.Village v = VillageData.get(level).at(center);
-        if (v == null || !player.getUUID().equals(v.owner())) return null;
+        if (v == null || !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) return null;
         TownData.Town t = Upgrades.town(level, center);
         List<UpgradeRow> rows = new ArrayList<>();
         UpgradeRow repair = repairRow(level, v, t);
@@ -335,7 +335,7 @@ public final class Panel {
         if (level.isPositionEntityTicking(center)) {
             AABB box = new AABB(center).inflate(GUARD_RADIUS, 32, GUARD_RADIUS);
             for (AbstractRecruitEntity e : level.getEntitiesOfClass(AbstractRecruitEntity.class, box,
-                    e -> e.isAlive() && Objects.equals(e.getOwnerUUID(), owner) && Soldiers.isSoldier(e))) {
+                    e -> e.isAlive() && com.ale.warbandcraft.faction.Allies.same(e.getOwnerUUID(), owner) && Soldiers.isSoldier(e))) {
                 if (Barracks.isGuard(e) && horizontalDistSq(e.getHoldPos(), center) <= r2) n++;
             }
         }
@@ -368,7 +368,7 @@ public final class Panel {
     public static Component deploy(ServerPlayer player, BlockPos camp, String row, int amount) {
         Component error = checkNear(player, camp);
         if (error != null) return error;
-        int n = Barracks.deploy(player.serverLevel(), camp, row, Math.max(1, amount));
+        int n = Barracks.deploy(player.serverLevel(), camp, row, Math.max(1, amount), player.getUUID());
         return Component.translatable("msg.warbandcraft.barracks.deployed", n).withStyle(ChatFormatting.GREEN);
     }
 
@@ -420,7 +420,7 @@ public final class Panel {
         BlockPos camp = pos;
         if (village) {
             VillageData.Village v = VillageData.get(level).at(pos);
-            if (v == null || !owner.equals(v.owner())) {
+            if (v == null || !com.ale.warbandcraft.faction.Allies.same(owner, v.owner())) {
                 return Component.translatable("msg.warbandcraft.panel.village_not_yours").withStyle(ChatFormatting.RED);
             }
             camp = com.ale.warbandcraft.village.VillageCamps.campOf(level, v);

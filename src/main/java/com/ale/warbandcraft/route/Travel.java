@@ -196,7 +196,7 @@ public final class Travel {
         ServerLevel level = player.serverLevel();
         List<AbstractRecruitEntity> escort = level.getEntitiesOfClass(AbstractRecruitEntity.class,
                 new AABB(player.blockPosition()).inflate(ESCORT_RADIUS),
-                r -> r.isAlive() && Objects.equals(r.getOwnerUUID(), player.getUUID()) && Barracks.isWithOwner(r));
+                r -> r.isAlive() && com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), player.getUUID()) && Barracks.isWithOwner(r));
 
         level.getChunk(to);   // fuerza que el destino exista y esté cargado
         Vec3 spot = Barracks.standable(level, to, null, to);

@@ -43,7 +43,7 @@ public class AerialCampsMessage {
         }
         List<BlockPos> villages = new ArrayList<>();
         for (com.ale.warbandcraft.village.VillageData.Village v : com.ale.warbandcraft.village.VillageData.get(level).all()) {
-            if (player.getUUID().equals(v.owner())) villages.add(v.center());
+            if (com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) villages.add(v.center());
         }
         return new AerialCampsMessage(out, villages);
     }
