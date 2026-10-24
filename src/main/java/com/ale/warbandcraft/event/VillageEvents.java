@@ -256,5 +256,6 @@ public class VillageEvents {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         WarbandCommand.register(event.getDispatcher());
+        com.ale.warbandcraft.command.SpawnCommand.register(event.getDispatcher());   // /spawn: volver al salón del tutorial
     }
 }

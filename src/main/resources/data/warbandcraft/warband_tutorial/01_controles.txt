@@ -61,4 +61,5 @@ Rueda (arrastrando terreno): subir o bajar la altura.
 /warband barracon
 /warband rutas
 /warband tutorial
+/spawn (volver a este salón)
 /camara (si la cámara de la vista aérea queda trabada)

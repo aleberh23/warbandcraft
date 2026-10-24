@@ -12,6 +12,8 @@ Podés llevarte cualquier libro: al rato vuelve a aparecer en su atril.
 Acá adentro y en los alrededores (5x5 chunks) no se puede romper ni construir. Salí del salón para empezar tu partida.
 
 Si te morís sin cama, volvés a aparecer acá.
+
+Para volver a leer algo: /spawn te trae de vuelta desde donde estés.
 ---
 ## Primeros pasos
 1. Conseguí madera, un cofre y una mesa de herrería y fabricá un Campamento (libro 2). Ponelo donde quieras tu base.
