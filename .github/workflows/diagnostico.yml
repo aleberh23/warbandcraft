@@ -39,7 +39,7 @@ jobs:
                    get /mods/warbandcraft-1.0.0.jar -o srv/warbandcraft-1.0.0.jar ;
                    get /logs/latest.log -o srv/latest.log;
                    get /server.properties -o srv/server.properties" || true
-          LEVEL=$(grep -E '^level-name=' srv/server.properties | cut -d= -f2- | tr -d '')
+          LEVEL=$(grep -E '^level-name=' srv/server.properties | cut -d= -f2- | tr -d '\r')
           echo "mundo: ${LEVEL:-world}"
           lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30;
                    open --env-password -u $SFTP_USER -p $SFTP_PORT sftp://$SFTP_HOST;
