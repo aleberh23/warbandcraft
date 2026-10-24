@@ -46,11 +46,17 @@ jobs:
         run: |
           ls -la build/libs
           JAR=$(ls build/libs/warbandcraft-*.jar | grep -v -e sources -e slim | head -n1)
-          gh release delete ultima --yes --cleanup-tag || true
           python3 tools/make_pack.py
-          cp dist/WarbandCraft-*-juego.zip WarbandCraft-juego.zip
-          cp dist/WarbandCraft-*-prism.zip WarbandCraft-Prism.zip
-          gh release create ultima "$JAR" WarbandCraft-juego.zip WarbandCraft-Prism.zip --prerelease --target "$GITHUB_SHA" \
+          EXTRA=""
+          for kind in juego prism; do
+            f=$(ls dist/WarbandCraft-*-$kind.zip 2>/dev/null | head -n1)
+            if [ -n "$f" ]; then
+              [ "$kind" = prism ] && dest=WarbandCraft-Prism.zip || dest=WarbandCraft-juego.zip
+              cp "$f" "$dest"; EXTRA="$EXTRA $dest"
+            fi
+          done
+          gh release delete ultima --yes --cleanup-tag || true
+          gh release create ultima "$JAR" $EXTRA --prerelease --target "$GITHUB_SHA" \
             --title "Última compilación" \
             --notes "Compilado automáticamente desde ${GITHUB_SHA::7}: $(git log -1 --pretty=%s)"
 
