@@ -146,6 +146,11 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
         return owner == null || owner.equals(player);
     }
 
+    /** Pedido de Ale: además del dueño, los de su facción de Recruits pueden sacar y guardar soldados del barracón. */
+    public boolean barracksUsableBy(UUID player) {
+        return canBeUsedBy(player) || level instanceof ServerLevel server && com.ale.warbandcraft.faction.Allies.same(server, owner, player);
+    }
+
     // ---------- Cofres vinculados ----------
 
     /**
@@ -342,7 +347,8 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
 
     @Override
     protected AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        return new CampMenu(id, inventory, this, worldPosition, canBeUsedBy(inventory.player.getUUID()), village != null, new CampStats(this));
+        return new CampMenu(id, inventory, this, worldPosition, canBeUsedBy(inventory.player.getUUID()),
+                barracksUsableBy(inventory.player.getUUID()), village != null, new CampStats(this));
     }
 
     @Override

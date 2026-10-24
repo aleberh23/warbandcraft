@@ -61,13 +61,14 @@ public class BarracksScreen extends Screen {
     protected void init() {
         left = (width - W) / 2;
         top = (height - H) / 2;
-        for (Button b : CampTabButtons.create(state.camp, CampTabs.BARRACKS, left, top)) addRenderableWidget(b);
+        for (Button b : CampTabButtons.create(state.camp, CampTabs.BARRACKS, left, top, state.owner)) addRenderableWidget(b);
 
         nameBox = new EditBox(font, left + 8, top + 6, 190, 14, Component.translatable("gui.warbandcraft.barracks.name"));
         nameBox.setMaxLength(CampBlockEntity.MAX_NAME_LENGTH);
         nameBox.setValue(typedName != null ? typedName : state.name);
+        nameBox.setEditable(state.owner);   // compañero de facción: no lo renombra
         addRenderableWidget(nameBox);
-        addRenderableWidget(Button.builder(Component.translatable("gui.warbandcraft.barracks.rename"), b -> rename())
+        if (state.owner) addRenderableWidget(Button.builder(Component.translatable("gui.warbandcraft.barracks.rename"), b -> rename())
                 .bounds(left + 202, top + 6, 90, 14).build());
 
         Button store = Button.builder(Component.translatable("gui.warbandcraft.barracks.store_near", state.nearby),
@@ -82,12 +83,12 @@ public class BarracksScreen extends Screen {
         addRenderableWidget(guards);
 
         // H20: ejércitos de campaña (arriba, entre la cuenta y los presos)
-        addRenderableWidget(Button.builder(Component.translatable("gui.warbandcraft.panel.tab.armies"),
+        if (state.owner) addRenderableWidget(Button.builder(Component.translatable("gui.warbandcraft.panel.tab.armies"),
                         b -> com.ale.warbandcraft.network.ModNetworking.CHANNEL.sendToServer(com.ale.warbandcraft.network.ArmyActionMessage.open()))
                 .bounds(left + 115, top + 23, 70, 13).build());
 
         // H19: campo de entrenamiento de un Campamento común (abajo a la derecha)
-        if (state.trainingCost >= 0 || state.trainingOrdered > 0) {
+        if (state.owner && (state.trainingCost >= 0 || state.trainingOrdered > 0)) {
             boolean waiting = state.trainingOrdered > state.training;
             Component label = state.trainingCost < 0
                     ? Component.translatable("gui.warbandcraft.barracks.training_max", state.training)
@@ -106,6 +107,7 @@ public class BarracksScreen extends Screen {
             int y = top + ROWS_TOP + i * ROW;
             OpenBarracksMessage.PrisonerRow prisoner = prisonerAt(scroll + i);
             if (prisoner != null) {
+                if (!state.owner) continue;   // presos: solo el dueño
                 Button recruit = Button.builder(Component.translatable("gui.warbandcraft.barracks.prisoner_recruit"),
                                 b -> send(BarracksActionMessage.Action.RECRUIT_PRISONER, prisoner.key(), 1))
                         .bounds(left + W - 140, y, 60, 14).build();

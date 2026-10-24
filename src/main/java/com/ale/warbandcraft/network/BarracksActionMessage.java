@@ -45,8 +45,11 @@ public class BarracksActionMessage {
         ServerPlayer player = ctx.get().getSender();
         ctx.get().enqueueWork(() -> {
             if (player == null) return;
-            CampBlockEntity camp = CampTabs.access(player, msg.camp, true);
+            // Sacar y guardar: también un compañero de facción del dueño. Lo demás, solo el dueño.
+            CampBlockEntity camp = CampTabs.accessBarracks(player, msg.camp);
             if (camp == null) return;
+            boolean shared = msg.action == Action.STORE_NEAR || msg.action == Action.DEPLOY || msg.action == Action.DEPLOY_GUARDS;
+            if (!shared && !camp.canBeUsedBy(player.getUUID())) return;
             Component result = switch (msg.action) {
                 case STORE_NEAR -> {
                     int n = Barracks.storeNear(player.serverLevel(), msg.camp, player.getUUID());
@@ -54,11 +57,11 @@ public class BarracksActionMessage {
                             .withStyle(n > 0 ? ChatFormatting.GREEN : ChatFormatting.YELLOW);
                 }
                 case DEPLOY -> {
-                    int n = Barracks.deploy(player.serverLevel(), msg.camp, msg.row, Math.max(1, msg.amount));
+                    int n = Barracks.deploy(player.serverLevel(), msg.camp, msg.row, Math.max(1, msg.amount), player.getUUID());
                     yield Component.translatable("msg.warbandcraft.barracks.deployed", n).withStyle(ChatFormatting.GREEN);
                 }
                 case DEPLOY_GUARDS -> {
-                    int n = Barracks.deployGuards(player.serverLevel(), msg.camp);
+                    int n = Barracks.deployGuards(player.serverLevel(), msg.camp, player.getUUID());
                     yield Component.translatable("msg.warbandcraft.barracks.guards_out", n).withStyle(ChatFormatting.GREEN);
                 }
                 case RECRUIT_PRISONER -> switch (Prisoners.recruit(player.serverLevel(), msg.camp, msg.row, player.getUUID())) {

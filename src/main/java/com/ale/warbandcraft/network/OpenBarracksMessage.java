@@ -48,6 +48,8 @@ public class OpenBarracksMessage {
     public final int prisonerCount;
     /** H19: campo de entrenamiento: nivel que vale hoy, nivel encargado y costo del próximo (-1 = no se mejora desde acá). */
     public int training, trainingOrdered, trainingCost = -1;
+    /** Lo abrió el dueño (false = un compañero de facción: solo sacar y guardar). */
+    public boolean owner = true;
 
     public OpenBarracksMessage(BlockPos camp, String name, int count, int capacity, int nearby, int guards,
                                int foodDays, int hungryDays, List<Row> rows, List<PrisonerRow> prisoners, int prisonerCount) {
@@ -71,7 +73,8 @@ public class OpenBarracksMessage {
         int nearby = Barracks.storableNear(player.serverLevel(), pos, player.getUUID()).size();
         OpenBarracksMessage msg = new OpenBarracksMessage(pos, camp.nameString(), soldiers.size(), Barracks.capacity(player.serverLevel(), pos), nearby,
                 b == null ? 0 : b.guards(), Barracks.foodDays(camp, b), b == null ? 0 : b.hungryDays,
-                rows(player.getServer(), player.getUUID(), b), prisonerRows(b), b == null ? 0 : b.prisoners.size());
+                rows(player.getServer(), camp.getOwner() != null ? camp.getOwner() : player.getUUID(), b), prisonerRows(b), b == null ? 0 : b.prisoners.size());
+        msg.owner = camp.canBeUsedBy(player.getUUID());
         msg.training = com.ale.warbandcraft.camp.Training.level(player.serverLevel(), pos);
         boolean village = com.ale.warbandcraft.village.VillageCamps.villageOf(player.serverLevel(), pos) != null;
         msg.trainingOrdered = village ? msg.training : com.ale.warbandcraft.camp.Training.ordered(player.serverLevel(), pos);
@@ -169,6 +172,7 @@ public class OpenBarracksMessage {
         buf.writeVarInt(msg.training);
         buf.writeVarInt(msg.trainingOrdered);
         buf.writeVarInt(msg.trainingCost + 1);
+        buf.writeBoolean(msg.owner);
     }
 
     public static OpenBarracksMessage decode(FriendlyByteBuf buf) {
@@ -183,6 +187,7 @@ public class OpenBarracksMessage {
         msg.training = buf.readVarInt();
         msg.trainingOrdered = buf.readVarInt();
         msg.trainingCost = buf.readVarInt() - 1;
+        msg.owner = buf.readBoolean();
         return msg;
     }
 

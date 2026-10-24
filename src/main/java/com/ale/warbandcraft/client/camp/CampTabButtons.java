@@ -21,12 +21,19 @@ public final class CampTabButtons {
     private CampTabButtons() {}
 
     public static List<Button> create(BlockPos camp, int active, int panelLeft, int panelTop) {
+        return create(camp, active, panelLeft, panelTop, true);
+    }
+
+    /** {@code owner} false = compañero de facción: solo Cofre y Barracón. */
+    public static List<Button> create(BlockPos camp, int active, int panelLeft, int panelTop, boolean owner) {
         List<Button> out = new ArrayList<>();
+        int row = 0;
         for (int i = 0; i < KEYS.length; i++) {
+            if (!owner && i != com.ale.warbandcraft.camp.CampTabs.CHEST && i != com.ale.warbandcraft.camp.CampTabs.BARRACKS) continue;
             int tab = i;
             Button b = Button.builder(Component.translatable(KEYS[i]),
                             x -> ModNetworking.CHANNEL.sendToServer(new CampTabMessage(camp, tab)))
-                    .bounds(Math.max(2, panelLeft - WIDTH - 4), panelTop + 4 + i * 24, WIDTH, 20).build();
+                    .bounds(Math.max(2, panelLeft - WIDTH - 4), panelTop + 4 + row++ * 24, WIDTH, 20).build();
             b.active = i != active;
             out.add(b);
         }

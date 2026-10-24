@@ -215,6 +215,11 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   cargarse el Campamento. 2º día sin comer: se va el 10% (mín. 1), menor nivel primero. Constantes en `BarracksData`.
 - Automático: dueño a >96 bloques de un soldado que no lo sigue ni pelea → se guarda. Guardias vuelven a su puesto
   con el dueño a <80 del puesto. `BarracksEvents` no corre en `GameTestServer`: las pruebas llaman a `Barracks` a mano.
+- Compañeros de facción (pedido de Ale, a probar): mismo equipo de Recruits que el dueño (`faction/Allies.same`, por
+  `Territory.factionOf`) → `CampBlockEntity.barracksUsableBy`: pestaña Barracón (solo Cofre + Barracón; sin renombrar,
+  entrenamiento, presos ni ejércitos). Sacar = el soldado pasa a ser del que lo saca (`Barracks.deploy(..., to)` / `handTo`);
+  guardar = sus soldados al barracón del dueño (`store` usa el dueño del Campamento). `campOf` acepta el Campamento de un
+  compañero. Envíos, rutas y Panel siguen siendo solo del dueño.
 - Jurisdicción = `CampBlockEntity.WORK_RADIUS` (24): armar, vincular cofres y "Guardar a los de cerca" usan ese radio.
 - Vista aérea: `AerialCampsMessage` (lista de tus Campamentos, se pide al entrar y al abrir la lista) dibuja nombre +
   barracón sobre cada uno; click izquierdo en uno = seleccionado, se dibuja su jurisdicción. Click derecho en uno con

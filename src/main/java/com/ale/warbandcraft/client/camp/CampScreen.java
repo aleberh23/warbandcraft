@@ -30,6 +30,10 @@ public class CampScreen extends ContainerScreen {
     @Override
     protected void init() {
         super.init();
+        if (menu instanceof CampMenu camp && !camp.isOwner() && camp.isAlly()) {
+            // Compañero de facción del dueño: solo el Barracón
+            for (Button b : CampTabButtons.create(camp.campPos(), CampTabs.CHEST, leftPos, topPos, false)) addRenderableWidget(b);
+        }
         if (menu instanceof CampMenu camp && camp.isOwner()) {
             for (Button b : CampTabButtons.create(camp.campPos(), CampTabs.CHEST, leftPos, topPos)) addRenderableWidget(b);
             Button zone = Button.builder(Component.translatable("gui.warbandcraft.camp.worker_zone"),

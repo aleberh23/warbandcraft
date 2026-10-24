@@ -100,6 +100,8 @@ public final class Barracks {
         if (data.contains(TAG_CAMP)) {
             BlockPos pos = BlockPos.of(data.getLong(TAG_CAMP));
             if (registry.isCampOf(owner, pos)) return pos;
+            // Pedido de Ale: guardado en el barracón de un compañero de facción, sigue siendo de ese barracón
+            if (com.ale.warbandcraft.faction.Allies.same(level, owner, registry.ownerOf(pos))) return pos;
         }
         BlockPos nearest = registry.nearestCamp(owner, soldier.blockPosition());
         if (nearest != null) attach(soldier, nearest);
@@ -166,7 +168,8 @@ public final class Barracks {
         BarracksData.Soldier sheet = new BarracksData.Soldier(tag, horseTag, guard, post, soldier.getYRot(), follow,
                 soldier.getName().getString(), kit, pd.getInt(ClassAssigner.TAG_TIER), soldier.getXpLevel());
 
-        BarracksData.Barracks b = data.getOrCreate(camp, owner);
+        UUID campOwner = level.getBlockEntity(camp) instanceof CampBlockEntity c && c.getOwner() != null ? c.getOwner() : owner;
+        BarracksData.Barracks b = data.getOrCreate(camp, campOwner);
         if (b.eaters() == 0) {   // barracón vacío: empieza a comer mañana
             b.lastFedDay = today(level);
             b.hungryDays = 0;
@@ -214,6 +217,11 @@ public final class Barracks {
      * tienen puesto. Devuelve cuántos salieron.
      */
     public static int deploy(ServerLevel level, BlockPos camp, @Nullable String rowKey, int amount) {
+        return deploy(level, camp, rowKey, amount, null);
+    }
+
+    /** Lo mismo, y los que salen pasan a ser de {@code to} (un compañero de facción que los saca; null = no cambia). */
+    public static int deploy(ServerLevel level, BlockPos camp, @Nullable String rowKey, int amount, @Nullable UUID to) {
         BarracksData.Barracks b = BarracksData.get(level).at(camp);
         if (b == null) return 0;
         List<BarracksData.Soldier> pick = new ArrayList<>();
@@ -224,19 +232,47 @@ public final class Barracks {
             }
         }
         int out = 0;
-        for (BarracksData.Soldier s : pick) if (spawn(level, camp, b, s, Where.MANUAL) != null) out++;
+        for (BarracksData.Soldier s : pick) {
+            AbstractRecruitEntity soldier = spawn(level, camp, b, s, Where.MANUAL);
+            if (soldier == null) continue;
+            handTo(level, soldier, to);
+            out++;
+        }
         return out;
     }
 
     /** "Guardias a sus puestos": saca a todos los que tienen puesto. */
     public static int deployGuards(ServerLevel level, BlockPos camp) {
+        return deployGuards(level, camp, null);
+    }
+
+    public static int deployGuards(ServerLevel level, BlockPos camp, @Nullable UUID to) {
         BarracksData.Barracks b = BarracksData.get(level).at(camp);
         if (b == null) return 0;
         int out = 0;
         for (BarracksData.Soldier s : new ArrayList<>(b.soldiers)) {
-            if (s.guard && spawn(level, camp, b, s, Where.MANUAL) != null) out++;
+            if (!s.guard) continue;
+            AbstractRecruitEntity soldier = spawn(level, camp, b, s, Where.MANUAL);
+            if (soldier == null) continue;
+            handTo(level, soldier, to);
+            out++;
         }
         return out;
+    }
+
+    /** El soldado pasa a ser de {@code to} (compañero de facción que lo sacó del barracón). */
+    private static void handTo(ServerLevel level, AbstractRecruitEntity soldier, @Nullable UUID to) {
+        UUID before = soldier.getOwnerUUID();
+        if (to == null || to.equals(before)) return;
+        soldier.setOwnerUUID(java.util.Optional.of(to));
+        soldier.setIsOwned(true);
+        try {
+            soldier.updateTeam();
+        } catch (Exception e) {
+            WarbandCraft.LOGGER.warn("No se pudo actualizar el equipo de Recruits de {}: {}", soldier.getName().getString(), e.toString());
+        }
+        if (before != null) recount(level, before);
+        recount(level, to);
     }
 
     /**

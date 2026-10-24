@@ -17,15 +17,18 @@ import net.minecraft.world.inventory.SimpleContainerData;
 public class CampMenu extends ChestMenu {
     private final BlockPos campPos;
     private final boolean owner;
+    /** Dueño o compañero de facción: ve la pestaña Barracón. */
+    private final boolean ally;
     /** El Campamento ya es el de una aldea (no muestra "Fundar aldea"). */
     private final boolean village;
     /** H10: totales del almacén ({@link CampStats}), se actualizan solos. */
     private final ContainerData stats;
 
-    public CampMenu(int id, Inventory inventory, Container container, BlockPos campPos, boolean owner, boolean village, ContainerData stats) {
+    public CampMenu(int id, Inventory inventory, Container container, BlockPos campPos, boolean owner, boolean ally, boolean village, ContainerData stats) {
         super(ModMenus.CAMP.get(), id, inventory, container, 6);
         this.campPos = campPos;
         this.owner = owner;
+        this.ally = ally;
         this.village = village;
         this.stats = stats;
         addDataSlots(stats);
@@ -33,7 +36,7 @@ public class CampMenu extends ChestMenu {
 
     public static CampMenu fromNetwork(int id, Inventory inventory, FriendlyByteBuf buf) {
         return new CampMenu(id, inventory, new SimpleContainer(CampBlockEntity.SIZE), buf.readBlockPos(), buf.readBoolean(),
-                buf.readBoolean(), new SimpleContainerData(CampStats.SIZE));
+                buf.readBoolean(), buf.readBoolean(), new SimpleContainerData(CampStats.SIZE));
     }
 
     /** Un total del almacén (índices de {@link CampStats}). */
@@ -48,6 +51,10 @@ public class CampMenu extends ChestMenu {
     /** Solo el dueño ve las pestañas Doctrinas y Kits. */
     public boolean isOwner() {
         return owner;
+    }
+
+    public boolean isAlly() {
+        return ally;
     }
 
     public boolean isVillage() {

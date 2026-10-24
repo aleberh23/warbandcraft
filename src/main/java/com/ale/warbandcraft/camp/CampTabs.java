@@ -36,10 +36,18 @@ public final class CampTabs {
         return camp;
     }
 
+    /** Como {@link #access} pero también para un compañero de la facción del dueño (barracón). */
+    @Nullable
+    public static CampBlockEntity accessBarracks(ServerPlayer player, BlockPos pos) {
+        CampBlockEntity camp = access(player, pos, false);
+        return camp != null && camp.barracksUsableBy(player.getUUID()) ? camp : null;
+    }
+
     public static void open(ServerPlayer player, CampBlockEntity camp, int tab) {
         BlockPos pos = camp.getBlockPos();
         boolean owner = camp.canBeUsedBy(player.getUUID());
-        if (!owner) tab = CHEST;
+        boolean ally = camp.barracksUsableBy(player.getUUID());
+        if (!owner && !(ally && tab == BARRACKS)) tab = CHEST;
         switch (tab) {
             case DOCTRINES -> {
                 if (player.containerMenu != player.inventoryMenu) player.closeContainer();
@@ -71,6 +79,7 @@ public final class CampTabs {
             default -> NetworkHooks.openScreen(player, camp, buf -> {
                 buf.writeBlockPos(pos);
                 buf.writeBoolean(owner);
+                buf.writeBoolean(ally);
                 buf.writeBoolean(camp.getVillage() != null);
             });
         }
