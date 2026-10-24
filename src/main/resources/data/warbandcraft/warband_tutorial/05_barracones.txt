@@ -1,0 +1,27 @@
+titulo: Barracones y comida
+cartel: Barracones|y comida
+## El barracón
+Cada Campamento guarda soldados "adentro", sin que estén en el mundo. Así no se pierden ni traban el juego.
+
+Pestaña Barracón: lista de los guardados. "Sacar" los saca (te siguen). "Guardar a los de cerca" guarda a los que están en la jurisdicción.
+---
+## Automático
+Si te alejás más de 96 bloques de un soldado que no te sigue ni pelea, se guarda solo en su Campamento.
+
+Los guardias (soldados que dejaste quietos en un puesto) vuelven a su puesto cuando pasás cerca.
+---
+## Desde la vista aérea
+Elegí soldados y hacé click derecho sobre un Campamento: van y se guardan ahí. Botón Barracón: elegís a cuál Campamento (o "cada uno al suyo").
+
+## Lugar
+Un Campamento común guarda una cantidad fija. Las aldeas y castillos guardan más, y el entrenamiento suma lugar.
+---
+## Comida
+Cada soldado come 4 puntos de comida por día del almacén (lo más barato, nunca nada dañino). Si el Campamento estuvo descargado, se cobran los días atrasados al volver (hasta 7).
+
+Si pasan 2 días sin comer, se va el 10% de los soldados (primero los de menor nivel).
+---
+## Atados a un Campamento
+Cada soldado pertenece a un Campamento (el más cercano cuando lo armaste o guardaste). Ahí come y ahí vuelve.
+
+Los prisioneros también están en el barracón. No comen. Ver libro 3 (reclutar o rescate).

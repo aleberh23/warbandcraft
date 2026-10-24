@@ -1,0 +1,23 @@
+titulo: Aldeas y castillos
+cartel: Aldeas y|castillos
+## Aldeas
+Cada aldea (una campana) tiene una guarnición de su facción que la defiende. Al entrar te aparece un cartelito con el nombre, la facción y qué podés hacer.
+
+Las aldeas de facción crecen solas: aldea, pueblo o ciudad, con mercado, taberna, torres, empalizada o muralla según el tamaño.
+---
+Dentro de una aldea de facción hay guardias en los portones, en el mercado, en la plaza y arqueros en las torres. También hay soldados de reserva que salen cuando la atacan.
+
+En el mercado podés comprar y vender con sus mercaderes, y el Tabernero te vende rumores (libro 24).
+---
+## Respetá la aldea
+No se puede romper nada con la mano en una aldea de facción. Si rompés cultivos o abrís cofres y te ven, te echan: tenés 15 segundos para irte o te atacan.
+---
+## Castillos
+Aparecen sueltos por el mundo, cada uno con el estilo de su facción. Tienen más guarnición, un capitán y muros con camino de ronda. En el torreón hay un cofre con tesoro.
+
+Si entrás sin permiso a un castillo de facción te avisan y a los 5 segundos te atacan.
+---
+## Ver aldeas
+/warband aldea: la aldea donde estás.
+/warband aldeas: las que conocés.
+El Panel (K) también las lista.

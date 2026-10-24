@@ -39,6 +39,7 @@ public final class Compat {
 
     /** ¿Hay en {@code pos} una pieza de una estructura que no es una aldea? Nunca carga chunks. */
     public static boolean foreignStructureAt(ServerLevel level, BlockPos pos) {
+        if (com.ale.warbandcraft.tutorial.Tutorial.isProtected(level, pos)) return true;   // el salón del tutorial cuenta como estructura
         if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) return false;
         Map<Structure, it.unimi.dsi.fastutil.longs.LongSet> all;
         try {
@@ -61,6 +62,7 @@ public final class Compat {
      * arriba cada {@link #SAMPLE_STEP}. Las mazmorras de abajo no cuentan: lo de arriba no las toca.
      */
     public static boolean surfaceStructureIn(ServerLevel level, int x0, int z0, int x1, int z1) {
+        if (com.ale.warbandcraft.tutorial.Tutorial.touches(level, x0, z0, x1, z1)) return true;
         int ax = Math.min(x0, x1), bx = Math.max(x0, x1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
         for (int x = ax; x <= bx + SAMPLE_STEP - 1; x += SAMPLE_STEP) {
             for (int z = az; z <= bz + SAMPLE_STEP - 1; z += SAMPLE_STEP) {

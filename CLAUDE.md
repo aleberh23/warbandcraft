@@ -546,6 +546,22 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   Escudos (cualquier `ShieldItem`, también los de EK) con el estandarte de la facción: `FactionStyle.apply` copia su
   `BlockEntityTag` + `Base`. Pavés en la mano secundaria (ballesteros de los Pantanos): para `PAVISE_BLOCK` (60%) de las flechas que vienen de frente.
 
+## Salón del tutorial (pedido de Ale, a probar; diseño sin Ale)
+
+- `tutorial/Tutorial`: en un mundo **nuevo** (`ServerAboutToStart`: `isInitialized` false; no en `GameTestServer`), en
+  `ServerStarted` se arma en el spawn un salón de piedra 37×37 (paredes a ±18, piso = mediana del heightmap, cimientos hasta
+  30 abajo, plaza a ±21), puerta al sur, y el spawn queda adentro (`setDefaultSpawnPos` + `spawnRadius` 0). 25 atriles:
+  el del medio ("Empezá acá") y 6 por pared con cartel encerado (orden: pared oeste desde la puerta, norte, este, sur).
+- Libros = `data/warbandcraft/warband_tutorial/NN_algo.txt` (`TutorialBooks`: `titulo:`, `cartel: a|b`, `## ` subtítulo,
+  `---` página nueva; corta las páginas midiendo la fuente, 113 px × 14 renglones). **Cambiar una mecánica = actualizar
+  su libro.** Llevarse un libro: vuelve a los `RESTOCK_TICKS`; al arrancar el server se reponen todos (textos nuevos).
+- Zona protegida: chunks a ≤`PROTECT_RADIUS_CHUNKS` (2 = 5×5) del medio (`TutorialData`, overworld). `TutorialEvents`:
+  romper, poner, usar ítems contra bloques (atriles sí se usan), baldes, explosiones, pistones, pisar cultivos, mob griefing.
+  Creativo + operador sí puede. `Compat.foreignStructureAt/surfaceStructureIn` lo cuentan como estructura (castillos,
+  mazmorras, obras, campos de batalla lo esquivan) y `RoadPlanner.usable` no pone camino ahí.
+- Mundos viejos: `/warband tutorial construir` (operador) lo arma en el spawn (pisa lo que haya); `/warband tutorial` dice dónde.
+- Prueba: `TutorialGameTests` (arma con `build(..., true)` a 7000 sin tocar spawn ni protección).
+
 ## Números en el archivo de configuración (pedido de Ale)
 
 - Todo número de juego vive en `config/warbandcraft-common.toml` (se edita con el juego cerrado o abierto: Forge lo recarga).

@@ -71,6 +71,7 @@ public class WarbandCraft {
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.ClaimFixEvents());
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.ArmyEvents());   // H20
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.DungeonEvents());   // H25
+        MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.TutorialEvents());   // salón del tutorial en el spawn
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.kit.WeaponRules());   // H26: peso de la armadura
 
         // Vista aérea (H5): registro cliente-only. Un servidor dedicado nunca debe cargar estas clases

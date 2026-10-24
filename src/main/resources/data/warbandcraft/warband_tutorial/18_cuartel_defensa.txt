@@ -1,0 +1,22 @@
+titulo: Cuartel y entrenamiento
+cartel: Cuartel y|entrenamiento
+## El cuartel
+Además del barracón, cada aldea y castillo tuyo tiene un cuartel: soldados que patrullan solos adentro del territorio. Los arqueros suben a las torres.
+
+Pelean primero con los enemigos que entran a la aldea y después con los bichos cercanos (nunca con creepers). No obedecen tus órdenes: son la guardia de la aldea.
+---
+Lugar: aldea 10, castillo 15 (el doble con la mejora Cuartel).
+
+Gestión, pestaña Tropas: pasás soldados del barracón al cuartel y al revés (→1, →T, ←1, ←T), "Llenar el cuartel" o "Todos al barracón".
+
+Salen cuando estás cerca y se guardan cuando te vas lejos.
+---
+## Entrenamiento
+Mejora de aldeas y castillos (pide Cuartel). Suma lugar y cada día los soldados guardados ganan experiencia hasta un nivel (3, 6 o 10 según el nivel), comiendo el doble.
+
+En un Campamento común se compra en la pestaña Barracón (16, 32 o 64 esmeraldas).
+---
+## Taberna
+Mejora de aldeas. Con un Tabernero (asignado en Aldeanos) llegan reclutas cada día, que comen del almacén.
+
+Auto-reclutar (pestaña Tropas, fila Taberna): pasan solos al cuartel y después al barracón.

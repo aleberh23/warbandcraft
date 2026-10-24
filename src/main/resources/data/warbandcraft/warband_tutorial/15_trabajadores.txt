@@ -1,0 +1,29 @@
+titulo: Trabajadores
+cartel: Trabajadores|y zonas
+## Asignar
+Gestión, pestaña Aldeanos: elegís un aldeano libre (en el mundo se marcan) y le das un oficio: granjero, leñador, minero, pescador, ganadero, cocinero, herrero, tabernero o mercader.
+
+Los que ya tienen oficio de aldeano también se pueden asignar (pierden sus tratos).
+---
+Auto-asignar (prendido de entrada): cada minuto, si hay una zona sin trabajador y un aldeano libre, lo asigna solo.
+
+## Zonas de trabajo
+Pestaña Trabajo. Cada trabajador necesita su zona dentro del territorio:
+- Zona: arrastrás un rectángulo en el piso (el herrero: un click).
+- Auto: la busca sola.
+- Borrar.
+---
+Cada zona cuesta algo del almacén: azada y semillas (granjero), hacha y retoños (leñador), pico (minero), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén.
+
+El corral sin animales trae 2 del bioma.
+---
+## Solos
+Los trabajadores reciben del almacén lo que necesitan (herramientas, comida, semillas) y cada tanto lo que juntaron pasa al almacén. Duermen en una cama libre.
+
+Sobre cada zona se ve qué le pasa: "Falta en el almacén", "Almacén lleno", "Con hambre", "Trabajando"...
+---
+## Herrero
+Convierte 1 hierro + 1 carbón en 2 de armamento, hasta 8 por día. Trabaja en la Herrería o al lado de un yunque.
+
+## Minero
+Saca piedra, carbón, hierro, oro y a veces diamante. Cuando termina baja más.

@@ -1,0 +1,18 @@
+titulo: El Mercado
+cartel: El Mercado
+## Mercado de tu aldea
+Mejora de aldeas y castillos con 3 niveles: Mercado, Plaza de mercado y Lonja. Asigná Mercaderes en Gestión, Aldeanos (uno por nivel).
+
+Hablándole al Mercader abrís la pantalla Mercado (agachado: la de trabajador). También desde Gestión, Rutas o /warband mercado.
+---
+## Ventas
+Otros jugadores de otra facción (no en guerra) le compran a tu Mercader lo que sobra del almacén. Vos ponés el mínimo que se guarda de cada cosa y el precio. Las esmeraldas entran al almacén.
+---
+## Envíos programados
+Cada 1 a 7 días, el almacén manda solo ítems a otro punto tuyo: una cantidad fija o "reponer hasta N". Nunca baja del mínimo.
+
+## Lonja (nivel 3)
+Ves lo que sobra en todos tus almacenes conectados y pedís que te lo manden.
+---
+## Mercados de facción
+Las aldeas de facción con mercado tienen mercaderes: te venden unas cosas y te compran otras, según el bioma. Cambian cada día. En guerra no te atienden.

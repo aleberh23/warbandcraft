@@ -74,6 +74,8 @@ public final class WarbandCommand {
                 .then(Commands.literal("fundar").executes(WarbandCommand::found))
                 .then(Commands.literal("mazmorras").executes(WarbandCommand::dungeons))   // H25
                 .then(Commands.literal("mercado").executes(WarbandCommand::market))
+                .then(Commands.literal("tutorial").executes(WarbandCommand::tutorialWhere)   // salón del tutorial
+                        .then(Commands.literal("construir").requires(s -> s.hasPermission(2)).executes(WarbandCommand::tutorialBuild)))
                 .then(Commands.literal("asediar").executes(ctx -> {   // H23: lo mismo que la tecla B
                     com.ale.warbandcraft.battle.BattleChoices.onKey(ctx.getSource().getPlayerOrException());
                     return 1;
@@ -81,6 +83,25 @@ public final class WarbandCommand {
                 .then(Commands.literal("batalla").executes(ctx -> battle(ctx, true))
                         .then(Commands.literal("parar").executes(ctx -> battle(ctx, false))))
                 .then(TestArmyCommand.node()));
+    }
+
+    /** Dónde está el salón del tutorial. */
+    private static int tutorialWhere(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {
+        net.minecraft.core.BlockPos c = com.ale.warbandcraft.tutorial.TutorialData.get(ctx.getSource().getServer().overworld()).center();
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(c == null
+                ? "Este mundo no tiene salón del tutorial. Un operador puede armarlo en el spawn con /warband tutorial construir."
+                : "El salón del tutorial está en " + c.getX() + ", " + (c.getY() + 1) + ", " + c.getZ() + " (overworld)."), false);
+        return 1;
+    }
+
+    /** Arma (o vuelve a armar) el salón del tutorial en el spawn del mundo. Pisa lo que haya ahí. */
+    private static int tutorialBuild(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {
+        net.minecraft.server.level.ServerLevel level = ctx.getSource().getServer().overworld();
+        net.minecraft.core.BlockPos old = com.ale.warbandcraft.tutorial.TutorialData.get(level).center();
+        net.minecraft.core.BlockPos spawn = com.ale.warbandcraft.tutorial.Tutorial.build(level, old != null ? old : level.getSharedSpawnPos());
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Salón del tutorial armado; el spawn quedó en "
+                + spawn.getX() + ", " + spawn.getY() + ", " + spawn.getZ() + "."), true);
+        return 1;
     }
 
     /** Fundar una aldea en el Campamento tuyo más cercano (a su jurisdicción como mucho). */

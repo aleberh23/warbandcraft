@@ -1,0 +1,25 @@
+titulo: Ejércitos de campaña
+cartel: Ejércitos|de campaña
+## Armar un ejército
+Panel (K), pestaña Ejércitos (o /warband ejercitos, o el botón en el Barracón). Podés tener 3 ejércitos de hasta 100 soldados.
+
+Elegís de qué barracones y de qué clase: botones -10 -1 +1 +10 y T (todos). Hasta que lo invocás, los soldados siguen guardados.
+---
+## Invocar
+"Invocar aquí" necesita un campo abierto y bastante plano adelante tuyo, sin agua ni muchos árboles y lejos de las aldeas.
+
+Tardan según lo lejos que estén sus Campamentos (barra arriba). Si te alejás mucho, se cancela. Llegan formados: infantería adelante, arqueros atrás, caballería a los costados.
+---
+## Órdenes
+Mantener: se quedan en su puesto y pelean con lo que se acerca.
+Avanzar: marcás en la vista aérea adónde van, formados.
+Cargar: todos contra el enemigo.
+Retirada.
+Licenciar: vuelven a su barracón.
+---
+Delegar: el general de la IA maneja tu ejército. Cualquier otra orden te devuelve el mando.
+
+## Emboscadas
+Cargar contra un ejército enemigo que marcha cerca arranca una batalla de campo. Si cargás desde un bosque, la primera carga pega +30%.
+
+Ganar da experiencia a todos.

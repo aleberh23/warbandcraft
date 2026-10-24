@@ -1,0 +1,27 @@
+titulo: Facciones del mundo
+cartel: Facciones|y relaciones
+## Las facciones
+Cada aldea del mundo pertenece a una facción según el bioma:
+- Reino de Valdren: llanuras y bosques.
+- Clanes del Norte: taiga, nieve, montaña.
+- Sultanato de Arena: desierto y badlands.
+- Liga de los Pantanos: pantano, selva, sabana.
+---
+Y los Bandidos: no tienen aldeas, viven en guaridas y patrullas, y siempre están en guerra con todos.
+
+Cada facción tiene sus tropas, sus colores, su estandarte y su estilo de edificios y castillos.
+---
+## Opinión
+Cada facción tiene una opinión de vos, de -100 a 100. Con -40 o menos estás en guerra.
+
+Baja si atacás sus aldeas, a sus patrullas o ayudás a sus enemigos. Sube si pagás rescates, ayudás en sus batallas o hacés trabajos para ellos (libro 24).
+---
+## Ver cómo estás
+/warband facciones: la lista.
+/warband relaciones: tu opinión con cada una.
+
+## Guerras entre ellas
+Las facciones se declaran la guerra entre sí y mandan ejércitos (se ven en el mapa M como rombos). Si estás cerca podés ver la batalla o meterte (tecla B, libro 10).
+---
+## Patrullas
+Por los caminos andan patrullas de las facciones y de bandidos. Pegarle a una patrulla baja la opinión pero no arranca una guerra. Las de bandidos te atacan.

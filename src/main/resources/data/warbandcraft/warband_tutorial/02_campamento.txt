@@ -1,0 +1,37 @@
+titulo: El Campamento
+cartel: El|Campamento
+## Qué es
+El Campamento es tu base. Es un cofre grande (54 espacios) que funciona como almacén de todo: comida, esmeraldas, armas, armaduras y materiales. También tiene el barracón donde se guardan tus soldados.
+---
+## Cómo se fabrica
+Arriba: tablón, mesa de herrería, tablón.
+Abajo: tablón, cofre, tablón.
+
+Está en el librito de recetas.
+
+## Jurisdicción
+Lo que pasa "en el Campamento" pasa a 24 bloques de él: armar soldados, vincular cofres, guardar soldados, los herreros.
+---
+## Cofres vinculados
+Agachado, click derecho con el Bastón de Mariscal a un cofre o barril cerca del Campamento: queda vinculado. El almacén cuenta todo lo que haya en esos cofres. Hasta 16 (un cofre doble cuenta 2).
+---
+## Pestañas
+Cofre: el almacén. Arriba ves los totales (comida, esmeraldas, armamento). Botones "Zona de trabajo" (trabajadores) y "Fundar aldea" (libro 14).
+
+Barracón: soldados guardados, prisioneros, nombre, entrenamiento, ejércitos.
+---
+Doctrinas y Kits: tu facción (libro 6).
+
+Rutas y Envíos: libro 20.
+
+Solo el dueño ve todas las pestañas.
+---
+## Nombre
+Cada Campamento tiene nombre ("Campamento 1"...). Se cambia en la pestaña Barracón, con un yunque o desde el Panel (K).
+
+Podés tener varios Campamentos. Todos aparecen en el Panel (K), en la vista aérea (V) y en el mapa (M).
+
+Si lo rompés, te lo llevás con el nombre puesto.
+---
+## Botín e impuestos
+Lo que saqueás, el botín de las batallas y lo que mandan tus aldeas llega al Campamento más cercano. Si no está cargado, queda "en camino" y entra cuando vuelvas.

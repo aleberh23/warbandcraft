@@ -1,0 +1,27 @@
+titulo: Atacar y conquistar
+cartel: Atacar|y conquistar
+## Empezar un ataque
+Parado en una aldea o castillo de facción, apretá B (o /warband asediar) y confirmá. También empieza si vos o tus soldados le pegan a la guarnición.
+
+La facción te baja la opinión y toda la guarnición sale a pelear. Arriba ves la barra de quién va ganando.
+---
+## Tus soldados
+Los que tenés cerca reciben la orden Batalla y pelean con la IA táctica. En una aldea con murallas arman escaleras, abren huecos con zapadores y entran (libro 11).
+
+La aldea tiene soldados de reserva: mientras le queden, no cae.
+---
+## Ganar
+Cuando no queda nadie defendiendo, aparecen dos botones:
+
+Saquear: el botín (y el almacén de la aldea) va a tu Campamento. La aldea queda saqueada 3 días.
+
+Conquistar: la aldea es tuya (libro 14).
+---
+## Prisioneros
+Los que se rindieron y los que quedaron en pie van presos a tu Campamento.
+
+## Si perdés
+Tus soldados rendidos pasan a la guarnición enemiga.
+
+## Meterse en batallas ajenas
+Si dos facciones pelean cerca tuyo, te avisan. Con B elegís a quién ayudar (o nada). El que gana te paga y te quiere más; el otro te quiere menos.

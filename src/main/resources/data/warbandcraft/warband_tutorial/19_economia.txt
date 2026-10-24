@@ -1,0 +1,25 @@
+titulo: Economía
+cartel: Economía|y armamento
+## Todo son ítems
+En el Campamento todo es lo que ves: esmeraldas, comida, armas. No hay sueldos: los soldados solo comen.
+
+## Armamento
+Ítem nuevo que vale como "metal para armas". Al armar un soldado, lo que falte de una pieza de metal se paga con armamento.
+---
+Sale de: herreros, castillos tuyos, botín de batalla y cofres de mazmorras.
+
+## Herreros de aldeano
+Los aldeanos armero, herrero o fabricante de herramientas a 24 bloques de un Campamento (hasta 4) convierten cada día 1 lingote + 1 carbón en 2 de armamento.
+---
+## Almacén de las aldeas
+Las aldeas y castillos tuyos producen cada día impuestos, comida y (castillos) armamento, hasta un tope de 7 días.
+
+/warband almacen: ver.
+/warband retirar: llevártelo a mano (parado en la aldea).
+O mandarlo por ruta a un Campamento.
+---
+## Ver todo junto
+El Panel (K) muestra lo que hay en cada almacén y cuántos días de comida quedan.
+
+## Tesoros
+Los Taberneros venden pistas de tesoros enterrados, naufragios y ruinas (libro 24).

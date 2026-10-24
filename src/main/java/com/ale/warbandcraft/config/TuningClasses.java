@@ -71,6 +71,7 @@ final class TuningClasses {
             "sapper.FieldCannonEntity",
             "sapper.SapperGoal",
             "sapper.SapperRules",
+            "tutorial.Tutorial",
             "upgrade.Blueprints",
             "upgrade.BuildCost",
             "upgrade.BuilderNpc",

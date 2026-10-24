@@ -166,6 +166,7 @@ public final class RoadPlanner {
      * del camino o justo arriba), ni nada con datos.
      */
     private static boolean usable(ServerLevel level, BlockPos surface) {
+        if (com.ale.warbandcraft.tutorial.Tutorial.isProtected(level, surface)) return false;   // zona del tutorial
         for (int dy = -1; dy <= 3; dy++) {
             BlockPos p = surface.above(dy);
             BlockState s = level.getBlockState(p);

@@ -1,0 +1,37 @@
+titulo: Clases y el Bastón
+cartel: Clases y|el Bastón
+## El Bastón de Mariscal
+Un lingote de oro y dos palos en diagonal.
+
+Click derecho al aire: cambia de clase (agachado: la anterior).
+
+Click derecho a un soldado tuyo cerca del Campamento: le da esa clase y lo arma con lo del almacén.
+---
+## Las clases
+Infante, Lancero, Arquero, Ballestero, Caballero, Abanderado y Zapador. Cada una tiene niveles (de básico a élite) según la experiencia del soldado.
+
+Armar cuesta las piezas del equipo (armas, armadura, flechas, caballo...). Lo que falte de metal se paga con armamento (libro 19). El nivel básico se puede pagar entero con armamento.
+---
+## Caballos
+El Caballero recibe caballo ensillado. Montado, el soldado usa al caballo para moverse.
+
+## Experiencia
+Los soldados suben de nivel peleando (y entrenando, libro 18). Con más nivel, mejor equipo: al re-armarlos les toca el nivel siguiente.
+---
+## Armas medievales
+Las facciones usan armas y armaduras de Epic Knights y sus agregados.
+
+- Armas de asta (picas, alabardas): doble daño contra montados y pegan de más lejos. En formación van adelante.
+- Lanza a caballo: más daño cuanto más rápido va el caballo.
+- Mazas y martillos: más daño contra armadura pesada.
+---
+- Armadura pesada: protege más pero hace un poco más lento.
+- Escudos con el estandarte de la facción.
+- Pavés: para muchas de las flechas que vienen de frente.
+---
+## El Zapador
+Lleva TNT. Vuela muros y puertas y arma el cañón de campaña (3 lingotes y 1 bloque de hierro). Se maneja desde la vista aérea: botones Volar y Cañón, y click en el objetivo.
+
+Solo contra aldeas y castillos que no son tuyos (usarlo arranca el ataque). Agachado + click al cañón lo desarma.
+
+En los asedios, los zapadores abren paso solos con cañón, túnel o TNT.

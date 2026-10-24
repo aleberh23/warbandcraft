@@ -1,0 +1,33 @@
+titulo: Conseguir soldados
+cartel: Conseguir|soldados
+## Esmeraldas primero
+Casi todo se paga con esmeraldas. Al principio:
+- Soldados de patrulla que matás: 1 o 2 cada uno (bandidos, uno más).
+- Bandidos de guarida: a veces 1.
+- Cofres de mazmorras y estructuras: muchas veces traen.
+- Botín de batalla.
+---
+## Reclutas de Recruits
+Los soldados son de Recruits. Click derecho a uno sin dueño abre su pantalla: pagás y es tuyo.
+
+## Reclutas errantes
+Por el mundo andan grupos de 1 a 3 reclutas sueltos, lejos de las aldeas. Se contratan igual.
+
+No hay tope de soldados.
+---
+## Taberna
+Las aldeas con taberna (tuyas o de facción) tienen reclutas esperando adentro. En las tuyas, con Tabernero, llegan solos cada día; click derecho = se unen gratis.
+
+## Tabernas del mundo
+Las tabernas sueltas, con guardias, tienen mercenarios de nivel 1 a 4. Se contratan con la pantalla de Recruits: cuanto más nivel, más caros.
+---
+## Prisioneros
+Cuando ganás una batalla los enemigos rendidos van presos a tu Campamento (pestaña Barracón). Ahí podés reclutarlos (vuelven con su clase) o cobrar rescate.
+
+## Presos de bandidos
+En las guaridas de bandidos hay presos: click derecho y se unen gratis.
+---
+## Que te sigan
+Un soldado recién contratado queda quieto. Con R (órdenes) o con la vista aérea (V, botón Seguir) le decís que te siga.
+
+Los que te siguen te defienden: atacan a los bichos que se te acercan y a lo que ataca a lo tuyo. Si te alejás mucho aparecen a tu lado. Si vas en bote, cada uno se sube al suyo y te sigue.

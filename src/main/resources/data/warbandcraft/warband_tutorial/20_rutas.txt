@@ -1,0 +1,24 @@
+titulo: Rutas, viajes y envíos
+cartel: Rutas,|viajes y envíos
+## Dibujar una ruta
+Abrí el mapa (M) y dibujá una ruta entre dos puntos tuyos (Campamentos, aldeas o castillos). Los extremos tienen que estar a 32 bloques de cada punto y el camino ya explorado.
+
+Después apretá J y "Registrar".
+---
+## Viajar
+J, pestaña Viajar: elegís el destino y viajás en una barra de tiempo. Te llevás tu caballo y a los soldados que te siguen. No te podés mover (si te movés, se corta) y nadie te lastima. Esc cancela.
+
+Las rutas se encadenan: podés viajar a cualquier punto unido.
+---
+## Emboscadas
+Si un ejército enemigo está cerca del camino, te frena y hay batalla.
+
+## Envíos
+Pestaña Envíos del Campamento: mandás ítems y soldados del barracón a otro punto. Tardan lo que dura el viaje. A una aldea, los soldados van de guardia.
+---
+Los bandidos pueden asaltar envíos que pasan cerca de su guarida: se llevan parte. Limpiando la guarida lo recuperás.
+
+## Poste de caminos
+Cartel + brújula. Click derecho abre Rutas como si estuvieras en tu punto más cercano.
+
+/warband rutas: la lista.

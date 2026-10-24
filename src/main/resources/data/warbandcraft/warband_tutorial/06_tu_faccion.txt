@@ -1,0 +1,24 @@
+titulo: Tu facción
+cartel: Tu facción|doctrinas y kits
+## Nombre y colores
+Tu facción es la de Recruits (tecla U): nombre, colores y estandarte. Tus soldados se visten con tus colores al armarlos y llevan tu estandarte en los escudos.
+
+/warband uniformar: repinta a tus soldados cercanos.
+---
+## Doctrinas
+Pestaña Doctrinas del Campamento. Elegís una especialidad:
+- Caballería: caballos mejores.
+- Arquería: flechas que pegan más.
+- Ingeniería: TNT y cañón mejores.
+
+La primera es gratis. Cambiarla cuesta 20 esmeraldas del almacén y tarda 1 día.
+---
+## Kits
+Pestaña Kits: cambiás el nombre de cada clase y qué equipo lleva cada nivel. Poné las piezas en los espacios fantasma y guardá.
+
+Hay reglas para no romper la IA: el arquero lleva arco, el ballestero ballesta, los demás nada de arco. Las flechas van en la mochila.
+---
+Al guardar un kit, tus soldados de esa clase se re-arman solos cuando están cerca de un Campamento con los materiales.
+
+## Diplomacia
+Las alianzas y guerras entre jugadores se manejan en la pantalla de Recruits (U).

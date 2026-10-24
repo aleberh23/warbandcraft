@@ -1,0 +1,64 @@
+titulo: Controles
+cartel: Controles|y comandos
+## Teclas del mod
+V: vista aérea. Ves el mundo desde arriba como en un juego de estrategia y das órdenes. V o Esc para salir.
+
+K: Panel de control (aldeas, campamentos, rutas, envíos y ejércitos).
+
+J: Rutas y viaje.
+
+B: meterte en una batalla que pasa cerca, o asediar la aldea o castillo donde estás parado.
+---
+## Teclas de Recruits
+M: mapa del mundo. Ahí se dibujan las rutas y ves tus aldeas, campamentos y ejércitos.
+
+R: órdenes rápidas a tus soldados (seguir, quedarse, atacar...).
+
+U: pantalla de Recruits (tu facción: nombre, colores, estandarte, diplomacia).
+
+Las teclas se cambian en Opciones, Controles. El instalador ya acomodó las que chocaban entre mods.
+---
+## En la vista aérea (V)
+W A S D: mover la cámara.
+Rueda: acercar y alejar.
+Click derecho y arrastrar (sin nada elegido): girar la cámara.
+
+Click izquierdo: elegir un soldado. Arrastrar: elegir varios con un rectángulo. Shift + click: abre su inventario.
+---
+Click derecho en el piso: los elegidos van ahí (o atacan lo que tocaste).
+
+Click derecho y arrastrar con soldados elegidos: los formás en línea. Mientras arrastrás, la rueda cambia entre 1, 2 y 3 filas.
+
+1 a 9: elegir un grupo. Ctrl + número: guardar los elegidos como ese grupo.
+
+El libro 7 explica los botones.
+---
+## Construyendo (Gestión)
+R: girar el edificio.
+Click izquierdo: plantar.
+Click derecho o Esc: cancelar.
+Enter: encargar la muralla dibujada.
+Rueda (arrastrando terreno): subir o bajar la altura.
+---
+## Comandos (1)
+/warband panel
+/warband aldea
+/warband aldeas
+/warband facciones
+/warband relaciones
+/warband batalla
+/warband batalla parar
+/warband asediar
+/warband ejercitos
+---
+## Comandos (2)
+/warband almacen
+/warband retirar
+/warband fundar
+/warband mercado
+/warband mazmorras
+/warband uniformar
+/warband barracon
+/warband rutas
+/warband tutorial
+/camara (si la cámara de la vista aérea queda trabada)

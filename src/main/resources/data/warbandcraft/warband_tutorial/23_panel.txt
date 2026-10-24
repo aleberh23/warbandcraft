@@ -1,0 +1,20 @@
+titulo: Panel de control (K)
+cartel: Panel de|control (K)
+## Todo en un lugar
+La tecla K (o /warband panel) abre el Panel. Arriba, el resumen de tu reino: aldeas, soldados, comida, esmeraldas.
+
+Pestañas: Aldeas y castillos, Campamentos, Rutas, Envíos y Ejércitos.
+---
+## Aldeas y castillos
+Cada una con su popularidad, guardias, invasiones (en rojo) y trabajadores trabados. Mejoras: niveles, murallas, caminos. Renombrar.
+
+## Campamentos
+Ver: soldados guardados y prisioneros. Sacar y guardar (estando cerca), reclutar presos, rescate, mandar soldados, fundar aldea.
+---
+## Rutas y Envíos
+Las rutas registradas y lo que va en camino.
+
+## Ejércitos
+Armarlos e invocarlos (libro 12).
+
+Desde el Panel se manejan cosas lejanas sin ir hasta allá.

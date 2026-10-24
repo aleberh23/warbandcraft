@@ -1,0 +1,26 @@
+titulo: Batallas
+cartel: Batallas|tácticas y botín
+## El general
+En cada batalla un general de la IA maneja a cada bando, como en Bannerlord: arma formaciones de infantería, arqueros y caballería y elige una táctica (cargar, línea defensiva, hostigar con flechas, flanquear con caballería, subir a una loma, retirarse...).
+---
+Los arqueros se ponen detrás de la infantería. La caballería rodea y busca a los arqueros. Si les llueven flechas, levantan escudos o atacan.
+
+Las batallas duran: los soldados se pegan menos entre ellos que a vos.
+---
+## Golpes
+Pegar de costado hace +25% y por detrás +50%. Cuidá los flancos.
+
+## Moral
+Cada soldado tiene moral. Baja si caen compañeros cerca, si cae el general, si le pegan por detrás o si van perdiendo. Con muy poca, huye.
+---
+## Rendirse
+Un soldado que recibe un golpe mortal en un ataque a veces se rinde (más seguido los de poco nivel; el capitán nunca). Queda tirado en el piso y nadie le pega. Al ganar va preso.
+---
+## Asedios
+Contra murallas: los atacantes buscan el lado más débil, ponen escaleras (los defensores las tumban), los zapadores abren huecos con cañón, túnel o TNT, y entran por grupos. Adentro buscan a los defensores. Si nadie pierde vida en 30 segundos, todos empujan.
+---
+## Botín
+Cada soldado de la IA que cae deja su equipo útil (armaduras, armas, arcos, flechas, escudos), armamento y esmeraldas. Se junta y va al Campamento más cercano a la pelea.
+
+## Tamaño
+Pelean hasta 60 por bando a la vez; el resto entra como refuerzo.

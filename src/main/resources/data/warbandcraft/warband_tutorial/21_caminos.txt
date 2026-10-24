@@ -1,0 +1,20 @@
+titulo: Caminos
+cartel: Caminos
+## Construir un camino
+Una ruta registrada se puede convertir en camino de verdad: grava de 3 de ancho, terraplenes, cortes y túneles en los cerros, puentes sobre el agua y muelles en las costas.
+
+Viajar por camino es el doble de rápido.
+---
+## Dónde se encarga
+Desde un Campamento común: pestaña Rutas, modo Caminos.
+
+Desde una aldea o castillo: Mejoras (Panel K o Gestión, Construir).
+
+Cuesta 1 esmeralda cada 10 bloques (mínimo 5).
+---
+## La obra
+Un constructor acompaña el frente de obra. Lo que está lejos (sin cargar) se pone cuando pasás.
+
+Si cambiás el trazado de la ruta, el camino viejo se saca. Borrar la ruta corta la obra.
+
+No rompe casas, caminos de aldea ni cofres.

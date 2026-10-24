@@ -1,0 +1,39 @@
+titulo: Vista aérea (V)
+cartel: Vista aérea|(tecla V)
+## Qué es
+Con V la cámara sube y manejás a tus soldados como en un juego de estrategia. Tu personaje se queda donde estaba. V o Esc para volver.
+
+Se ven tus Campamentos (nombre y cuántos guarda) y un minimapa.
+---
+## Elegir
+Click izquierdo: uno.
+Arrastrar: varios.
+Botones Caballería, A Distancia, Infantería: todos los de ese tipo.
+1 a 9: un grupo. Ctrl + número: guardar el grupo.
+Shift + click: inventario.
+---
+## Dar órdenes
+Click derecho en el piso: ir ahí.
+Click derecho a un enemigo: atacarlo.
+Click derecho y arrastrar: formar en línea (rueda = 1, 2 o 3 filas).
+
+Botones de modo: Mover, Atacar, Auto, Volar y Cañón (zapadores). Formación: Libre o Línea.
+---
+## Estados
+Seguir: te siguen.
+Mantener: se quedan ahí.
+Vagar: libres.
+
+Neutral, Agresivo, Raid, Pasivo: cómo pelean (Pasivo no ataca).
+---
+Barracón: a guardarse.
+Batalla: entran al combate con la IA táctica (libro 11). De nuevo para sacarlos.
+
+## Ejércitos
+Con un ejército en el campo aparece una fila arriba: elegirlo, Mantener, Avanzar, Cargar, Retirada, Licenciar y Delegar (libro 12).
+---
+## Gestión
+Cerca de una aldea tuya aparece el botón Gestión arriba a la izquierda (libros 14 a 18).
+
+## Si se traba
+El comando /camara te devuelve a tu personaje.

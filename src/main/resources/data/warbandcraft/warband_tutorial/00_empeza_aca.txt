@@ -1,0 +1,47 @@
+titulo: Empezá acá
+cartel: Bienvenido|a Warband Craft
+## Bienvenido
+Warband Craft convierte Minecraft en un Mount & Blade: juntás soldados, los armás, peleás contra facciones, conquistás aldeas y castillos y armás tu propio reino.
+
+## Este salón
+Hay un atril por tema, numerados del 1 al 24. Empezá por la pared de la izquierda (mirando al fondo, de espaldas a la puerta) y seguí dando la vuelta.
+
+Podés llevarte cualquier libro: al rato vuelve a aparecer en su atril.
+---
+## Zona protegida
+Acá adentro y en los alrededores (5x5 chunks) no se puede romper ni construir. Salí del salón para empezar tu partida.
+
+Si te morís sin cama, volvés a aparecer acá.
+---
+## Primeros pasos
+1. Conseguí madera, un cofre y una mesa de herrería y fabricá un Campamento (libro 2). Ponelo donde quieras tu base.
+
+2. Fabricá el Bastón de Mariscal: un lingote de oro y dos palos en diagonal.
+
+3. Juntá esmeraldas: las patrullas, los bandidos y los cofres de las mazmorras sueltan.
+---
+4. Conseguí tus primeros soldados (libro 3) y armalos con el Bastón cerca del Campamento (libro 4).
+
+5. Guardá comida en el Campamento: los soldados comen todos los días (libro 5).
+
+6. Conocé las facciones del mundo (libro 8). Atacá una aldea y saqueala o conquistala (libro 10).
+---
+7. Una aldea conquistada es tuya: cobrás impuestos, la hacés crecer y construís (libros 14 a 18).
+
+8. Uní tus tierras con rutas y caminos (libros 20 y 21) y armá ejércitos para las batallas grandes (libro 12).
+
+9. Cuidate: las facciones con las que estás en guerra te van a invadir (libro 13).
+---
+## Las teclas más importantes
+V: vista aérea
+K: panel de control
+J: rutas y viajes
+B: meterse en una batalla o asediar
+M: mapa (de Recruits)
+R: órdenes de Recruits
+U: pantalla de Recruits
+
+El libro 1 tiene todos los controles.
+---
+## Para cambiar números
+Todos los números del juego (costos, tiempos, chances, tamaños) están en el archivo config/warbandcraft-common.toml. Se puede editar con el juego abierto.

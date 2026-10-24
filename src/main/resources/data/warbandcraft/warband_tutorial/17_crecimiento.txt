@@ -1,0 +1,26 @@
+titulo: Crecimiento
+cartel: Crecimiento|y popularidad
+## Popularidad
+Cada aldea tuya tiene popularidad de 0 a 100 (Gestión, pestaña Pueblo). Con 50 o más y camas libres llegan habitantes nuevos. Con menos de 50 se van.
+
+Tope: 12 en una aldea, 24 en un pueblo, 48 en una ciudad.
+---
+## Qué la sube o la baja
+- Raciones y variedad de comida del almacén.
+- Impuestos (más altos, menos popularidad).
+- Camas libres.
+- Guardias (uno cada 10 habitantes).
+- Empalizada o muralla.
+- Taberna con tabernero, mercado y capilla.
+- Invasiones y ataques recientes la bajan.
+---
+## Raciones e impuestos
+En la pestaña Pueblo los cambiás con las flechas. Más raciones = más comida por día del almacén. Impuestos de 0 a 4: multiplican lo que cobrás.
+
+Si no alcanza la comida, la aldea pasa hambre y baja mucho la popularidad ese día.
+---
+## Casas
+Pestaña Casas: ves quién no tiene cama, camas libres y terrenos sugeridos. "Plantar una casa" pone una de 2 camas.
+
+## Descargada
+Una aldea lejos sigue creciendo "en papel" y al volver llegan o se van de verdad.

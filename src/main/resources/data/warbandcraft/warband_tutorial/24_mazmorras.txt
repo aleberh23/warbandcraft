@@ -1,0 +1,24 @@
+titulo: Mazmorras y tabernas
+cartel: Mazmorras|y tabernas
+## Mazmorras de otros mods
+Hay mazmorras de YUNG's Better Dungeons, Cataclysm (con jefes) y Dungeon Now Loading, y estructuras chicas de Dungeons and Taverns y Structory. Muchas en montañas y bosques; pocas en lo llano, donde se pelean las batallas.
+---
+## Guaridas de bandidos
+Bajo tierra, con boca de arco o empalizada. Adentro: trampas, bandidos, su jefe y presos (click = se unen gratis). En el fondo, el tesoro. Limpia, a los días se vuelve a llenar.
+---
+## Túmulos nórdicos
+En taiga, nieve y montaña. Draugr que salen de los ataúdes, un guardián con la Garra de oro (su descripción dice la combinación) y la puerta de las garras: girá los 3 marcos con click hasta que coincidan. Atrás espera el Señor del Túmulo.
+---
+## Tabernero
+En las tabernas (tuyas, de facción o sueltas). Click derecho:
+- Rumor (5 esmeraldas): te marca una mazmorra en el mapa.
+- Tesoro: pista de un tesoro.
+- Trabajo: limpiar una guarida o túmulo a cambio de esmeraldas y opinión.
+---
+/warband mazmorras: lo que conocés y tu trabajo.
+
+## Tabernas sueltas
+Tienen guardias que pelean con quien moleste, mercenarios para contratar y un Tabernero.
+
+## Entrás como quieras
+Solo o con los soldados que te sigan. Llevá antorchas.

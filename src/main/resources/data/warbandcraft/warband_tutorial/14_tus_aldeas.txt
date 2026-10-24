@@ -1,0 +1,29 @@
+titulo: Tus aldeas y Gestión
+cartel: Tus aldeas|y Gestión
+## Una aldea tuya
+Al conquistarla, la aldea es tuya: produce impuestos, comida y (los castillos) armamento todos los días, y tiene su propio Campamento como almacén. Su nombre es el de ese Campamento.
+
+Tiene territorio: chunks reclamados a tu nombre (claim de Recruits, se ve en el mapa M).
+---
+## Modo Gestión
+Abrí la vista aérea (V) cerca de tu aldea: botón Gestión arriba a la izquierda. Pestañas:
+- Resumen: datos y agrandar el territorio (10 esmeraldas por chunk, hasta 50).
+- Aldeanos: asignar oficios.
+- Trabajo: zonas de trabajo.
+---
+- Construir: edificios, murallas, terreno.
+- Casas: camas y casas.
+- Pueblo: popularidad, raciones, impuestos.
+- Tropas: cuartel y barracón.
+- Rutas: envíos y Mercado.
+---
+## Fundar una aldea
+Un Campamento tuyo puede convertirse en aldea: botón "Fundar aldea" en la pestaña Cofre, desde el Panel (K) o /warband fundar.
+
+Cuesta 40 esmeraldas. Tiene que estar lejos de otras aldeas (128 bloques). Pone una campana, te da el territorio y llegan 3 aldeanos.
+---
+## Perderla
+Si te la invaden, vuelve a la facción y te sacan lo del almacén. Las aldeas que fundaste no las reconquista nadie, pero sí te las pueden invadir.
+
+## Retirar el almacén
+Parado en la aldea: /warband retirar. O mandalo por ruta a otro Campamento (libro 20).
