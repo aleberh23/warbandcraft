@@ -1,0 +1,103 @@
+# Cuando termina bien "Compilar" (cada push a main): sube los mods al servidor de Baires Host por SFTP y lo reinicia.
+# Usa el jar que "Compilar" deja en la release "ultima"; los demás mods salen de pack/mods.json (lado servidor).
+# Secrets (Settings > Secrets and variables > Actions):
+#   SFTP_PASSWORD  contraseña SFTP del panel (ícono de la llave)
+#   PANEL_API_KEY  clave de API del panel (Mi cuenta > Claves de API)
+name: Subir al servidor
+
+on:
+  workflow_run:
+    workflows: [Compilar]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:   # botón "Run workflow" para subir a mano
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+env:
+  SFTP_HOST: gs-04.baires.host
+  SFTP_PORT: "2022"
+  SFTP_USER: jj87kdav.d607d01a
+  PANEL_URL: https://panel.baires.host
+  SERVER_ID: d607d01a
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Revisar que estén los secrets
+        env:
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          PANEL_API_KEY: ${{ secrets.PANEL_API_KEY }}
+        run: |
+          falta=0
+          for s in SFTP_PASSWORD PANEL_API_KEY; do
+            if [ -z "${!s}" ]; then echo "::error::Falta el secret $s (Settings > Secrets and variables > Actions)"; falta=1; fi
+          done
+          exit $falta
+
+      - name: Bajar el jar compilado (release "ultima")
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out/mods
+          gh release download ultima -R "$GITHUB_REPOSITORY" -p 'warbandcraft-*.jar' -D out/mods
+          ls -la out/mods
+
+      - name: Bajar los mods del servidor (pack/mods.json)
+        shell: python
+        run: |
+          import hashlib, json, pathlib, time, urllib.request
+          out = pathlib.Path("out/mods")
+          lista = json.loads(pathlib.Path("pack/mods.json").read_text(encoding="utf-8-sig"))
+          for f in lista["files"]:
+              if f["side"] not in ("both", "server") or f["folder"] != "mods":
+                  continue
+              destino = out / f["file"]
+              for intento in range(3):
+                  try:
+                      req = urllib.request.Request(f["url"], headers={"User-Agent": "warbandcraft-deploy/1.0"})
+                      destino.write_bytes(urllib.request.urlopen(req, timeout=120).read())
+                      if hashlib.sha1(destino.read_bytes()).hexdigest() != f["sha1"]:
+                          raise ValueError("sha1 distinto")
+                      break
+                  except Exception as e:
+                      if intento == 2:
+                          raise SystemExit(f"No se pudo bajar {f['url']}: {e}")
+                      time.sleep(3)
+              print("  " + f["name"] + ": " + f["file"])
+
+      - name: Subir los mods por SFTP
+        env:
+          LFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp > /dev/null
+          JAR=$(cd out/mods && ls warbandcraft-*.jar | head -n1)
+          # mirror: deja /mods igual a la lista (borra lo que sobra, sube lo que falta).
+          # put: el jar del mod se sube siempre, aunque pese lo mismo que el anterior.
+          lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30;
+                   open --env-password -u $SFTP_USER -p $SFTP_PORT sftp://$SFTP_HOST;
+                   mkdir -p -f /mods;
+                   mirror -R --delete --ignore-time --no-perms --verbose out/mods /mods;
+                   put -O /mods out/mods/$JAR"
+
+      - name: Reiniciar el servidor
+        env:
+          PANEL_API_KEY: ${{ secrets.PANEL_API_KEY }}
+        run: |
+          curl -fsS -X POST "$PANEL_URL/api/client/servers/$SERVER_ID/power" \
+            -H "Authorization: Bearer $PANEL_API_KEY" \
+            -H "Accept: application/json" -H "Content-Type: application/json" \
+            -d '{"signal":"restart"}'
+          echo "Reinicio pedido. En 1 o 2 minutos el servidor está arriba con la versión nueva."
