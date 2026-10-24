@@ -74,6 +74,11 @@ public final class Tutorial {
                 WarbandCraft.LOGGER.error("Tutorial: no se pudo armar el salón", e);
             }
         }
+        // Salón armado sin libros (p. ej. el mod no cargó sus datos al crear el mundo): se vuelve a armar en el mismo lugar.
+        if (cachedCenter != null && data.lecterns.isEmpty() && !topics(server).isEmpty() && !(server instanceof GameTestServer)) {
+            WarbandCraft.LOGGER.warn("Tutorial: el salón no tiene atriles; se vuelve a armar");
+            build(level, cachedCenter);
+        }
         freshWorld = false;
     }
 
@@ -262,6 +267,7 @@ public final class Tutorial {
             sign(level, lec.above(2), st.facing(), signLines(n + ".", t), ChatFormatting.DARK_BLUE);
             ordered.put(lec, t.id());
         }
+        if (list.isEmpty()) WarbandCraft.LOGGER.error("Tutorial: no hay libros (¿no cargaron los datos del mod?)");
         if (list.size() > 25) WarbandCraft.LOGGER.warn("Tutorial: hay {} libros y el salón tiene 25 atriles", list.size());
 
         BlockPos spawn = new BlockPos(cx, floor + 1, cz + 3);
