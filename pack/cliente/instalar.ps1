@@ -1,9 +1,10 @@
-# Warband Craft: instala el juego para el launcher común de Minecraft.
+﻿# Warband Craft: instala el juego para el launcher común de Minecraft.
 # Lo llama "Instalar Warband Craft.bat". Todo va a una carpeta aparte (%APPDATA%\.warbandcraft) con su propio perfil
 # en el launcher: no toca tus otros mods ni tus mundos de siempre. Volver a correrlo = actualizar.
 param(
     [string]$Juego = (Join-Path $env:APPDATA '.warbandcraft'),
-    [switch]$SinPerfil
+    [switch]$SinPerfil,
+    [switch]$SoloArchivos   # Prism Launcher: solo mods, shaders y configuración (Prism ya pone Java y Forge)
 )
 . (Join-Path $PSScriptRoot 'comun.ps1')
 
@@ -17,42 +18,44 @@ try {
     Write-Host "================================================" -ForegroundColor Yellow
     Info "Se instala en: $Juego"
 
-    Paso "Revisando el launcher de Minecraft"
-    $perfiles = @('launcher_profiles.json', 'launcher_profiles_microsoft_store.json') |
-        ForEach-Object { Join-Path $mc $_ } | Where-Object { Test-Path -LiteralPath $_ }
-    if (-not $perfiles) {
-        Write-Host "   No encontré el launcher de Minecraft en $mc." -ForegroundColor Red
-        Write-Host "   Instalá el launcher oficial, abrilo una vez con tu cuenta y volvé a correr esto."
-        Fin 1
-    }
-    while (Get-Process -Name 'MinecraftLauncher', 'Minecraft' -ErrorAction SilentlyContinue) {
-        Write-Host "   El launcher de Minecraft está abierto: cerralo (si no, borra el perfil nuevo al cerrarse)." -ForegroundColor Yellow
-        Read-Host "   Cuando lo cierres, apretá Enter" | Out-Null
-    }
-    Ok "Launcher encontrado"
-
-    Paso "Java 17 (para instalar Forge)"
-    $java = Java17 (Join-Path $Juego 'java') $lista.java
-    Ok "Listo"
-
-    Paso "Forge $($lista.forge)"
-    if (Test-Path -LiteralPath (Join-Path $mc "versions\$forgeId\$forgeId.json")) {
-        Ok "Ya estaba instalado"
-    } else {
-        $inst = Join-Path $env:TEMP "forge-$forgeId-installer.jar"
-        Bajar $lista.forge_installer.url $inst $lista.forge_installer.sha1 | Out-Null
-        Info "Instalando (baja Minecraft $($lista.minecraft) si hace falta, tarda un poco)..."
-        $log = Join-Path $Juego 'forge-instalador.log'
-        for ($intento = 1; $intento -le 3; $intento++) {   # a veces se corta la descarga de Mojang
-            Start-Process -FilePath $java -ArgumentList '-jar', "`"$inst`"", '--installClient', "`"$mc`"" -WorkingDirectory $env:TEMP `
-                -Wait -NoNewWindow -RedirectStandardOutput $log -RedirectStandardError "$log.err" | Out-Null
-            if (Test-Path -LiteralPath (Join-Path $mc "versions\$forgeId\$forgeId.json")) { break }
-            if ($intento -lt 3) { Info "Se cortó la descarga, pruebo de nuevo ($intento/3)..." }
+    if (-not $SoloArchivos) {
+        Paso "Revisando el launcher de Minecraft"
+        $perfiles = @('launcher_profiles.json', 'launcher_profiles_microsoft_store.json') |
+            ForEach-Object { Join-Path $mc $_ } | Where-Object { Test-Path -LiteralPath $_ }
+        if (-not $perfiles) {
+            Write-Host "   No encontré el launcher de Minecraft en $mc." -ForegroundColor Red
+            Write-Host "   Instalá el launcher oficial, abrilo una vez con tu cuenta y volvé a correr esto."
+            Fin 1
         }
-        if (-not (Test-Path -LiteralPath (Join-Path $mc "versions\$forgeId\$forgeId.json"))) {
-            throw "No se pudo instalar Forge (detalle en $log)"
+        while (Get-Process -Name 'MinecraftLauncher', 'Minecraft' -ErrorAction SilentlyContinue) {
+            Write-Host "   El launcher de Minecraft está abierto: cerralo (si no, borra el perfil nuevo al cerrarse)." -ForegroundColor Yellow
+            Read-Host "   Cuando lo cierres, apretá Enter" | Out-Null
         }
-        Ok "Instalado"
+        Ok "Launcher encontrado"
+
+        Paso "Java 17 (para instalar Forge)"
+        $java = Java17 (Join-Path $Juego 'java') $lista.java
+        Ok "Listo"
+
+        Paso "Forge $($lista.forge)"
+        if (Test-Path -LiteralPath (Join-Path $mc "versions\$forgeId\$forgeId.json")) {
+            Ok "Ya estaba instalado"
+        } else {
+            $inst = Join-Path $env:TEMP "forge-$forgeId-installer.jar"
+            Bajar $lista.forge_installer.url $inst $lista.forge_installer.sha1 | Out-Null
+            Info "Instalando (baja Minecraft $($lista.minecraft) si hace falta, tarda un poco)..."
+            $log = Join-Path $Juego 'forge-instalador.log'
+            for ($intento = 1; $intento -le 3; $intento++) {   # a veces se corta la descarga de Mojang
+                Start-Process -FilePath $java -ArgumentList '-jar', "`"$inst`"", '--installClient', "`"$mc`"" -WorkingDirectory $env:TEMP `
+                    -Wait -NoNewWindow -RedirectStandardOutput $log -RedirectStandardError "$log.err" | Out-Null
+                if (Test-Path -LiteralPath (Join-Path $mc "versions\$forgeId\$forgeId.json")) { break }
+                if ($intento -lt 3) { Info "Se cortó la descarga, pruebo de nuevo ($intento/3)..." }
+            }
+            if (-not (Test-Path -LiteralPath (Join-Path $mc "versions\$forgeId\$forgeId.json"))) {
+                throw "No se pudo instalar Forge (detalle en $log)"
+            }
+            Ok "Instalado"
+        }
     }
 
     Paso "Mods y shaders"
@@ -97,7 +100,7 @@ try {
         Ok "Idioma y teclas acomodadas"
     }
 
-    if (-not $SinPerfil) {
+    if (-not $SinPerfil -and -not $SoloArchivos) {
         Paso "Perfil 'Warband Craft' en el launcher"
         $mem = Memoria 6
         $jvm = "-Xmx${mem}G -Xms2G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M"
@@ -115,6 +118,22 @@ try {
             [IO.File]::WriteAllText($p, ($json | ConvertTo-Json -Depth 32), (New-Object Text.UTF8Encoding $false))
         }
         Ok "Perfil listo ($mem GB de memoria)"
+    }
+
+    if (-not $SoloArchivos) {
+        Paso "Acceso directo 'Jugar Warband Craft'"
+        $act = Join-Path $Juego 'actualizador'
+        New-Item -ItemType Directory -Force -Path $act | Out-Null
+        $script = Join-Path $act 'actualizar.ps1'
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'actualizar.ps1') -Destination $script -Force
+        $ws = New-Object -ComObject WScript.Shell
+        $lnk = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'Jugar Warband Craft.lnk'))
+        $lnk.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        $lnk.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$script`""
+        $lnk.WorkingDirectory = $act
+        $lnk.Description = 'Actualiza Warband Craft y abre el launcher de Minecraft'
+        $lnk.Save()
+        Ok "En el escritorio: entrá siempre por ahí y se actualiza solo"
     }
 
     Write-Host ""

@@ -3,17 +3,25 @@
 
 Minecraft 1.20.1 convertido en un Mount & Blade: facciones, aldeas, castillos, ejércitos, asedios y mazmorras.
 
-INSTALAR (una sola vez)
+DESCARGA
+Siempre la última versión: https://github.com/aleberh23/warbandcraft/releases/download/ultima/WarbandCraft-juego.zip
+Servidor: gs-04.baires.host:25830 (la primera vez: /register <contraseña> <contraseña>; después: /login <contraseña>)
+
+OPCIÓN A - LAUNCHER OFICIAL (Minecraft original)
 1. Necesitás el launcher oficial de Minecraft (Java Edition) con tu cuenta. Abrilo al menos una vez y CERRALO.
 2. Descomprimí este .zip entero en una carpeta cualquiera (click derecho > Extraer todo).
 3. Doble click en "Instalar Warband Craft.bat". Si Windows avisa ("Windows protegió su PC"), tocá
    "Más información" > "Ejecutar de todas formas". Tarda unos minutos: baja Java, Forge y los mods.
-4. Abrí el launcher, elegí el perfil "Warband Craft" (abajo a la izquierda, al lado de Jugar) y jugá.
+4. Te deja en el escritorio el acceso directo "Jugar Warband Craft". ENTRÁ SIEMPRE POR AHÍ: se actualiza solo
+   (mod, mods y configuración) y después abre el launcher. Elegí el perfil "Warband Craft" y dale a Jugar.
 
-Todo queda en %APPDATA%\.warbandcraft (mundos, mods, configuración). Tus otros mods y mundos no se tocan.
+OPCIÓN B - PRISM LAUNCHER (Windows)
+1. Instalá Prism Launcher (https://prismlauncher.org) y agregá tu cuenta.
+2. Agregar instancia > Importar > pegá este link y aceptá:
+   https://github.com/aleberh23/warbandcraft/releases/download/ultima/WarbandCraft-Prism.zip
+3. Dale a Iniciar. Cada vez que lo abrís, antes de arrancar se actualiza solo (la primera vez tarda más).
 
-ACTUALIZAR
-Cuando te pasen una versión nueva: descomprimila y volvé a correr "Instalar Warband Craft.bat". Tus mundos quedan.
+Todo queda aparte de tus otros mods y mundos.
 
 SHADERS
 Vienen prendidos (Complementary Reimagined). Si anda lento, apagalos: tecla O (o Opciones > Opciones de video >

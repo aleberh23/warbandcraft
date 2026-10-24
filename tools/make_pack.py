@@ -1,4 +1,4 @@
-"""Arma los paquetes para repartir: dist/WarbandCraft-<versión>-juego.zip y dist/WarbandCraft-<versión>-servidor.zip.
+"""Arma los paquetes para repartir: dist/WarbandCraft-<versión>-juego.zip, -servidor.zip y -prism.zip (instancia de Prism).
 
 Adentro va solo lo nuestro (instaladores, lista de mods, warbandcraft.jar); los demás mods los bajan los instaladores
 de Modrinth (Recruits y Workers son All Rights Reserved: no se pueden meter en el zip).
@@ -49,6 +49,29 @@ def main():
             z.write(PACK / "mods.json", top + "mods.json")
             z.write(jar, top + jar.name)
         print(f"{out.relative_to(ROOT)}  ({out.stat().st_size // 1024} KB)")
+
+    # Instancia de Prism Launcher: Minecraft + Forge, y antes de abrir corre actualizar.ps1 (baja mods y mod nuestro).
+    # Se importa en Prism con Agregar instancia > Importar > link de la release.
+    out = dist / f"WarbandCraft-{v}-prism.zip"
+    cfg = (CR + LF).join([
+        "InstanceType=OneSix",
+        "name=Warband Craft",
+        "iconKey=default",
+        "OverrideCommands=true",
+        'PreLaunchCommand=powershell -NoProfile -ExecutionPolicy Bypass -File \\"$INST_DIR/actualizar.ps1\\" -Prism',
+        "OverrideMemory=true",
+        "MinMemAlloc=2048",
+        "MaxMemAlloc=6144",
+    ]) + CR + LF
+    pack_json = json.dumps({"formatVersion": 1, "components": [
+        {"uid": "net.minecraft", "version": mods["minecraft"], "important": True},
+        {"uid": "net.minecraftforge", "version": mods["forge"]},
+    ]}, indent=2)
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("instance.cfg", cfg)
+        z.writestr("mmc-pack.json", pack_json)
+        add(z, PACK / "cliente" / "actualizar.ps1", "actualizar.ps1")
+    print(f"{out.relative_to(ROOT)}  ({out.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":

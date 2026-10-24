@@ -1,6 +1,7 @@
 name: Compilar
 
-# Cada push a main compila el mod y deja el .jar en la release "ultima".
+# Cada push a main compila el mod y deja en la release pública "ultima": el .jar, WarbandCraft-juego.zip (instalador;
+# también lo baja el acceso directo "Jugar Warband Craft") y WarbandCraft-Prism.zip (instancia de Prism que se actualiza sola).
 # Cuando termina bien, arranca "Subir al servidor" (deploy.yml).
 on:
   push:
@@ -46,7 +47,10 @@ jobs:
           ls -la build/libs
           JAR=$(ls build/libs/warbandcraft-*.jar | grep -v -e sources -e slim | head -n1)
           gh release delete ultima --yes --cleanup-tag || true
-          gh release create ultima "$JAR" --prerelease --target "$GITHUB_SHA" \
+          python3 tools/make_pack.py
+          cp dist/WarbandCraft-*-juego.zip WarbandCraft-juego.zip
+          cp dist/WarbandCraft-*-prism.zip WarbandCraft-Prism.zip
+          gh release create ultima "$JAR" WarbandCraft-juego.zip WarbandCraft-Prism.zip --prerelease --target "$GITHUB_SHA" \
             --title "Última compilación" \
             --notes "Compilado automáticamente desde ${GITHUB_SHA::7}: $(git log -1 --pretty=%s)"
 

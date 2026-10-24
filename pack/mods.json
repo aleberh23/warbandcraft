@@ -12,6 +12,8 @@
       "url": "https://cdn.modrinth.com/data/WOg9lm4u/versions/2zXpVxK4/recruits-1.20.1-1.15.2.jar", "sha1": "8d2ed3f0ab18c67a1d9394526bcae47b3ec162ab" },
     { "name": "Villager Workers", "side": "both", "folder": "mods", "file": "workers-1.20.1-2.0.3.jar",
       "url": "https://cdn.modrinth.com/data/Pqlv7VM3/versions/49csRXJc/workers-1.20.1-2.0.3.jar", "sha1": "1f68527132995485145433b07cd459fb4b602d06" },
+    { "name": "ServerOfflineAuth (login con contraseña)", "side": "server", "folder": "mods", "file": "server_offline_auth-0.2.0-beta-1.20.1-forge.jar",
+      "url": "https://cdn.modrinth.com/data/Slc6GcNQ/versions/lB4EmTeu/server_offline_auth-0.2.0-beta-1.20.1-forge.jar", "sha1": "a6188204420b9a234ce1f7f842ef75220de8a7a2" },
     { "name": "Xaero's Minimap", "side": "client", "folder": "mods", "file": "xaerominimap-forge-1.20.1-26.6.0.jar",
       "url": "https://cdn.modrinth.com/data/1bokaNcj/versions/dB6E0CY9/xaerominimap-forge-1.20.1-26.6.0.jar", "sha1": "ee73886f2f5f27bf28cffa7cc8f2b9b4540df2aa" },
     { "name": "YUNG's API", "side": "both", "folder": "mods", "file": "YungsApi-1.20-Forge-4.0.6.jar",
