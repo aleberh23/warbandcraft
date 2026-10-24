@@ -97,8 +97,15 @@ jobs:
         env:
           PANEL_API_KEY: ${{ secrets.PANEL_API_KEY }}
         run: |
-          curl -fsS -X POST "$PANEL_URL/api/panel/servers/$SERVER_ID/power" \
-            -H "Authorization: Bearer $PANEL_API_KEY" \
-            -H "Accept: application/json" -H "Content-Type: application/json" \
-            -d '{"signal":"restart"}'
-          echo "Reinicio pedido. En 1 o 2 minutos el servidor está arriba con la versión nueva."
+          ok=0
+          for url in "$PANEL_URL/api/panel/servers/$SERVER_ID/power" "$PANEL_URL/api/client/servers/${SERVER_ID%%-*}/power"; do
+            code=$(curl -sS -o resp.txt -D head.txt -w '%{http_code}' -X POST "$url" \
+              -H "Authorization: Bearer $PANEL_API_KEY" -H "Accept: application/json" -H "Content-Type: application/json" \
+              -H "User-Agent: warbandcraft-deploy/1.0" -d '{"signal":"restart"}' || echo 000)
+            echo "== $url -> HTTP $code"
+            grep -i -E '^(server|cf-ray|cf-mitigated|content-type):' head.txt || true
+            head -c 400 resp.txt; echo
+            case "$code" in 2*) ok=1; break;; esac
+          done
+          if [ "$ok" = 1 ]; then echo "Reinicio pedido. En 1 o 2 minutos el servidor está arriba con la versión nueva."
+          else echo "::warning::No se pudo reiniciar por la API: reinicialo desde el panel"; exit 1; fi
