@@ -122,6 +122,19 @@ public final class Tutorial {
         }
     }
 
+    /**
+     * Vanilla hace aparecer al jugador arriba de todo lo de la columna del spawn (el techo del salón). Al entrar al mundo
+     * o reaparecer: si quedó arriba del salón (o adentro de las paredes), va al lugar de aparecer de adentro.
+     */
+    public static void fixSpawn(net.minecraft.server.level.ServerPlayer player) {
+        BlockPos c = cachedCenter;
+        if (c == null || player.level().dimension() != Level.OVERWORLD) return;
+        double dx = player.getX() - (c.getX() + 0.5), dz = player.getZ() - (c.getZ() + 0.5);
+        if (Math.abs(dx) > PLAZA + 1 || Math.abs(dz) > PLAZA + 1 || player.getY() < c.getY() + HEIGHT - 1) return;
+        player.stopRiding();
+        player.teleportTo(player.serverLevel(), c.getX() + 0.5, c.getY() + 1, c.getZ() + 3.5, 180.0F, 0.0F);
+    }
+
     // ------------------------------------------------------------------ libros
 
     /** Cada {@link #RESTOCK_TICKS}: vuelve a poner los libros que faltan (al arrancar, todos: así llegan los textos nuevos). */

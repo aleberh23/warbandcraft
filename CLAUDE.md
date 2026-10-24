@@ -559,6 +559,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   romper, poner, usar ítems contra bloques (atriles sí se usan), baldes, explosiones, pistones, pisar cultivos, mob griefing.
   Creativo + operador sí puede. `Compat.foreignStructureAt/surfaceStructureIn` lo cuentan como estructura (castillos,
   mazmorras, obras, campos de batalla lo esquivan) y `RoadPlanner.usable` no pone camino ahí.
+- Vanilla hace aparecer arriba de todo lo de la columna del spawn (el techo): `Tutorial.fixSpawn` (al entrar y al reaparecer)
+  mueve adentro al que quedó arriba del salón.
 - `/spawn` (todos, `command/SpawnCommand`): te lleva al spawn del overworld (corta el viaje, te baja del caballo; tus soldados quedan). No para zafar:
   no anda a `COMBAT_SECONDS` (15) de un golpe recibido o dado (`LivingHurtEvent`, en memoria) ni con un `Mob` a `ENEMY_RANGE`
   (32) que te tiene de objetivo. Creativo/espectador, sí.

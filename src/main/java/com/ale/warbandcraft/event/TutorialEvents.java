@@ -108,6 +108,17 @@ public class TutorialEvents {
         com.ale.warbandcraft.command.SpawnCommand.onHurt(event.getEntity(), event.getSource().getEntity());
     }
 
+    /** Vanilla te pone arriba del techo: adentro. */
+    @SubscribeEvent
+    public void onLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) Tutorial.fixSpawn(p);
+    }
+
+    @SubscribeEvent
+    public void onRespawn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent event) {
+        if (!event.isEndConquered() && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) Tutorial.fixSpawn(p);
+    }
+
     @SubscribeEvent
     public void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         com.ale.warbandcraft.command.SpawnCommand.forget(event.getEntity());
