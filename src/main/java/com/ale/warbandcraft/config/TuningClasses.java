@@ -30,6 +30,7 @@ final class TuningClasses {
             "camp.WorkerZone",
             "castle.CastleDesigns",
             "castle.CastleShape",
+            "command.SpawnCommand",
             "command.TestArmyCommand",
             "command.WarbandCommand",
             "dungeon.Bandits",

@@ -13,7 +13,7 @@ Acá adentro y en los alrededores (5x5 chunks) no se puede romper ni construir. 
 
 Si te morís sin cama, volvés a aparecer acá.
 
-Para volver a leer algo: /spawn te trae de vuelta desde donde estés.
+Para volver a leer algo: /spawn te trae de vuelta desde donde estés. No anda en medio de una pelea.
 ---
 ## Primeros pasos
 1. Conseguí madera, un cofre y una mesa de herrería y fabricá un Campamento (libro 2). Ponelo donde quieras tu base.

@@ -102,6 +102,17 @@ public class TutorialEvents {
         }
     }
 
+    /** /spawn: anota el último golpe recibido o dado (getEntity = el dueño de la flecha). */
+    @SubscribeEvent
+    public void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        com.ale.warbandcraft.command.SpawnCommand.onHurt(event.getEntity(), event.getSource().getEntity());
+    }
+
+    @SubscribeEvent
+    public void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        com.ale.warbandcraft.command.SpawnCommand.forget(event.getEntity());
+    }
+
     /** Endermen, ravagers y compañía no tocan nada en la zona. */
     @SubscribeEvent
     public void onMobGriefing(EntityMobGriefingEvent event) {
