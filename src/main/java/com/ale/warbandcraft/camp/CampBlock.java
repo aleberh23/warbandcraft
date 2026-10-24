@@ -44,7 +44,16 @@ public class CampBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof CampBlockEntity camp && player instanceof ServerPlayer sp) {
-            CampTabs.open(sp, camp, CampTabs.CHEST);
+            // Pedido de Ale ("mi compañero no puede abrir el Campamento"): queda en el log quién lo abre y si es de su facción
+            com.ale.warbandcraft.WarbandCraft.LOGGER.info("Campamento en {}: lo abre {} (dueño {}, facción del que abre {}, del dueño {}, puede usarlo {})",
+                    pos.toShortString(), sp.getName().getString(), camp.getOwner(),
+                    com.ale.warbandcraft.faction.Allies.factionOf(sp.getUUID()), com.ale.warbandcraft.faction.Allies.factionOf(camp.getOwner()),
+                    camp.canBeUsedBy(sp.getUUID()));
+            try {
+                CampTabs.open(sp, camp, CampTabs.CHEST);
+            } catch (RuntimeException e) {
+                com.ale.warbandcraft.WarbandCraft.LOGGER.error("No se pudo abrir el Campamento en {} para {}", pos.toShortString(), sp.getName().getString(), e);
+            }
         }
         return InteractionResult.CONSUME;
     }
