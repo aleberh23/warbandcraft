@@ -26,5 +26,5 @@ src.zip
 out/
 
 # clases sueltas de Recruits (All Rights Reserved: no van al repo)
-com/
+/com/
 *.class
