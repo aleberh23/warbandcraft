@@ -100,6 +100,69 @@ try {
         Ok "Idioma y teclas acomodadas"
     }
 
+    # Pack de texturas John Smith Legacy. Su web no deja bajarlo por script (anti-hotlinking) ni se puede repartir:
+    # se baja a mano de la página oficial y acá lo buscamos en Descargas, lo copiamos y lo dejamos activado.
+    Paso "Pack de texturas John Smith Legacy"
+    $jslSha1 = 'ce2726b362daec1719e4ebcda7e5b2c87e1025a9'
+    $jslBytes = 35786496
+    $jslNombre = 'JohnSmithLegacy-1.20.1-v4.zip'
+    $jslWeb = 'https://www.johnsmithlegacy.co.uk/'
+    $rp = Join-Path $Juego 'resourcepacks'
+    New-Item -ItemType Directory -Force -Path $rp | Out-Null
+    $jslDestino = Join-Path $rp $jslNombre
+    $jslMarca = Join-Path $Juego '.pack-texturas-preguntado'
+    function BuscarJsl {
+        $carpetas = @()
+        try { $carpetas += (New-Object -ComObject Shell.Application).Namespace('shell:Downloads').Self.Path } catch { }
+        $carpetas += (Join-Path $env:USERPROFILE 'Downloads')
+        foreach ($c in ($carpetas | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique)) {
+            $z = Get-ChildItem -LiteralPath $c -Filter '*.zip' -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Length -eq $jslBytes } | Where-Object { (Sha1 $_.FullName) -eq $jslSha1 } | Select-Object -First 1
+            if ($z) { return $z.FullName }
+        }
+        return $null
+    }
+    $jslNuevo = $false
+    if ((Test-Path -LiteralPath $jslDestino) -and ((Sha1 $jslDestino) -eq $jslSha1)) {
+        Ok "Ya estaba"
+    } else {
+        $encontrado = BuscarJsl
+        if (-not $encontrado -and -not $SoloArchivos -and -not (Test-Path -LiteralPath $jslMarca)) {
+            Write-Host "   Se baja a mano (la web no deja que un programa lo baje). Te abro la página oficial:" -ForegroundColor Yellow
+            Write-Host "   descargá 'John Smith Legacy 1.20.1 v4' (sección Java, Trails & Tales) y dejalo en Descargas."
+            Write-Host "   Te espero hasta 5 minutos. Para seguir sin el pack, apretá Enter."
+            Start-Process $jslWeb
+            [IO.File]::WriteAllText($jslMarca, "Ya se ofreció bajar el pack de texturas`r`n")
+            $hasta = (Get-Date).AddMinutes(5)
+            while (-not $encontrado -and (Get-Date) -lt $hasta) {
+                if ([Console]::KeyAvailable -and [Console]::ReadKey($true).Key -eq 'Enter') { break }
+                Start-Sleep -Seconds 2
+                $encontrado = BuscarJsl
+            }
+        }
+        if ($encontrado) {
+            Copy-Item -LiteralPath $encontrado -Destination $jslDestino -Force
+            $jslNuevo = $true
+            Ok "Copiado y activado"
+        } else {
+            Info "Sin el pack por ahora. Cuando lo bajes de $jslWeb, volvé a abrir el juego por 'Jugar Warband Craft' y se pone solo."
+        }
+    }
+    if ($jslNuevo) {
+        # Activarlo una vez (arriba de los demás); si después lo sacás en Opciones > Paquetes de recursos, no lo volvemos a poner.
+        $lineas = [Collections.Generic.List[string]]::new()
+        if (Test-Path -LiteralPath $opciones) { $lineas.AddRange([IO.File]::ReadAllLines($opciones)) }
+        $i = $lineas.FindIndex([Predicate[string]]{ param($x) $x.StartsWith('resourcePacks:') })
+        $valor = 'resourcePacks:["vanilla","file/' + $jslNombre + '"]'
+        if ($i -ge 0) {
+            if ($lineas[$i] -notmatch [regex]::Escape($jslNombre)) { $lineas[$i] = $lineas[$i] -replace '\]\s*$', (',"file/' + $jslNombre + '"]') }
+        } else {
+            if (-not ($lineas | Where-Object { $_.StartsWith('version:') })) { $lineas.Add('version:3465') }
+            $lineas.Add($valor)
+        }
+        [IO.File]::WriteAllLines($opciones, $lineas, (New-Object Text.UTF8Encoding $false))
+    }
+
     if (-not $SinPerfil -and -not $SoloArchivos) {
         Paso "Perfil 'Warband Craft' en el launcher"
         $mem = Memoria 6

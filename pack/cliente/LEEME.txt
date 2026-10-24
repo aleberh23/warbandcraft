@@ -23,6 +23,11 @@ OPCIÓN B - PRISM LAUNCHER (Windows)
 
 Todo queda aparte de tus otros mods y mundos.
 
+PACK DE TEXTURAS (John Smith Legacy)
+La primera vez el instalador te abre la página oficial (johnsmithlegacy.co.uk): descargá "John Smith Legacy 1.20.1 v4"
+(sección Java, Trails & Tales) y listo, el instalador lo encuentra en Descargas y lo deja activado. Es opcional:
+si no lo bajás, jugás con las texturas normales. Se saca en Opciones > Paquetes de recursos.
+
 SHADERS
 Vienen prendidos (Complementary Reimagined). Si anda lento, apagalos: tecla O (o Opciones > Opciones de video >
 Paquetes de shaders) > "Shaders: ON" para que quede en OFF > Listo. Sin shaders anda mucho más rápido.
