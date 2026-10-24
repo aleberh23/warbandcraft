@@ -1130,6 +1130,16 @@ Entidades de Recruits útiles: `recruit`, `recruit_shieldman`, `bowman`, `crossb
 - Patrullas NPC: `world/RecruitsPatrolSpawn` (base para las facciones NPC de H2).
 - Facciones y diplomacia: `world/RecruitsFactionManager`, `RecruitsDiplomacyManager`.
 
+## Versión en el nombre del jar (pedido de Ale, 24/10, vale para todas las sesiones)
+El jar se llama `warbandcraft-<mod_version>-<commit corto>.jar` (ej. `warbandcraft-1.0.0-60d2304.jar`) y esa misma versión
+sale en la lista de mods del juego: así se ve enseguida qué versión tiene el server y cada jugador. `build.gradle` la arma con
+`GITHUB_SHA` en Actions o `git rev-parse --short=7 HEAD` en la PC (sin git queda `1.0.0`) y borra los jars viejos de
+`build/libs` antes de armar el nuevo. Nada tiene que asumir el nombre fijo `warbandcraft-1.0.0.jar`: buscar
+`warbandcraft-*.jar` (sin `-sources`/`-slim`). Ya lo hacen `make_pack.py`, `compilar.bat`, `comun.ps1` (mueve las versiones
+viejas a `mods-viejos/`) y los workflows `build.yml` y `deploy.yml` (el `mirror --delete` borra del server el jar viejo).
+`diagnostico.yml` también (`mget /mods/warbandcraft-*.jar`).
+`mod_version` en `gradle.properties` sigue siendo la versión "humana" (se sube a mano) y la de los nombres de los zips.
+
 ## Compilar
 
 `./gradlew build` → `build/libs/warbandcraft-<versión>.jar`. Ese jar va a la carpeta `mods` junto con Recruits.

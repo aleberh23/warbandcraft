@@ -2,7 +2,7 @@
 
 Adentro va solo lo nuestro (instaladores, lista de mods, warbandcraft.jar); los demás mods los bajan los instaladores
 de Modrinth (Recruits y Workers son All Rights Reserved: no se pueden meter en el zip).
-Uso: python tools/make_pack.py   (después de compilar: usa build/libs/warbandcraft-<versión>.jar)
+Uso: python tools/make_pack.py   (después de compilar: usa build/libs/warbandcraft-<versión>-<commit>.jar)
 """
 import json
 import pathlib
@@ -63,9 +63,11 @@ def guide(v):
 
 def main():
     v = version()
-    jar = ROOT / "build" / "libs" / f"warbandcraft-{v}.jar"
-    if not jar.exists():
-        raise SystemExit(f"Falta {jar}: compilá primero")
+    # El jar lleva el commit en el nombre (warbandcraft-1.0.0-60d2304.jar): se busca, no se arma el nombre.
+    jars = [p for p in (ROOT / "build" / "libs").glob("warbandcraft-*.jar") if not re.search(r"-(sources|slim)\.jar$", p.name)]
+    if len(jars) != 1:
+        raise SystemExit(f"Tiene que haber un solo warbandcraft-*.jar en build/libs (hay {len(jars)}): compilá de nuevo")
+    jar = jars[0]
     mods = json.loads((PACK / "mods.json").read_text(encoding="utf-8"))
     for f in mods["files"]:
         assert f["side"] in ("both", "client", "server"), f

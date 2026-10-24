@@ -4,7 +4,16 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
 
-version = mod_version
+// Versión con el commit en el nombre del jar (warbandcraft-1.0.0-60d2304.jar), pedido de Ale: así se ve enseguida qué
+// versión tiene el server y cada jugador. En GitHub Actions sale de GITHUB_SHA; en la PC, del último commit de git.
+def buildId = System.getenv('GITHUB_SHA')?.take(7)
+if (!buildId) {
+    try {
+        buildId = ['git', 'rev-parse', '--short=7', 'HEAD'].execute(null, projectDir).text.trim()
+    } catch (ignored) {
+    }
+}
+version = buildId ? "${mod_version}-${buildId}".toString() : mod_version
 group = mod_group_id
 
 base {
@@ -137,7 +146,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
-            mod_version            : mod_version,
+            mod_version            : project.version.toString(),   // con el commit, se ve en la lista de mods
             mod_authors            : mod_authors,
             mod_description        : mod_description,
     ]
@@ -170,4 +179,11 @@ tasks.withType(JavaCompile).configureEach {
 // Recruits trae mixins: en el entorno de desarrollo necesitan el archivo SRG->MCP antes de arrancar
 tasks.matching { it.name.startsWith('prepareRun') }.configureEach {
     dependsOn 'createSrgToMcp'
+}
+
+// Con el commit en el nombre, build/libs juntaría un jar por compilación y compilar.bat / make_pack.py copiarían varios.
+tasks.named('jar') {
+    doFirst {
+        delete fileTree(destinationDirectory) { include 'warbandcraft-*.jar' }
+    }
 }
