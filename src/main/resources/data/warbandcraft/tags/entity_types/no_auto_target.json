@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#forge:bosses",
+    { "id": "dungeonnowloading:chaos_spawner", "required": false },
+    { "id": "dungeonnowloading:fairkeeper_boros", "required": false },
+    { "id": "dungeonnowloading:fairkeeper_ouros", "required": false }
+  ]
+}

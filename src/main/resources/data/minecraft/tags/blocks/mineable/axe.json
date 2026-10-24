@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "warbandcraft:camp"
+    "warbandcraft:camp",
+    "warbandcraft:route_post"
   ]
 }

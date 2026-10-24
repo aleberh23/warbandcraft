@@ -1,0 +1,102 @@
+{
+  "name": "Liga de los Pantanos",
+  "of_name": "de la Liga de los Pantanos",
+  "soldier_suffix": "de los Pantanos",
+  "order": 30,
+  "color": "dark_green",
+  "armor_color": "#3F5A2A",
+  "banner": {
+    "base": "green",
+    "patterns": [
+      {
+        "pattern": "minecraft:gradient_up",
+        "color": "brown"
+      },
+      {
+        "pattern": "minecraft:flower",
+        "color": "lime"
+      }
+    ]
+  },
+  "biomes": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp",
+    "#minecraft:is_jungle",
+    "#minecraft:is_savanna"
+  ],
+  "garrison": {
+    "min": 4,
+    "max": 8
+  },
+  "troops": [
+    {
+      "name": "Ballestero",
+      "kit": "warbandcraft:ballestero",
+      "weight": 4,
+      "equipment": {
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ],
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:leather_helmet"
+        ],
+        "offhand": [
+          "magistuarmory:iron_pavese",
+          "none"
+        ]
+      }
+    },
+    {
+      "name": "Zapador",
+      "kit": "warbandcraft:zapador",
+      "weight": 2
+    },
+    {
+      "name": "Emboscador",
+      "kit": "warbandcraft:infante",
+      "weight": 2,
+      "equipment": {
+        "offhand": "none",
+        "mainhand": [
+          "magistuarmory:iron_guisarme",
+          "minecraft:iron_sword"
+        ],
+        "feet": "minecraft:leather_boots",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:leather_helmet"
+        ],
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:chainmail_chestplate"
+        ]
+      }
+    },
+    {
+      "name": "Piquero",
+      "kit": "warbandcraft:lancero",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_ranseur",
+          "minecraft:iron_axe"
+        ],
+        "offhand": "none",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:pantyhose",
+          "minecraft:leather_leggings"
+        ]
+      }
+    }
+  ]
+}

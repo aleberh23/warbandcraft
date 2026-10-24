@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "betterdungeons:skeleton_dungeon", "required": false },
+    { "id": "betterdungeons:zombie_dungeon", "required": false },
+    { "id": "betterdungeons:spider_dungeon", "required": false },
+    { "id": "cataclysm:frosted_prison", "required": false },
+    { "id": "cataclysm:cursed_pyramid", "required": false },
+    { "id": "cataclysm:ancient_factory", "required": false },
+    { "id": "cataclysm:sunken_city", "required": false },
+    { "id": "cataclysm:acropolis", "required": false },
+    { "id": "dungeonnowloading:labyrinth", "required": false },
+    { "id": "dungeonnowloading:temple_of_duality", "required": false }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "name": "Bandidos",
+  "of_name": "de los Bandidos",
+  "soldier_suffix": "bandido",
+  "order": 900,
+  "outlaw": true,
+  "color": "gray",
+  "armor_color": "#4A3B2C",
+  "banner": {
+    "base": "black",
+    "patterns": [
+      {
+        "pattern": "minecraft:skull",
+        "color": "white"
+      }
+    ]
+  },
+  "garrison": {
+    "min": 6,
+    "max": 10
+  },
+  "troops": [
+    {
+      "name": "Salteador",
+      "kit": "warbandcraft:infante",
+      "entity": "recruits:recruit",
+      "weight": 5,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:club",
+          "minecraft:stone_sword"
+        ],
+        "offhand": "none",
+        "chest": [
+          "magistuarmory:rustedchainmail_chestplate",
+          "minecraft:leather_chestplate"
+        ],
+        "head": "none",
+        "legs": "none",
+        "feet": "minecraft:leather_boots"
+      }
+    },
+    {
+      "name": "Matón",
+      "kit": "warbandcraft:infante",
+      "entity": "recruits:recruit",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:rusted_heavymace",
+          "minecraft:iron_axe"
+        ],
+        "offhand": "none",
+        "chest": [
+          "magistuarmory:rustedcrusader_chestplate",
+          "minecraft:leather_chestplate"
+        ],
+        "head": [
+          "magistuarmory:rustedbarbute",
+          "minecraft:leather_helmet"
+        ],
+        "legs": [
+          "magistuarmory:rustedchainmail_leggings",
+          "minecraft:leather_leggings"
+        ]
+      }
+    },
+    {
+      "name": "Cazador furtivo",
+      "kit": "warbandcraft:arquero",
+      "weight": 3,
+      "equipment": {
+        "head": "none",
+        "chest": "minecraft:leather_chestplate"
+      }
+    },
+    {
+      "name": "Campesino armado",
+      "kit": "warbandcraft:infante",
+      "entity": "recruits:recruit",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:pitchfork",
+          "minecraft:wooden_sword"
+        ],
+        "offhand": "none",
+        "head": [
+          "magistuarmory:rustedkettlehat",
+          "none"
+        ],
+        "chest": "minecraft:leather_chestplate",
+        "legs": "none",
+        "feet": "none"
+      }
+    }
+  ]
+}

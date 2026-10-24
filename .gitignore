@@ -2,6 +2,7 @@
 build/
 out/
 run/
+run-tests/
 runs/
 .idea/
 *.iml
@@ -10,3 +11,20 @@ runs/
 .vscode/
 .DS_Store
 .jdk17/
+libs/
+build-log.txt
+test-log.txt
+client-log.txt
+
+dist/
+
+# logs y archivos sueltos que no van al repo
+logs/
+*.log
+test-log-*.txt
+src.zip
+out/
+
+# clases sueltas de Recruits (All Rights Reserved: no van al repo)
+com/
+*.class

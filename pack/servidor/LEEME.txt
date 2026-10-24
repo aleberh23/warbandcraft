@@ -1,0 +1,34 @@
+﻿WARBAND CRAFT - SERVIDOR (versión 1.0.0)
+========================================
+
+Para jugar con un amigo en el mismo mundo. Uno de los dos lo prende en su compu y el otro se conecta.
+
+ARMARLO (una sola vez)
+1. Descomprimí este .zip en una carpeta que vaya a ser "el servidor" (por ejemplo Documentos\Servidor Warband).
+   Ahí van a quedar el mundo y todo lo demás.
+2. Doble click en "Instalar servidor.bat". Te va a pedir aceptar el EULA de Minecraft (S).
+3. Doble click en "Iniciar servidor.bat". La primera vez tarda en crear el mundo. Cuando diga "Done" ya está.
+   Para apagarlo: escribí  stop  en esa ventana y Enter (así guarda bien el mundo).
+
+ENTRAR
+- El que lo hospeda: Multijugador > Agregar servidor > dirección  localhost
+- El amigo:
+  * En la misma casa (mismo wifi): la IP de la compu del servidor (en esa compu: Win+R, "cmd", "ipconfig",
+    la "Dirección IPv4", algo como 192.168.0.15).
+  * Desde otra casa, lo más fácil: Radmin VPN (gratis). Los dos lo instalan, uno crea una red, el otro se une, y el
+    amigo entra con la IP que muestra Radmin para la compu del servidor (26.x.x.x).
+  * O abrir el puerto 25565 (TCP) en el router de la casa del servidor y pasarle tu IP pública.
+  Windows puede preguntar si deja pasar a Java por el firewall: decile que sí (redes privadas).
+
+SER ADMINISTRADOR (para los comandos /warband prueba ...)
+En la ventana del servidor escribí:  op TuNombreDeMinecraft
+
+ACTUALIZAR
+Apagá el servidor (stop), descomprimí la versión nueva ENCIMA de esta carpeta y corré "Instalar servidor.bat" de nuevo.
+El mundo (carpeta world) y la configuración quedan.
+
+NOTAS
+- El servidor lleva los mods del juego menos los que son solo de pantalla (minimapa, shaders, rendimiento gráfico).
+- Los números del juego se cambian en config\warbandcraft-common.toml (con el servidor apagado).
+- Memoria: se pone sola según la compu (user_jvm_args.txt). Si el que hospeda también juega en la misma compu,
+  conviene tener 16 GB de RAM.

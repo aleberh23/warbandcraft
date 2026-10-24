@@ -1,0 +1,36 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/oak_planks",
+    "post": "minecraft:block/spruce_log",
+    "top": "minecraft:block/spruce_log_top",
+    "board": "minecraft:block/oak_planks",
+    "board2": "minecraft:block/birch_planks"
+  },
+  "elements": [
+    {
+      "from": [7, 0, 7], "to": [9, 16, 9],
+      "faces": {
+        "north": { "texture": "#post" }, "south": { "texture": "#post" },
+        "east": { "texture": "#post" }, "west": { "texture": "#post" },
+        "up": { "texture": "#top" }, "down": { "texture": "#top", "cullface": "down" }
+      }
+    },
+    {
+      "from": [1, 10, 6], "to": [16, 14.5, 7],
+      "faces": {
+        "north": { "texture": "#board" }, "south": { "texture": "#board" },
+        "east": { "texture": "#board" }, "west": { "texture": "#board" },
+        "up": { "texture": "#board" }, "down": { "texture": "#board" }
+      }
+    },
+    {
+      "from": [0, 4.5, 9], "to": [15, 9, 10],
+      "faces": {
+        "north": { "texture": "#board2" }, "south": { "texture": "#board2" },
+        "east": { "texture": "#board2" }, "west": { "texture": "#board2" },
+        "up": { "texture": "#board2" }, "down": { "texture": "#board2" }
+      }
+    }
+  ]
+}

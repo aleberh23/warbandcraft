@@ -1,0 +1,102 @@
+{
+  "name": "Sultanato de Arena",
+  "of_name": "del Sultanato de Arena",
+  "soldier_suffix": "de Arena",
+  "order": 20,
+  "color": "gold",
+  "armor_color": "#E8D2A0",
+  "banner": {
+    "base": "yellow",
+    "patterns": [
+      {
+        "pattern": "minecraft:rhombus",
+        "color": "red"
+      },
+      {
+        "pattern": "minecraft:stripe_bottom",
+        "color": "red"
+      }
+    ]
+  },
+  "biomes": [
+    "minecraft:desert",
+    "#minecraft:is_badlands"
+  ],
+  "garrison": {
+    "min": 4,
+    "max": 7
+  },
+  "troops": [
+    {
+      "name": "Arquero montado",
+      "kit": "warbandcraft:arquero",
+      "entity": "recruits:nomad",
+      "horse": true,
+      "weight": 4,
+      "equipment": {
+        "head": [
+          "magistuarmory:shishak",
+          "minecraft:leather_helmet"
+        ],
+        "chest": [
+          "magistuarmory:lamellar_chestplate",
+          "minecraft:leather_chestplate"
+        ]
+      }
+    },
+    {
+      "name": "Jinete",
+      "kit": "warbandcraft:caballero",
+      "weight": 2,
+      "equipment": {
+        "head": [
+          "magistuarmoryaddon:saracen_helmet",
+          "magistuarmory:face_helmet",
+          "minecraft:golden_helmet"
+        ],
+        "chest": [
+          "magistuarmoryaddon:saracen_chestplate",
+          "magistuarmory:lamellar_chestplate",
+          "minecraft:leather_chestplate"
+        ],
+        "offhand": [
+          "magistuarmory:iron_rondache",
+          "none"
+        ],
+        "mainhand": [
+          "magistuarmory:iron_chivalrylance",
+          "minecraft:iron_sword"
+        ],
+        "feet": [
+          "magistuarmoryaddon:saracen_boots",
+          "magistuarmory:lamellar_boots",
+          "minecraft:leather_boots"
+        ]
+      }
+    },
+    {
+      "name": "Guardia",
+      "kit": "warbandcraft:infante",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:messer_sword",
+          "minecraft:iron_sword"
+        ],
+        "head": [
+          "magistuarmoryaddon:mamluk_helmet",
+          "magistuarmory:shishak",
+          "minecraft:golden_helmet"
+        ],
+        "offhand": [
+          "magistuarmory:iron_roundshield",
+          "minecraft:shield"
+        ],
+        "chest": [
+          "magistuarmory:lamellar_chestplate",
+          "minecraft:chainmail_chestplate"
+        ]
+      }
+    }
+  ]
+}

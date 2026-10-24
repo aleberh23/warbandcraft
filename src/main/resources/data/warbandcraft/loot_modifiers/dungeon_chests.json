@@ -1,0 +1,12 @@
+{
+  "type": "warbandcraft:dungeon_chests",
+  "conditions": [],
+  "namespaces": ["betterdungeons", "cataclysm", "dungeonnowloading", "nova_structures", "structory", "structory_towers", "minecraft"],
+  "exclude": ["village"],
+  "armament_chance": 0.6,
+  "armament_min": 2,
+  "armament_max": 6,
+  "emerald_chance": 0.85,
+  "emerald_min": 2,
+  "emerald_max": 7
+}

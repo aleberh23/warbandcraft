@@ -1,0 +1,145 @@
+{
+  "name": "Reino de Valdren",
+  "of_name": "del Reino de Valdren",
+  "soldier_suffix": "de Valdren",
+  "order": 40,
+  "color": "blue",
+  "armor_color": "#2B4C9A",
+  "banner": {
+    "base": "blue",
+    "patterns": [
+      {
+        "pattern": "minecraft:straight_cross",
+        "color": "yellow"
+      },
+      {
+        "pattern": "minecraft:border",
+        "color": "yellow"
+      }
+    ]
+  },
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:meadow",
+    "#minecraft:is_forest"
+  ],
+  "garrison": {
+    "min": 4,
+    "max": 8
+  },
+  "troops": [
+    {
+      "name": "Caballero",
+      "kit": "warbandcraft:caballero",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_chivalrylance",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:armet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:knight_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:knight_leggings",
+          "minecraft:iron_leggings"
+        ],
+        "feet": [
+          "magistuarmory:knight_boots",
+          "minecraft:iron_boots"
+        ]
+      }
+    },
+    {
+      "name": "Lancero",
+      "kit": "warbandcraft:lancero",
+      "weight": 3,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_pike",
+          "minecraft:iron_axe"
+        ],
+        "chest": [
+          "magistuarmoryaddon:pikeman_chestplate",
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:chainmail_chestplate"
+        ],
+        "offhand": "none",
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "feet": [
+          "magistuarmoryaddon:pikeman_boots",
+          "minecraft:leather_boots"
+        ]
+      }
+    },
+    {
+      "name": "Hombre de armas",
+      "kit": "warbandcraft:infante",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_bastardsword",
+          "minecraft:iron_sword"
+        ],
+        "head": [
+          "magistuarmory:bascinet",
+          "minecraft:iron_helmet"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "chest": [
+          "magistuarmory:chainmail_chestplate",
+          "minecraft:chainmail_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:chainmail_leggings",
+          "minecraft:chainmail_leggings"
+        ]
+      }
+    },
+    {
+      "name": "Abanderado",
+      "kit": "warbandcraft:abanderado",
+      "weight": 1
+    },
+    {
+      "name": "Alabardero",
+      "kit": "warbandcraft:lancero",
+      "weight": 1,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_concavehalberd",
+          "minecraft:iron_axe"
+        ],
+        "offhand": "none",
+        "head": [
+          "magistuarmory:sallet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:halfarmor_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:chainmail_leggings",
+          "minecraft:chainmail_leggings"
+        ]
+      }
+    }
+  ]
+}

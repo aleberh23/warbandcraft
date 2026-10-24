@@ -1,0 +1,134 @@
+{
+  "name": "Clanes del Norte",
+  "of_name": "de los Clanes del Norte",
+  "soldier_suffix": "del Norte",
+  "order": 10,
+  "color": "dark_aqua",
+  "armor_color": "#5B5E63",
+  "banner": {
+    "base": "gray",
+    "patterns": [
+      {
+        "pattern": "minecraft:triangles_bottom",
+        "color": "white"
+      },
+      {
+        "pattern": "minecraft:circle",
+        "color": "cyan"
+      },
+      {
+        "pattern": "minecraft:triangles_top",
+        "color": "white"
+      }
+    ]
+  },
+  "biomes": [
+    "#minecraft:is_taiga",
+    "minecraft:snowy_plains",
+    "minecraft:ice_spikes",
+    "minecraft:snowy_slopes",
+    "minecraft:grove"
+  ],
+  "garrison": {
+    "min": 5,
+    "max": 8
+  },
+  "troops": [
+    {
+      "name": "Hachero",
+      "kit": "warbandcraft:infante",
+      "weight": 5,
+      "equipment": {
+        "mainhand": "minecraft:iron_axe",
+        "legs": "minecraft:leather_leggings",
+        "offhand": [
+          "magistuarmory:iron_roundshield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "slavicarmory:varangian_helmet",
+          "magistuarmory:norman_helmet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "slavicarmory:rus_chainmail_chestplate",
+          "minecraft:chainmail_chestplate"
+        ]
+      }
+    },
+    {
+      "name": "Guerrero",
+      "kit": "warbandcraft:lancero",
+      "weight": 2,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_lochaberaxe",
+          "minecraft:stone_axe"
+        ],
+        "legs": "minecraft:leather_leggings",
+        "feet": [
+          "slavicarmory:rus_gambeson_boots",
+          "minecraft:leather_boots"
+        ],
+        "offhand": "none",
+        "head": [
+          "slavicarmory:gnezdovo_helmet",
+          "magistuarmory:norman_helmet",
+          "minecraft:leather_helmet"
+        ],
+        "chest": [
+          "slavicarmory:rus_gambeson",
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ]
+      }
+    },
+    {
+      "name": "Cazador",
+      "kit": "warbandcraft:arquero",
+      "weight": 2,
+      "equipment": {
+        "head": [
+          "slavicarmory:shapka",
+          "minecraft:leather_helmet"
+        ],
+        "mainhand": [
+          "magistuarmory:longbow",
+          "minecraft:bow"
+        ],
+        "chest": [
+          "slavicarmory:rus_gambeson",
+          "minecraft:leather_chestplate"
+        ]
+      }
+    },
+    {
+      "name": "Varego",
+      "kit": "warbandcraft:infante",
+      "weight": 1,
+      "equipment": {
+        "mainhand": [
+          "magistuarmory:iron_bastardsword",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_kiteshield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "slavicarmory:varangian_guard_helmet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "slavicarmory:rus_heavy_lamellar_chestplate",
+          "magistuarmory:lamellar_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "feet": [
+          "slavicarmory:rus_heavy_lamellar_boots",
+          "minecraft:iron_boots"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "nova_structures:tavern_acacia",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_birch",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_cherry",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_dark_oak",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_desert",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_jungle",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_mangrove",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_oak",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_snowy",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_spruce",
+      "required": false
+    },
+    {
+      "id": "nova_structures:tavern_swamp",
+      "required": false
+    }
+  ]
+}

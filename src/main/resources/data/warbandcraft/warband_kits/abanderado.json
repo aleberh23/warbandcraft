@@ -9,8 +9,14 @@
       "min_level": 0,
       "equipment": {
         "head": "minecraft:white_banner",
-        "mainhand": "minecraft:stone_sword",
-        "chest": "minecraft:leather_chestplate"
+        "mainhand": [
+          "magistuarmory:stone_shortsword",
+          "minecraft:stone_sword"
+        ],
+        "chest": [
+          "magistuarmory:gambeson_chestplate",
+          "minecraft:leather_chestplate"
+        ]
       }
     },
     {
@@ -18,9 +24,18 @@
       "min_level": 3,
       "equipment": {
         "head": "minecraft:white_banner",
-        "mainhand": "minecraft:iron_sword",
-        "chest": "minecraft:chainmail_chestplate",
-        "legs": "minecraft:chainmail_leggings"
+        "mainhand": [
+          "magistuarmory:iron_shortsword",
+          "minecraft:iron_sword"
+        ],
+        "chest": [
+          "magistuarmory:chainmail_chestplate",
+          "minecraft:chainmail_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:chainmail_leggings",
+          "minecraft:chainmail_leggings"
+        ]
       }
     },
     {
@@ -28,11 +43,26 @@
       "min_level": 6,
       "equipment": {
         "head": "minecraft:white_banner",
-        "mainhand": "minecraft:iron_sword",
-        "offhand": "minecraft:shield",
-        "chest": "minecraft:iron_chestplate",
-        "legs": "minecraft:iron_leggings",
-        "feet": "minecraft:iron_boots"
+        "mainhand": [
+          "magistuarmory:iron_shortsword",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "chest": [
+          "magistuarmory:platemail_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:platemail_leggings",
+          "minecraft:iron_leggings"
+        ],
+        "feet": [
+          "magistuarmory:platemail_boots",
+          "minecraft:iron_boots"
+        ]
       }
     }
   ]

@@ -7,10 +7,22 @@
       "name": "Básico",
       "min_level": 0,
       "equipment": {
-        "mainhand": "minecraft:iron_sword",
-        "offhand": "minecraft:shield",
-        "head": "minecraft:iron_helmet",
-        "chest": "minecraft:iron_chestplate"
+        "mainhand": [
+          "magistuarmory:iron_bastardsword",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_kiteshield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:greathelm",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:crusader_chestplate",
+          "minecraft:iron_chestplate"
+        ]
       },
       "extra_cost": [
         {
@@ -28,12 +40,30 @@
       "name": "Veterano",
       "min_level": 3,
       "equipment": {
-        "mainhand": "minecraft:iron_sword",
-        "offhand": "minecraft:shield",
-        "head": "minecraft:iron_helmet",
-        "chest": "minecraft:iron_chestplate",
-        "legs": "minecraft:iron_leggings",
-        "feet": "minecraft:iron_boots"
+        "mainhand": [
+          "magistuarmory:iron_chivalrylance",
+          "minecraft:iron_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:armet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:knight_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:knight_leggings",
+          "minecraft:iron_leggings"
+        ],
+        "feet": [
+          "magistuarmory:knight_boots",
+          "minecraft:iron_boots"
+        ]
       },
       "extra_cost": [
         {
@@ -51,12 +81,30 @@
       "name": "Élite",
       "min_level": 6,
       "equipment": {
-        "mainhand": "minecraft:diamond_sword",
-        "offhand": "minecraft:shield",
-        "head": "minecraft:iron_helmet",
-        "chest": "minecraft:diamond_chestplate",
-        "legs": "minecraft:iron_leggings",
-        "feet": "minecraft:iron_boots"
+        "mainhand": [
+          "magistuarmory:steel_chivalrylance",
+          "minecraft:diamond_sword"
+        ],
+        "offhand": [
+          "magistuarmory:iron_heatershield",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:armet",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:gothic_chestplate",
+          "minecraft:diamond_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:gothic_leggings",
+          "minecraft:iron_leggings"
+        ],
+        "feet": [
+          "magistuarmory:gothic_boots",
+          "minecraft:iron_boots"
+        ]
       },
       "extra_cost": [
         {

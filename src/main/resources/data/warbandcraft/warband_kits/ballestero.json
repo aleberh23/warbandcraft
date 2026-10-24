@@ -8,7 +8,10 @@
       "min_level": 0,
       "equipment": {
         "mainhand": "minecraft:crossbow",
-        "chest": "minecraft:iron_chestplate"
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:iron_chestplate"
+        ]
       },
       "inventory": [
         {
@@ -22,8 +25,14 @@
       "min_level": 3,
       "equipment": {
         "mainhand": "minecraft:crossbow",
-        "head": "minecraft:iron_helmet",
-        "chest": "minecraft:iron_chestplate"
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:iron_chestplate"
+        ]
       },
       "inventory": [
         {
@@ -36,11 +45,26 @@
       "name": "Élite",
       "min_level": 6,
       "equipment": {
-        "mainhand": "minecraft:crossbow",
-        "offhand": "minecraft:shield",
-        "head": "minecraft:iron_helmet",
-        "chest": "minecraft:iron_chestplate",
-        "legs": "minecraft:iron_leggings"
+        "mainhand": [
+          "magistuarmory:heavy_crossbow",
+          "minecraft:crossbow"
+        ],
+        "offhand": [
+          "magistuarmory:iron_pavese",
+          "minecraft:shield"
+        ],
+        "head": [
+          "magistuarmory:kettlehat",
+          "minecraft:iron_helmet"
+        ],
+        "chest": [
+          "magistuarmory:brigandine_chestplate",
+          "minecraft:iron_chestplate"
+        ],
+        "legs": [
+          "magistuarmory:platemail_leggings",
+          "minecraft:iron_leggings"
+        ]
       },
       "inventory": [
         {
