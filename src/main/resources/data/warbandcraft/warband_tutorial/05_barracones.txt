@@ -27,6 +27,6 @@ Cada soldado pertenece a un Campamento (el más cercano cuando lo armaste o guar
 Los prisioneros también están en el barracón. No comen. Ver libro 3 (reclutar o rescate).
 ---
 ## Compañeros de facción
-Si otro jugador está en tu misma facción de Recruits, puede abrir la pestaña Barracón de tus Campamentos: sacar soldados (pasan a ser suyos y lo siguen) y guardar a los suyos ahí.
+Si otro jugador está en tu misma facción de Recruits, puede usar la pestaña Barracón de tus Campamentos igual que vos: sacar soldados (pasan a ser suyos y lo siguen), guardar a los suyos, renombrar, entrenamiento y prisioneros.
 
-Renombrar, entrenamiento, prisioneros, doctrinas y kits siguen siendo solo del dueño.
+Las otras pestañas (doctrinas, kits, rutas, envíos) siguen siendo solo del dueño.

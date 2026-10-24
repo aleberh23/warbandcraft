@@ -45,11 +45,9 @@ public class BarracksActionMessage {
         ServerPlayer player = ctx.get().getSender();
         ctx.get().enqueueWork(() -> {
             if (player == null) return;
-            // Sacar y guardar: también un compañero de facción del dueño. Lo demás, solo el dueño.
+            // También un compañero de facción del dueño (pedido de Ale: todo lo del barracón)
             CampBlockEntity camp = CampTabs.accessBarracks(player, msg.camp);
             if (camp == null) return;
-            boolean shared = msg.action == Action.STORE_NEAR || msg.action == Action.DEPLOY || msg.action == Action.DEPLOY_GUARDS;
-            if (!shared && !camp.canBeUsedBy(player.getUUID())) return;
             Component result = switch (msg.action) {
                 case STORE_NEAR -> {
                     int n = Barracks.storeNear(player.serverLevel(), msg.camp, player.getUUID());

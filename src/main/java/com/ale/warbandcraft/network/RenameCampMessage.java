@@ -35,7 +35,7 @@ public class RenameCampMessage {
         ServerPlayer player = ctx.get().getSender();
         ctx.get().enqueueWork(() -> {
             if (player == null) return;
-            CampBlockEntity camp = CampTabs.access(player, msg.camp, true);
+            CampBlockEntity camp = CampTabs.accessBarracks(player, msg.camp);
             if (camp == null || !camp.rename(msg.name)) return;
             player.displayClientMessage(Component.translatable("msg.warbandcraft.camp.renamed", camp.nameString())
                     .withStyle(ChatFormatting.GREEN), true);

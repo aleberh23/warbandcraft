@@ -48,7 +48,7 @@ public class OpenBarracksMessage {
     public final int prisonerCount;
     /** H19: campo de entrenamiento: nivel que vale hoy, nivel encargado y costo del próximo (-1 = no se mejora desde acá). */
     public int training, trainingOrdered, trainingCost = -1;
-    /** Lo abrió el dueño (false = un compañero de facción: solo sacar y guardar). */
+    /** Lo abrió el dueño (false = un compañero de facción: el barracón entero, pero no las otras pestañas). */
     public boolean owner = true;
 
     public OpenBarracksMessage(BlockPos camp, String name, int count, int capacity, int nearby, int guards,
