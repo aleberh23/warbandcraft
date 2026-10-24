@@ -24,7 +24,7 @@ env:
   SFTP_PORT: "2022"
   SFTP_USER: jj87kdav.d607d01a
   PANEL_URL: https://panel.baires.host
-  SERVER_ID: d607d01a
+  SERVER_ID: d607d01a-7510-4525-85ee-3eec3e17f2c8
 
 jobs:
   deploy:
@@ -93,10 +93,11 @@ jobs:
                    put -O /mods out/mods/$JAR"
 
       - name: Reiniciar el servidor
+        continue-on-error: true
         env:
           PANEL_API_KEY: ${{ secrets.PANEL_API_KEY }}
         run: |
-          curl -fsS -X POST "$PANEL_URL/api/client/servers/$SERVER_ID/power" \
+          curl -fsS -X POST "$PANEL_URL/api/panel/servers/$SERVER_ID/power" \
             -H "Authorization: Bearer $PANEL_API_KEY" \
             -H "Accept: application/json" -H "Content-Type: application/json" \
             -d '{"signal":"restart"}'
