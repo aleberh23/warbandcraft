@@ -47,5 +47,5 @@ jobs:
           unzip -l srv/warbandcraft-1.0.0.jar | grep -E "faction/Allies|LoginPositionEvents" || echo "NO tiene las clases nuevas"
           echo "== log (sin IPs)"
           sed -E 's/[0-9]{1,3}(\.[0-9]{1,3}){3}(:[0-9]+)?/<ip>/g' srv/latest.log \
-            | grep -a -E "Done \(|Starting minecraft server|warbandcraft|WarbandCraft|Login:|joined the game|left the game|logged in|Campamento|Exception|ERROR" \
+            | grep -a -E "Done \(|Starting minecraft server|warbandcraft|WarbandCraft|Login:|ServerOfflineAuth|citprobe|joined the game|left the game|logged in|Campamento|Exception|ERROR" \
             | grep -a -v -i "password|contrase|token" | head -200
