@@ -330,6 +330,29 @@ public class H8GameTests {
         h.succeed();
     }
 
+    /** "Al barracón" trabado (pedido de Ale): si no se acerca en {@link Barracks#STUCK_SECONDS}, se guarda igual; otra orden lo corta. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void sendHomeStuckStoresAnyway(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CampBlockEntity camp = placeCamp(h);
+        AbstractRecruitEntity stuck = spawnRecruit(h, CAMP_POS.east(6));
+        AbstractRecruitEntity changed = spawnRecruit(h, CAMP_POS.west(6));
+        stuck.setNoAi(true);
+        changed.setNoAi(true);
+        check(Barracks.sendHome(level, stuck, null) && Barracks.sendHome(level, changed, null), "no tiene Campamento al que ir");
+        Barracks.checkArrivals(level);
+        check(!stuck.isRemoved(), "se guardó antes de tiempo");
+        changed.setFollowState(Barracks.FOLLOW_OWNER);   // otra orden en el camino
+        h.runAfterDelay(Barracks.STUCK_SECONDS * 20L + 40, () -> {
+            Barracks.checkArrivals(level);
+            check(stuck.isRemoved(), "se trabó y no se guardó");
+            check(!changed.isRemoved() && !changed.getPersistentData().getBoolean(Barracks.TAG_TO_BARRACKS),
+                    "con otra orden igual siguió yendo al barracón");
+            check(BarracksData.get(level).count(camp.getBlockPos()) == 1, "no quedó en el barracón");
+            h.succeed();
+        });
+    }
+
     /** Vista aérea: mandarlos a OTRO Campamento tuyo los ata a ese y se guardan ahí; a uno ajeno, no. */
     @GameTest(template = TEMPLATE)
     public static void sendToChosenCamp(GameTestHelper h) {

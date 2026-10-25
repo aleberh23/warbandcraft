@@ -549,16 +549,34 @@ public final class Barracks {
         return true;
     }
 
-    /** Los que iban al barracón y ya llegaron, se guardan. */
+    /**
+     * Los que iban al barracón y ya llegaron, se guardan (cada 1 s). Pedido de Ale: el que se trabó en el camino
+     * (no se acercó {@link #STUCK_PROGRESS} bloques en {@link #STUCK_SECONDS}) se guarda igual, como si hubiera llegado.
+     */
     public static void checkArrivals(ServerLevel level) {
+        long now = level.getGameTime();
+        java.util.Set<UUID> seen = new java.util.HashSet<>();
         for (AbstractRecruitEntity s : level.getEntities(EntityTypeTest.forClass(AbstractRecruitEntity.class),
                 r -> r.isAlive() && r.getPersistentData().getBoolean(TAG_TO_BARRACKS))) {
             BlockPos camp = campOf(level, s);
-            if (camp == null) {
+            if (camp == null || !goingTo(s, camp)) {   // sin Campamento, o le dieron otra orden en el camino
                 s.getPersistentData().remove(TAG_TO_BARRACKS);
+                GOING.remove(s.getUUID());
                 continue;
             }
-            if (s.position().distanceToSqr(Vec3.atBottomCenterOf(camp)) > ARRIVE_DISTANCE * ARRIVE_DISTANCE) continue;
+            seen.add(s.getUUID());
+            double dist = s.position().distanceTo(Vec3.atBottomCenterOf(camp));
+            if (dist > ARRIVE_DISTANCE) {
+                Going g = GOING.computeIfAbsent(s.getUUID(), k -> new Going(dist, now));
+                if (dist < g.best - STUCK_PROGRESS || isFighting(s)) {
+                    g.best = Math.min(g.best, dist);
+                    g.since = now;
+                    continue;
+                }
+                if (now - g.since < STUCK_SECONDS * 20L) continue;
+                // Trabado: se guarda desde donde está (llega directo al barracón)
+            }
+            GOING.remove(s.getUUID());
             StoreResult r = store(level, s, camp, true);
             if (r == StoreResult.FULL) {
                 s.getPersistentData().remove(TAG_TO_BARRACKS);
@@ -566,7 +584,36 @@ public final class Barracks {
                         CampRegistry.get(level).displayName(camp)).withStyle(ChatFormatting.RED));
             }
         }
+        if (level == level.getServer().overworld() && now % 1200 < 20) {
+            GOING.keySet().removeIf(id -> !seen.contains(id) && level.getEntity(id) == null);   // ya no existen
+        }
     }
+
+    /** Sigue con la orden "Al barracón": quieto/volver a un puesto que es ese Campamento. */
+    private static boolean goingTo(AbstractRecruitEntity s, BlockPos camp) {
+        int state = s.getFollowState();
+        if (state != BACK_TO_POS && state != HOLD) return false;
+        Vec3 post = s.getHoldPos();
+        return post != null && post.distanceToSqr(Vec3.atBottomCenterOf(camp)) <= 4.0;
+    }
+
+    /** "Al barracón": a qué distancia llegó lo más cerca y desde cuándo (game time), en memoria. */
+    private static final class Going {
+        double best;
+        long since;
+
+        Going(double best, long since) {
+            this.best = best;
+            this.since = since;
+        }
+    }
+
+    private static final Map<UUID, Going> GOING = new java.util.HashMap<>();
+
+    /** "Al barracón": si en estos segundos no se acercó {@link #STUCK_PROGRESS} bloques, se guarda directo. */
+    public static int STUCK_SECONDS = 10;
+    /** "Al barracón": cuánto tiene que acercarse (bloques) para no contar como trabado. */
+    public static double STUCK_PROGRESS = 1.0;
 
     /** Revisión de cada 10 s: comida de los Campamentos cargados, guardado automático y vuelta de guardias. */
     public static void tick(ServerLevel level) {
