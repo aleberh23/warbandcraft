@@ -602,6 +602,22 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   lista y los comentarios). Lo que no es de juego (códigos de estado de Recruits, colores, índices, pantallas) queda
   `final` (`FIXED_NAMES`/`EXCLUDE` en el script). Ojo: una constante calculada con otra toma el valor de entrada.
 
+## Trabajador de un Campamento común (pedido de Ale, a probar; números sin Ale)
+
+- `camp/CampWorkers` (SavedData `warbandcraft_camp_workers` por dimensión, uno por Campamento común: `Rec` worker/owner/away/bed).
+  Se contrata al Tabernero (`village/TavernWorkers`: opción nueva del menú de `Rumors`, índice 3; cada taberna junta
+  `PER_DAY` por día hasta `MAX_1..3` = 1/2/3 según `tavernLevel`, las del mundo nivel `WORLD_LEVEL` 2; clave = centro de la aldea
+  o `WorldTaverns` id; `HIRE_COST` 10 con `Rumors.pay`). Elegís el Campamento (pantalla de H23, kind `tavern_worker`).
+- Aparece un aldeano sin oficio (marca `warbandcraft:camp_worker` = Campamento) al lado del Tabernero y camina (`WALK_TARGET`
+  cada 1 s desde `BarracksEvents`); sin acercarse `STUCK_PROGRESS` en `STUCK_SECONDS` aparece en el Campamento; dueño a >`OWNER_RANGE`
+  o Campamento lejos/descargado = `away` (aparece cuando el Campamento se carga). Al llegar, `setNoAi(true)`: queda parado.
+- Pestaña Cofre → "Trabajador" (`CampWorkerMessage` → `CampWorkers.open`, kind `camp_worker`, id "pos:estado"): Herrero (yunque a ≤24,
+  `WorkZones.standNextTo`, `SmithEntity.setCamp/setWorkplace`) o Granjero (`WorkZones.campFarmSite`: huerta hecha o 9×9 libre;
+  `campFarm` cobra azada + 8 semillas, sin cofre). Ambos piden cama libre a ≤24 (`PoiManager.take` + `WorkerSupply.homeAt`).
+  Después `serve`: `WorkerSupply.supply/feed/collect` con ese Campamento, vuelve si se aleja >`LEASH`. Despedir libera cama y zona.
+  `VillageManagement.workers` no los cuenta (no los atiende una aldea). Sin producción "en papel" (a revisar). Prueba: `CampWorkerGameTests`.
+- Tope de reclutas de tus tabernas: 4/7/10 (pedido de Ale: nunca más de 10).
+
 ## Taberna, entrenamiento y armar con armamento (H19, a probar — plan en `plan-h19-taberna.md`)
 
 - Mejoras de H12 `TAVERN_1..3` (solo aldeas, terreno "tavern") y `TRAINING_1..3` (aldeas y castillos, pide Cuartel,

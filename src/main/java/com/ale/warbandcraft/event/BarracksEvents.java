@@ -29,7 +29,10 @@ public class BarracksEvents {
             for (ServerLevel level : server.getAllLevels()) com.ale.warbandcraft.village.Quarters.tick(level);   // cuartel: patrullas
         }
         if (tick % ARRIVAL_INTERVAL == 0) {
-            for (ServerLevel level : server.getAllLevels()) Barracks.checkArrivals(level);
+            for (ServerLevel level : server.getAllLevels()) {
+                Barracks.checkArrivals(level);
+                com.ale.warbandcraft.camp.CampWorkers.tick(level);   // trabajadores de Campamentos comunes
+            }
         }
         if (tick % CHECK_INTERVAL == 0) {
             for (ServerLevel level : server.getAllLevels()) {

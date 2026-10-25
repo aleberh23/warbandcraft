@@ -199,7 +199,7 @@ public final class WorkerSupply {
     }
 
     /** Lo que le falta (su equipo y lo que pidió Workers), del almacén a su mochila. Lo que no hay queda anotado. */
-    static void supply(CampBlockEntity camp, AbstractWorkerEntity w) {
+    public static void supply(CampBlockEntity camp, AbstractWorkerEntity w) {
         MutableComponent missing = null;
         for (Kit k : kit(w)) {
             int lack = k.count - w.countMatchingItems(k.match);
@@ -248,7 +248,7 @@ public final class WorkerSupply {
     }
 
     /** Con hambre: come del almacén (lo más barato). */
-    static void feed(CampBlockEntity camp, AbstractWorkerEntity w) {
+    public static void feed(CampBlockEntity camp, AbstractWorkerEntity w) {
         if (!w.needsToGetFood()) return;
         int got = Barracks.takeFood(camp, MEAL_POINTS);
         if (got > 0) w.setHunger(Math.min(100F, w.getHunger() + got * 10F));
@@ -259,7 +259,7 @@ public final class WorkerSupply {
      * Lo que juntó (salvo su equipo y un poco de comida) pasa al almacén y queda anotado como producción. Si no entra,
      * queda anotado. El trigo del granjero se hace pan (3 → 1): la aldea no come trigo.
      */
-    static void collect(CampBlockEntity camp, AbstractWorkerEntity w) {
+    public static void collect(CampBlockEntity camp, AbstractWorkerEntity w) {
         if (WorkZones.jobOf(w) == VillageManagement.Job.FARMER) bake(w);
         List<Kit> kit = kit(w);
         int[] kept = new int[kit.size()];

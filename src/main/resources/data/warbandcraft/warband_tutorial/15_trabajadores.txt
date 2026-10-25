@@ -25,6 +25,17 @@ Sobre cada zona se ve qué le pasa: "Falta en el almacén", "Almacén lleno", "C
 ## Herrero
 Convierte 1 hierro + 1 carbón en 2 de armamento, hasta 8 por día. Trabaja en la Herrería o al lado de un yunque. También desguaza lo que marques en la pestaña Cofre (Desguace).
 
+## Trabajador de un Campamento
+Un Campamento común (no el de una aldea) puede tener un trabajador: Herrero o Granjero.
+---
+Se contrata hablándole al Tabernero de cualquier taberna (10 esmeraldas). Llega uno por día, hasta 1, 2 o 3 según el nivel de la taberna (las sueltas, 2). Elegís a qué Campamento va y va solo; si se traba, aparece ahí.
+---
+Al llegar espera quieto. Pestaña Cofre del Campamento, botón Trabajador:
+- Herrero: necesita un yunque a 24 bloques o menos.
+- Granjero: la huerta la elige él (una hecha, o un terreno de 9×9). Pide una azada y 8 semillas del almacén.
+---
+Los dos necesitan una cama libre a 24 bloques o menos, y comen del almacén. Lo que juntan va al almacén.
+
 ## Minero
 Su zona es una escalera: marcá un rectángulo largo y angosto (mínimo 8 de largo, máximo 5 de ancho). Baja desde la punta más cerca del almacén. Abajo de todo sigue cavando pasillos por el territorio.
 

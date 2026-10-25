@@ -46,7 +46,7 @@ public final class Tavern {
 
     /** Reclutas que llegan por día, cuántos pueden esperar y entre qué niveles vienen, por nivel de taberna. */
     public static int ARRIVALS_1 = 2, ARRIVALS_2 = 4, ARRIVALS_3 = 6;
-    public static int MAX_WAITING_1 = 4, MAX_WAITING_2 = 8, MAX_WAITING_3 = 12;
+    public static int MAX_WAITING_1 = 4, MAX_WAITING_2 = 7, MAX_WAITING_3 = 10;
     public static int MIN_LEVEL_1 = 0, MAX_LEVEL_1 = 1, MIN_LEVEL_2 = 0, MAX_LEVEL_2 = 3, MIN_LEVEL_3 = 2, MAX_LEVEL_3 = 5;
     /** Puntos de comida (los de la barra de hambre) que se come cada recluta que llega. Sin comida no llega nadie. */
     public static int FOOD_PER_RECRUIT = 10;

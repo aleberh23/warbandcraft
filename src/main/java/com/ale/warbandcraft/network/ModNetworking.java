@@ -10,7 +10,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * aldea ganada), las órdenes de la vista aérea (H5) y las pestañas del Campamento y el Zapador (H6) y el barracón (H8).
  */
 public final class ModNetworking {
-    private static final String PROTOCOL_VERSION = "11";
+    private static final String PROTOCOL_VERSION = "12";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(WarbandCraft.MODID, "main"),
@@ -122,5 +122,8 @@ public final class ModNetworking {
                 ScrapMessage::encode, ScrapMessage::decode, ScrapMessage::handle);
         CHANNEL.registerMessage(nextId++, ScrapListMessage.class,
                 ScrapListMessage::encode, ScrapListMessage::decode, ScrapListMessage::handle);
+        // Trabajador de un Campamento común
+        CHANNEL.registerMessage(nextId++, CampWorkerMessage.class,
+                CampWorkerMessage::encode, CampWorkerMessage::decode, CampWorkerMessage::handle);
     }
 }

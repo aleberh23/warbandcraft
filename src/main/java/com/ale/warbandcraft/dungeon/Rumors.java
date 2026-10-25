@@ -72,10 +72,13 @@ public final class Rumors {
         lines.add(Component.translatable("gui.warbandcraft.tavern.greeting"));
         DungeonData.Contract c = DungeonData.get(player.serverLevel()).contractOf(player.getUUID());
         if (c != null) lines.add(contractLine(player.serverLevel(), c));
+        List<Component> options = new ArrayList<>(List.of(Component.translatable("gui.warbandcraft.tavern.rumor", RUMOR_COST),
+                Component.translatable("gui.warbandcraft.tavern.treasure", TREASURE_COST), Component.translatable("gui.warbandcraft.tavern.work")));
+        Component hire = com.ale.warbandcraft.village.TavernWorkers.menuOption(player.serverLevel(), innkeeper);   // trabajadores
+        options.add(hire != null ? hire : Component.translatable("gui.warbandcraft.tavern.no_workers"));
+        options.add(Component.translatable("gui.warbandcraft.tavern.bye"));
         BattleChoices.send(player, KIND_MENU, Integer.toString(innkeeper.getId()), Component.translatable("gui.warbandcraft.tavern.title"), lines,
-                List.of(Component.translatable("gui.warbandcraft.tavern.rumor", RUMOR_COST), Component.translatable("gui.warbandcraft.tavern.treasure", TREASURE_COST),
-                        Component.translatable("gui.warbandcraft.tavern.work"),
-                        Component.translatable("gui.warbandcraft.tavern.bye")), true);
+                options, true);
     }
 
     public static void answer(ServerPlayer player, String kind, String id, int option) {
@@ -85,6 +88,7 @@ public final class Rumors {
             if (option == 0) player.sendSystemMessage(buyRumor(player, inn));
             else if (option == 1) player.sendSystemMessage(buyTreasure(player, inn));
             else if (option == 2) offerContract(player);
+            else if (option == 3) com.ale.warbandcraft.village.TavernWorkers.offer(player, inn);
         } else if (KIND_CONTRACT.equals(kind) && option == 0) {
             player.sendSystemMessage(accept(player, id));
         }
@@ -354,7 +358,7 @@ public final class Rumors {
     // ------------------------------------------------------------------ plata
 
     /** Cobra: primero del inventario, después del Campamento de la aldea del tabernero. */
-    private static boolean pay(ServerPlayer player, @Nullable InnkeeperEntity inn, int n) {
+    public static boolean pay(ServerPlayer player, @Nullable InnkeeperEntity inn, int n) {
         int have = player.getInventory().countItem(Items.EMERALD);
         CampBlockEntity camp = inn != null && inn.getCamp() != null && player.serverLevel().getBlockEntity(inn.getCamp()) instanceof CampBlockEntity c ? c : null;
         int inCamp = camp == null ? 0 : camp.count(Items.EMERALD);

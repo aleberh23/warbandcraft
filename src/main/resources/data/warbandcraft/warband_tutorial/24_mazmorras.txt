@@ -14,6 +14,7 @@ En las tabernas (tuyas, de facción o sueltas). Click derecho:
 - Rumor (5 esmeraldas): te marca una mazmorra en el mapa.
 - Tesoro: pista de un tesoro.
 - Trabajo: limpiar una guarida o túmulo a cambio de esmeraldas y opinión.
+- Contratar trabajador: para un Campamento común (libro 15).
 ---
 /warband mazmorras: lo que conocés y tu trabajo.
 

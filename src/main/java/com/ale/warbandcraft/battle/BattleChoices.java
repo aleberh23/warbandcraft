@@ -81,6 +81,8 @@ public final class BattleChoices {
             }
             case com.ale.warbandcraft.dungeon.Rumors.KIND_MENU, com.ale.warbandcraft.dungeon.Rumors.KIND_CONTRACT ->
                     com.ale.warbandcraft.dungeon.Rumors.answer(player, kind, id, option);   // H25: el Tabernero
+            case com.ale.warbandcraft.village.TavernWorkers.KIND_HIRE -> com.ale.warbandcraft.village.TavernWorkers.answer(player, id, option);
+            case com.ale.warbandcraft.camp.CampWorkers.KIND -> com.ale.warbandcraft.camp.CampWorkers.answer(player, id, option);
             default -> {
             }
         }

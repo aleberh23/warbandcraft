@@ -224,7 +224,8 @@ public final class VillageManagement {
     /** Tus trabajadores de Villager Workers cerca del centro. */
     public static List<AbstractWorkerEntity> workers(ServerLevel level, BlockPos center, UUID owner) {
         List<AbstractWorkerEntity> out = level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(center).inflate(RADIUS, 32, RADIUS),
-                w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner));
+                w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner)
+                        && !w.getPersistentData().contains(com.ale.warbandcraft.camp.CampWorkers.TAG));   // los de un Campamento común, no
         for (WorkerOutput.Rec r : WorkerOutput.get(level).of(center)) {   // los de los puestos de afuera (si están cargados)
             if (r.outpost && level.getEntity(r.worker) instanceof AbstractWorkerEntity w && w.isAlive()
                     && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner) && !out.contains(w)) out.add(w);

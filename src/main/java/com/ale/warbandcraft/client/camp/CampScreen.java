@@ -64,6 +64,13 @@ public class CampScreen extends ContainerScreen {
                     .bounds(leftPos + imageWidth + 4, topPos + (camp.isVillage() ? 28 : 52), 96, 20).build();
             scrapButton.setTooltip(Tooltip.create(Component.translatable("gui.warbandcraft.camp.scrap.tip")));
             addRenderableWidget(scrapButton);
+            if (!camp.isVillage()) {   // en una aldea los trabajadores se manejan desde Gestión
+                Button worker = Button.builder(Component.translatable("gui.warbandcraft.camp.worker"),
+                                x -> ModNetworking.CHANNEL.sendToServer(new com.ale.warbandcraft.network.CampWorkerMessage(camp.campPos())))
+                        .bounds(leftPos + imageWidth + 4, topPos + 76, 96, 20).build();
+                worker.setTooltip(Tooltip.create(Component.translatable("gui.warbandcraft.camp.worker.tip")));
+                addRenderableWidget(worker);
+            }
         }
     }
 

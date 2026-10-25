@@ -367,6 +367,78 @@ public final class WorkZones {
         return Component.translatable("msg.warbandcraft.zone.deleted").withStyle(ChatFormatting.YELLOW);
     }
 
+    // ------------------------------------------------------------------ el granjero de un Campamento común
+
+    /**
+     * Trabajador de un Campamento común: la huerta la elige él. Una huerta hecha (tierra de cultivo + agua) adentro de la
+     * jurisdicción del Campamento, o si no un terreno libre de 9×9 ahí (la ara él). Null = no hay lugar.
+     */
+    @Nullable
+    public static BoundingBox campFarmSite(ServerLevel level, BlockPos camp) {
+        BoundingBox farm = VillageManagement.findFarm(level, camp);
+        if (farm != null && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, new BlockPos(farm.minX(), farm.minY(), farm.minZ()))
+                && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, new BlockPos(farm.maxX(), farm.minY(), farm.maxZ()))) return farm;
+        int s = Blueprints.SITE;
+        List<Blueprints.Lot> taken = new ArrayList<>();
+        int r = com.ale.warbandcraft.camp.CampBlockEntity.WORK_RADIUS;
+        for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(camp).inflate(r + 16, 64, r + 16),
+                a -> a.isAlive() && a.getArea() != null)) {
+            AABB b = a.getArea();
+            for (int x = (int) Math.floor(b.minX) - s; x < b.maxX; x += s) {
+                for (int z = (int) Math.floor(b.minZ) - s; z < b.maxZ; z += s) taken.add(new Blueprints.Lot(new BlockPos(x, 0, z), s));
+            }
+        }
+        taken.add(new Blueprints.Lot(camp.offset(-2, 0, -2), 5));   // el Campamento mismo
+        for (int tries = 0; tries < 8; tries++) {
+            BlockPos site = Blueprints.findSite(level, camp, 3, r, s, taken);
+            if (site == null) return null;
+            if (com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, site)
+                    && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, site.offset(s - 1, 0, s - 1))) {
+                return new BoundingBox(site.getX(), site.getY(), site.getZ(), site.getX() + s - 1, site.getY(), site.getZ() + s - 1);
+            }
+            taken.add(new Blueprints.Lot(site, s));
+        }
+        return null;
+    }
+
+    /** Lo que cuesta la huerta de un Campamento común: azada y semillas, sin cofre (lo que junta va directo al almacén). */
+    public static List<ZoneCosts.Need> campFarmNeeds() {
+        return ZoneCosts.needs(VillageManagement.Job.FARMER).stream().filter(n -> !ZoneCosts.isChest(n)).toList();
+    }
+
+    /** Crea la huerta {@code farm} del granjero {@code w} de un Campamento común y cobra azada + semillas (a su mochila). */
+    public static Component campFarm(ServerPlayer player, com.ale.warbandcraft.camp.CampBlockEntity camp, AbstractWorkerEntity w, BoundingBox farm) {
+        ServerLevel level = player.serverLevel();
+        List<ZoneCosts.Need> needs = campFarmNeeds();
+        Component miss = ZoneCosts.missing(camp, needs);
+        if (miss != null) return miss;
+        int midX = (farm.minX() + farm.maxX()) / 2, midZ = (farm.minZ() + farm.maxZ()) / 2;
+        Integer g = Blueprints.groundY(level, midX, midZ, camp.getBlockPos().getY());
+        int ground = g == null ? camp.getBlockPos().getY() - 1 : g;
+        WorkerZone.BoundingBox box = new WorkerZone.BoundingBox(farm.minX(), ground, farm.minZ(), farm.maxX(), ground + FLAT_HEIGHT - 1, farm.maxZ());
+        if (WorkerZone.existing(level, box.aabb()) != null) return error("overlap");
+        CropArea area = make(level, ModEntityTypes.CROPAREA.get(), a -> {
+            ItemStack seed = VillageManagement.seedOf(level, new BoundingBox(farm.minX(), ground, farm.minZ(), farm.maxX(), ground, farm.maxZ()));
+            if (!seed.isEmpty()) a.setSeedStack(seed);
+        });
+        if (area == null) return error("failed");
+        area.setWidthSize(box.width() + 1);
+        area.setHeightSize(box.height());
+        area.setDepthSize(box.depth() + 1);
+        area.setTeamAccess(false);
+        area.setPlayerUUID(player.getUUID());
+        area.setPlayerName(player.getGameProfile().getName());
+        if (!WorkerZone.place(area, box)) {
+            area.discard();
+            return error("failed");
+        }
+        area.setDone(false);
+        level.addFreshEntity(area);
+        bind(w, area);
+        for (ZoneCosts.Need n : needs) for (ItemStack it : ZoneCosts.take(camp, n)) give(w, it);
+        return Component.translatable("msg.warbandcraft.zone.created", area.getType().getDescription()).withStyle(ChatFormatting.GREEN);
+    }
+
     // ------------------------------------------------------------------ crear la zona de Workers
 
     private static Component create(ServerPlayer player, VillageData.Village v, AbstractWorkerEntity w, VillageManagement.Job job,
@@ -824,7 +896,7 @@ public final class WorkZones {
     }
 
     @Nullable
-    private static BlockPos standNextTo(ServerLevel level, BlockPos anvil) {
+    public static BlockPos standNextTo(ServerLevel level, BlockPos anvil) {
         for (Direction d : Direction.Plane.HORIZONTAL) {
             BlockPos s = anvil.relative(d);
             if (free(level, s)) return s;
