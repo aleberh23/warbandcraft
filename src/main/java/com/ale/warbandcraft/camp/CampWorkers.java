@@ -251,6 +251,7 @@ public final class CampWorkers {
 
     /** Con oficio: equipo y semillas del almacén, comida, lo que junta al almacén, su cama, y que no se vaya lejos. */
     private static void serve(ServerLevel level, CampBlockEntity camp, Rec r, AbstractWorkerEntity w) {
+        paper(level, camp, r, w);
         WorkerSupply.supply(camp, w);
         WorkerSupply.feed(camp, w);
         if ((ticks + w.getId()) % COLLECT_EVERY == 0) WorkerSupply.collect(camp, w);
@@ -262,7 +263,76 @@ public final class CampWorkers {
         }
     }
 
+    // ------------------------------------------------------------------ producción sin cargar (como en las aldeas)
+
+    /** Comida por día que come sin cargar (puntos: un pan = 5). Si no alcanza, produce en proporción. */
+    public static int FOOD_PER_DAY = 6;
+
+    /** Fracción de lingote que le quedó al Herrero de la última cuenta (en memoria). */
+    private static final Map<UUID, Double> SMITH_CARRY = new HashMap<>();
+
+    /**
+     * Lo que hizo mientras el Campamento no estaba cargado: al volver a atenderlo, por el tiempo que pasó (máx. 7 días), come
+     * del almacén y deja lo de su producción por día ({@link com.ale.warbandcraft.village.WorkerOutput}, lo medido o lo
+     * esperado del oficio). El Herrero, en cambio, hace sus vueltas de verdad con el hierro, el carbón y lo marcado.
+     */
+    private static void paper(ServerLevel level, CampBlockEntity camp, Rec r, AbstractWorkerEntity w) {
+        com.ale.warbandcraft.village.WorkerOutput out = com.ale.warbandcraft.village.WorkerOutput.get(level);
+        long now = level.getGameTime();
+        com.ale.warbandcraft.village.WorkerOutput.Rec rec = out.ensure(w.getUUID(), camp.getBlockPos(), w.blockPosition(), now);
+        rec.pos = w.blockPosition();
+        rec.estimate.clear();
+        rec.estimate.putAll(WorkerSupply.estimate(level, w));
+        long gap = out.seen(rec, now);
+        if (gap <= 0) return;
+        long ticks = Math.min(gap, (long) com.ale.warbandcraft.village.WorkerOutput.MAX_OFFLINE_DAYS * com.ale.warbandcraft.village.WorkerOutput.DAY);
+        double days = ticks / (double) com.ale.warbandcraft.village.WorkerOutput.DAY;
+        int need = (int) Math.ceil(days * FOOD_PER_DAY);
+        double fed = need <= 0 ? 1 : Math.min(1, Barracks.takeFood(camp, need) / (double) need);
+        List<net.minecraft.world.item.ItemStack> made = new ArrayList<>();
+        if (w instanceof SmithEntity) {
+            double jobs = days * fed * SmithEntity.IRON_PER_DAY + SMITH_CARRY.getOrDefault(w.getUUID(), 0D);
+            int n = (int) Math.floor(jobs);
+            SMITH_CARRY.put(w.getUUID(), jobs - n);
+            int before = camp.count(com.ale.warbandcraft.kit.Armament.item());
+            for (int i = 0; i < n; i++) {
+                net.minecraft.world.item.ItemStack left = com.ale.warbandcraft.worker.SmithWorkGoal.workOnce(camp);
+                if (left == null) break;
+                if (!left.isEmpty()) made.add(left);
+            }
+            int got = camp.count(com.ale.warbandcraft.kit.Armament.item()) - before;
+            if (got > 0) made.add(new net.minecraft.world.item.ItemStack(com.ale.warbandcraft.kit.Armament.item(), got));
+        } else {
+            for (net.minecraft.world.item.ItemStack s : out.owed(rec, (long) (ticks * fed))) {
+                net.minecraft.world.item.ItemStack back = camp.insert(s.copy());
+                if (!back.isEmpty()) CampRegistry.get(level).deliver(level, r.owner, List.of(back), camp.getBlockPos());
+                made.add(s);
+            }
+        }
+        if (gap >= WorkerSupply.TELL_GAP_TICKS && !made.isEmpty()) tellPaid(level, camp.getBlockPos(), r.owner, made, fed < 1);
+    }
+
+    /** "Mientras no estabas, el trabajador de X dejó: ..." (al dueño, si está conectado). */
+    private static void tellPaid(ServerLevel level, BlockPos camp, UUID owner, List<net.minecraft.world.item.ItemStack> made, boolean hungry) {
+        ServerPlayer p = level.getServer().getPlayerList().getPlayer(owner);
+        if (p == null) return;
+        Map<net.minecraft.world.item.Item, Integer> sum = new java.util.LinkedHashMap<>();
+        for (net.minecraft.world.item.ItemStack s : made) sum.merge(s.getItem(), s.getCount(), Integer::sum);
+        net.minecraft.network.chat.MutableComponent items = Component.empty();
+        int i = 0;
+        for (Map.Entry<net.minecraft.world.item.Item, Integer> e : sum.entrySet()) {
+            if (i++ >= 6) break;
+            if (i > 1) items.append(", ");
+            items.append(e.getValue() + " ").append(new net.minecraft.world.item.ItemStack(e.getKey()).getHoverName());
+        }
+        p.sendSystemMessage(Component.translatable("msg.warbandcraft.camp_worker.offline_output", CampRegistry.get(level).displayName(camp), items)
+                .withStyle(ChatFormatting.GOLD));
+        if (hungry) p.sendSystemMessage(Component.translatable("msg.warbandcraft.camp_worker.hungry").withStyle(ChatFormatting.YELLOW));
+    }
+
     private static void forget(ServerLevel level, Data d, BlockPos camp, Rec r) {
+        com.ale.warbandcraft.village.WorkerOutput.get(level).remove(r.worker);
+        SMITH_CARRY.remove(r.worker);
         if (r.bed != null) release(level, r.bed);
         WALKING.remove(r.worker);
         d.byCamp.remove(camp.asLong());

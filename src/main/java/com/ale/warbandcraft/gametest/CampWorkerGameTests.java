@@ -74,6 +74,20 @@ public class CampWorkerGameTests {
         check(CampWorkers.Data.get(level).at(campAbs).bed != null, "no se le reservó la cama");
         check(e.getPersistentData().contains(CampWorkers.TAG), "le falta la marca de trabajador de Campamento");
 
+        // Un día entero sin cargar: come y hace sus 8 vueltas (8 lingotes + 8 carbones → 16 de armamento)
+        CampWorkers.tick(level);
+        com.ale.warbandcraft.village.WorkerOutput.Rec out = com.ale.warbandcraft.village.WorkerOutput.get(level).of(e.getUUID());
+        check(out != null, "no se anotó su producción");
+        camp.insert(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 10));
+        camp.insert(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COAL, 10));
+        camp.insert(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BREAD, 4));
+        out.lastTick -= com.ale.warbandcraft.village.WorkerOutput.DAY;
+        CampWorkers.tick(level);
+        int armament = camp.count(com.ale.warbandcraft.kit.Armament.item());
+        check(armament == 16, "un día sin cargar tendría que dar 16 de armamento, dio " + armament);
+        check(camp.count(net.minecraft.world.item.Items.IRON_INGOT) == 2, "tendrían que quedar 2 lingotes");
+        check(camp.count(net.minecraft.world.item.Items.BREAD) < 4, "no comió");
+
         CampWorkers.dismiss(player, camp);
         check(CampWorkers.Data.get(level).at(campAbs) == null && !e.isAlive(), "despedir no lo sacó");
         h.succeed();

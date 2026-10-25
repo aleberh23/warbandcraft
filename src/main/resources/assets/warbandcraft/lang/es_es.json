@@ -290,6 +290,8 @@
   "msg.warbandcraft.camp_worker.smith_ok": "Listo: es Herrero. Trabaja de día al lado del yunque.",
   "msg.warbandcraft.camp_worker.farmer_ok": "Listo: es Granjero.",
   "msg.warbandcraft.camp_worker.dismissed": "Se fue.",
+  "msg.warbandcraft.camp_worker.offline_output": "Mientras no estabas, el trabajador de %s dejó: %s",
+  "msg.warbandcraft.camp_worker.hungry": "No le alcanzó la comida del almacén: trabajó menos.",
   "entity.warbandcraft.camp_worker": "Trabajador",
   "gui.warbandcraft.camp.scrap.off": "Desguace: NO",
   "gui.warbandcraft.camp.scrap.on": "Desguace: SÍ",

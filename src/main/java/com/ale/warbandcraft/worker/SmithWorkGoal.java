@@ -102,18 +102,25 @@ public class SmithWorkGoal extends Goal {
     public boolean forge(ServerLevel level) {
         CampBlockEntity camp = camp(level, smith);
         if (camp == null || smith.ironLeftToday(level.getDayTime() / 24000L) <= 0) return false;
-        if (Scrap.work(camp, Scrap.PIECES_PER_JOB) > 0) {   // primero lo marcado para desguazar
-            smith.forged();
-            return true;
-        }
-        Item coal = camp.count(Items.COAL) > 0 ? Items.COAL : camp.count(Items.CHARCOAL) > 0 ? Items.CHARCOAL : null;
-        if (coal == null || camp.count(Items.IRON_INGOT) <= 0) return false;
-        camp.take(Items.IRON_INGOT, 1);
-        camp.take(coal, 1);
-        ItemStack left = camp.insert(new ItemStack(Armament.item(), SmithEntity.ARMAMENT_PER_IRON));
+        ItemStack left = workOnce(camp);
+        if (left == null) return false;
         if (!left.isEmpty()) smith.spawnAtLocation(left);
         smith.forged();
         return true;
+    }
+
+    /**
+     * Una vuelta de trabajo con el almacén {@code camp}: desguaza lo marcado o, si no hay, 1 lingote + 1 carbón → armamento.
+     * Devuelve lo que no entró en el almacén (vacío = todo bien), o null si no había con qué trabajar.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static ItemStack workOnce(CampBlockEntity camp) {
+        if (Scrap.work(camp, Scrap.PIECES_PER_JOB) > 0) return ItemStack.EMPTY;   // primero lo marcado para desguazar
+        Item coal = camp.count(Items.COAL) > 0 ? Items.COAL : camp.count(Items.CHARCOAL) > 0 ? Items.CHARCOAL : null;
+        if (coal == null || camp.count(Items.IRON_INGOT) <= 0) return null;
+        camp.take(Items.IRON_INGOT, 1);
+        camp.take(coal, 1);
+        return camp.insert(new ItemStack(Armament.item(), SmithEntity.ARMAMENT_PER_IRON));
     }
 
     public static CampBlockEntity camp(ServerLevel level, SmithEntity smith) {

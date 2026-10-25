@@ -360,7 +360,7 @@ public final class WorkerSupply {
     }
 
     /** Lo que se espera que dé por día cada oficio (hasta que se mida lo de verdad). Ítem → cantidad. */
-    static Map<String, Double> estimate(ServerLevel level, AbstractWorkerEntity w) {
+    public static Map<String, Double> estimate(ServerLevel level, AbstractWorkerEntity w) {
         Map<String, Double> out = new HashMap<>();
         VillageManagement.Job job = WorkZones.jobOf(w);
         if (job == null) return out;

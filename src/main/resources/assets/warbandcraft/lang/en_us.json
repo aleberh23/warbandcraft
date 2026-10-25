@@ -290,6 +290,8 @@
   "msg.warbandcraft.camp_worker.smith_ok": "Done: Smith. Works by day next to the anvil.",
   "msg.warbandcraft.camp_worker.farmer_ok": "Done: Farmer.",
   "msg.warbandcraft.camp_worker.dismissed": "They left.",
+  "msg.warbandcraft.camp_worker.offline_output": "While you were away, the worker of %s left: %s",
+  "msg.warbandcraft.camp_worker.hungry": "There wasn't enough food in the storage: they worked less.",
   "entity.warbandcraft.camp_worker": "Worker",
   "gui.warbandcraft.camp.scrap.off": "Scrap: OFF",
   "gui.warbandcraft.camp.scrap.on": "Scrap: ON",

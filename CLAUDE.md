@@ -615,7 +615,12 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `WorkZones.standNextTo`, `SmithEntity.setCamp/setWorkplace`) o Granjero (`WorkZones.campFarmSite`: huerta hecha o 9×9 libre;
   `campFarm` cobra azada + 8 semillas, sin cofre). Ambos piden cama libre a ≤24 (`PoiManager.take` + `WorkerSupply.homeAt`).
   Después `serve`: `WorkerSupply.supply/feed/collect` con ese Campamento, vuelve si se aleja >`LEASH`. Despedir libera cama y zona.
-  `VillageManagement.workers` no los cuenta (no los atiende una aldea). Sin producción "en papel" (a revisar). Prueba: `CampWorkerGameTests`.
+  `VillageManagement.workers` no los cuenta (no los atiende una aldea). Prueba: `CampWorkerGameTests`.
+- Producción sin cargar (pedido de Ale: "tiene que ser igual que en las aldeas"): `CampWorkers.paper` en cada `serve` usa
+  `WorkerOutput` (rec con `village` = el Campamento): por el hueco (máx. 7 días) come `FOOD_PER_DAY` del almacén (si no alcanza,
+  produce en proporción) y deja `owed` (lo medido o `WorkerSupply.estimate`). El Herrero hace sus vueltas de verdad
+  (`SmithWorkGoal.workOnce`: desguace o hierro + carbón, `IRON_PER_DAY` por día). Aviso "Mientras no estabas..." si fue >2 min.
+  Visible esperando en la taberna: no (Ale: "si cuesta mucho dejalo así").
 - Tope de reclutas de tus tabernas: 4/7/10 (pedido de Ale: nunca más de 10).
 
 ## Taberna, entrenamiento y armar con armamento (H19, a probar — plan en `plan-h19-taberna.md`)
