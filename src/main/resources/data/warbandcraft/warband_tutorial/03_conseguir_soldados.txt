@@ -19,7 +19,7 @@ No hay tope de soldados.
 Las aldeas con taberna (tuyas o de facción) tienen reclutas esperando adentro. En las tuyas, con Tabernero, llegan solos cada día; click derecho = se unen gratis.
 
 ## Tabernas del mundo
-Las tabernas sueltas, con guardias, tienen mercenarios de nivel 1 a 4. Vienen bien armados: los de nivel 1 y 2 con cota de malla y hierro, los de 3 y 4 con placas y acero. Se contratan con la pantalla de Recruits: cuanto más nivel, más caros.
+Las tabernas sueltas, con guardias, tienen mercenarios de nivel 1 a 4. Vienen bien armados: los de nivel 1 y 2 con cota de malla y hierro, los de 3 y 4 con placas y acero. Se contratan con la pantalla de Recruits: cuanto más nivel y mejor equipo, más caros: uno de placas sale bastante más que uno de cota.
 ---
 ## Prisioneros
 Cuando ganás una batalla los enemigos rendidos van presos a tu Campamento (pestaña Barracón). Ahí podés reclutarlos (vuelven con su clase) o cobrar rescate.

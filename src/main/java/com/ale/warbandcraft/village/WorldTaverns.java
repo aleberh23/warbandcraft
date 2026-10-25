@@ -98,7 +98,9 @@ public final class WorldTaverns extends SavedData {
     /** Nivel de Recruits de los mercenarios. */
     public static int MERC_LEVEL_MIN = 1, MERC_LEVEL_MAX = 4;
     /** Esmeraldas de más por cada nivel (encima del precio de Recruits). */
-    public static int MERC_COST_PER_LEVEL = 3;
+    public static int MERC_COST_PER_LEVEL = 5;
+    /** Esmeraldas de más por el equipo (cota y hierro / placas y acero); arqueros y ballesteros, la mitad. */
+    public static int MERC_GEAR_COST_BASIC = 6, MERC_GEAR_COST_ELITE = 15;
     /** Desde este nivel el mercenario viene con placas y acero (antes, cota de malla y hierro). */
     public static int MERC_ELITE_LEVEL = 3;
     /** Chances de cada tipo de mercenario (el resto, de a pie). */
@@ -328,8 +330,8 @@ public final class WorldTaverns extends SavedData {
         AbstractRecruitEntity m = create(level, type, lvl);
         if (m == null) return;
         m.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, r.nextFloat() * 360F, 0F);
-        outfitMerc(m, type, lvl);
-        m.setCost(m.getCost() + MERC_COST_PER_LEVEL * lvl);
+        int gearCost = outfitMerc(m, type, lvl);
+        m.setCost(m.getCost() + MERC_COST_PER_LEVEL * lvl + gearCost);
         m.setCustomName(Component.translatable("entity.warbandcraft.mercenary", lvl));
         m.setInvulnerable(true);
         mark(m, inn, MERC);
@@ -343,17 +345,19 @@ public final class WorldTaverns extends SavedData {
      * Pedido de Ale ("con lo caro que salen"): el mercenario viene con equipo de metal según su nivel, no con lo que le da
      * Recruits al aparecer. Nivel ≥ {@link #MERC_ELITE_LEVEL}: placas y acero; si no, cota de malla y hierro. Los de arco y
      * ballesta se quedan con su arma (la IA de Recruits la necesita) y van más livianos. Sin Epic Knights, lo de vanilla.
+     * Devuelve cuánto suma el equipo al precio.
      */
-    private static void outfitMerc(AbstractRecruitEntity m, String type, int lvl) {
+    private static int outfitMerc(AbstractRecruitEntity m, String type, int lvl) {
         boolean elite = lvl >= MERC_ELITE_LEVEL;
         boolean ranged = type.equals("bowman") || type.equals("crossbowman");
+        int cost = elite ? MERC_GEAR_COST_ELITE : MERC_GEAR_COST_BASIC;
         if (ranged) {
             gear(m, EquipmentSlot.HEAD, "magistuarmory:kettlehat", "minecraft:chainmail_helmet");
             gear(m, EquipmentSlot.CHEST, elite ? "magistuarmory:brigandine_chestplate" : "magistuarmory:gambeson_chestplate",
                     "minecraft:chainmail_chestplate");
             gear(m, EquipmentSlot.LEGS, "magistuarmory:chainmail_leggings", "minecraft:chainmail_leggings");
             gear(m, EquipmentSlot.FEET, elite ? "minecraft:iron_boots" : "minecraft:chainmail_boots");
-            return;
+            return cost / 2;   // armadura liviana
         }
         if (elite) {
             gear(m, EquipmentSlot.HEAD, "magistuarmory:armet", "magistuarmory:bascinet", "minecraft:iron_helmet");
@@ -373,6 +377,7 @@ public final class WorldTaverns extends SavedData {
         if (type.equals("recruit_shieldman"))
             gear(m, EquipmentSlot.OFFHAND, elite ? "magistuarmory:steel_heatershield" : "magistuarmory:iron_heatershield",
                     "magistuarmory:iron_heatershield", "minecraft:shield");
+        return cost;
     }
 
     /** Pone la primera pieza de la lista que exista. */

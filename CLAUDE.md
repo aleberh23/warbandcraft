@@ -483,7 +483,7 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `Enemy` sin creepers/jefes, bandidos y quien le pegó a alguien de la taberna o a sus aldeanos hace <`GRUDGE_TICKS`, también
   a vos; pedido de Ale: los mercenarios que esperan y los reclutas sueltos de cerca también defienden, los mercenarios se pueden
   lastimar mientras pelean y después vuelven a esperar) y `mercs` mercenarios (nivel 1-4, pasivos e invulnerables, se contratan con la pantalla de Recruits: `setCost` +
-  `MERC_COST_PER_LEVEL` × nivel; contratado = `hired` les saca las marcas). Equipo (pedido de Ale: "con lo caro que salen"): `outfitMerc` pisa el de Recruits: nivel ≥`MERC_ELITE_LEVEL` (3) placas + acero, si no cota de malla + hierro; arqueros/ballesteros conservan su arma, armadura más liviana. Marcas `warbandcraft:world_tavern` (id) +
+  `MERC_COST_PER_LEVEL` × nivel; contratado = `hired` les saca las marcas). Equipo (pedido de Ale: "con lo caro que salen"): `outfitMerc` pisa el de Recruits: nivel ≥`MERC_ELITE_LEVEL` (3) placas + acero, si no cota de malla + hierro; arqueros/ballesteros conservan su arma, armadura más liviana. Precio = el de Recruits + `MERC_COST_PER_LEVEL` (5) × nivel + `MERC_GEAR_COST_BASIC/ELITE` (6/15; a distancia la mitad). Marcas `warbandcraft:world_tavern` (id) +
   `world_tavern_role`; no se guardan (`onLoad`). Por día: vuelven `GUARD_REFILL_PER_DAY` guardias, llegan `MERC_PER_DAY`
   (tope `MERC_MAX`). Saludo la primera vez (`visitors`). Tabernero (todos): opción nueva **Tesoro** (`Rumors.treasure`,
   `TREASURE_COST`, etiqueta `#warbandcraft:treasure_rumored`: enterrados, naufragios, templos, ruinas de nova_structures;
