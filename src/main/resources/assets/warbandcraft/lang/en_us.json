@@ -290,6 +290,7 @@
   "msg.warbandcraft.camp_worker.smith_ok": "Done: Smith. Works by day next to the anvil.",
   "msg.warbandcraft.camp_worker.farmer_ok": "Done: Farmer.",
   "msg.warbandcraft.camp_worker.dismissed": "They left.",
+  "msg.warbandcraft.found.workers": "Its %s workers become villagers of the new village.",
   "msg.warbandcraft.camp_worker.job_taken": "This Camp already has one with that job.",
   "gui.warbandcraft.camp_worker.room": "Room for one Smith and one Farmer.",
   "gui.warbandcraft.camp_worker.dismiss_new": "Dismiss the one coming",

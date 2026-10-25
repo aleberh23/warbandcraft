@@ -99,10 +99,12 @@ public final class Founding {
         Territory.ensure(level, v);
         int settlers = 0;
         for (int i = 0; i < SETTLERS; i++) if (spawnSettler(level, bell)) settlers++;
+        int workers = com.ale.warbandcraft.camp.CampWorkers.toVillage(level, campPos);   // los del Campamento pasan a la aldea
         WarbandCraft.LOGGER.info("{} fundó una aldea en {} (Campamento {})", owner,
                 bell.toShortString(), campPos.toShortString());
-        return Component.translatable("msg.warbandcraft.found.done", CampRegistry.get(level).displayName(campPos), settlers, COST)
+        Component done = Component.translatable("msg.warbandcraft.found.done", CampRegistry.get(level).displayName(campPos), settlers, COST)
                 .withStyle(ChatFormatting.GREEN);
+        return workers <= 0 ? done : done.copy().append(" ").append(Component.translatable("msg.warbandcraft.found.workers", workers));
     }
 
     /** La facción "de la zona": si perdés la aldea, pasa a ser de ella. La del bioma, o la primera si ninguno lo reclama. */

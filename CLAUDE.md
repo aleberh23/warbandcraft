@@ -622,6 +622,9 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   produce en proporción) y deja `owed` (lo medido o `WorkerSupply.estimate`). El Herrero hace sus vueltas de verdad
   (`SmithWorkGoal.workOnce`: desguace o hierro + carbón, `IRON_PER_DAY` por día). Aviso "Mientras no estabas..." si fue >2 min.
   Visible esperando en la taberna: no (Ale: "si cuesta mucho dejalo así").
+- Fundar aldea (pedido de Ale): `Founding.found` → `CampWorkers.toVillage`: el que tiene oficio pierde la marca y lo atiende la aldea
+  (cama, zona y `WorkerOutput` siguen); el que esperaba/venía = aldeano libre al lado del Campamento. `tickOne` lo hace también si
+  un Campamento ya es aldea y alguno no estaba cargado.
 - Tope de reclutas de tus tabernas: 4/7/10 (pedido de Ale: nunca más de 10).
 
 ## Taberna, entrenamiento y armar con armamento (H19, a probar — plan en `plan-h19-taberna.md`)

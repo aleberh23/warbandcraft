@@ -211,6 +211,10 @@ public final class CampWorkers {
     private static void tickOne(ServerLevel level, Data d, BlockPos camp, Rec r) {
         {
             boolean campLoaded = level.isPositionEntityTicking(camp);
+            if (campLoaded && com.ale.warbandcraft.village.VillageCamps.villageOf(level, camp) != null) {   // ya es una aldea
+                settle(level, d, camp, r);
+                return;
+            }
             CampBlockEntity be = campLoaded && level.getBlockEntity(camp) instanceof CampBlockEntity c ? c : null;
             if (campLoaded && be == null) {   // rompieron el Campamento: queda suelto
                 Entity ent = level.getEntity(r.worker);
@@ -357,6 +361,42 @@ public final class CampWorkers {
         p.sendSystemMessage(Component.translatable("msg.warbandcraft.camp_worker.offline_output", CampRegistry.get(level).displayName(camp), items)
                 .withStyle(ChatFormatting.GOLD));
         if (hungry) p.sendSystemMessage(Component.translatable("msg.warbandcraft.camp_worker.hungry").withStyle(ChatFormatting.YELLOW));
+    }
+
+    // ------------------------------------------------------------------ el Campamento se hizo aldea
+
+    /**
+     * El Campamento se convirtió en aldea (Fundar aldea): sus trabajadores pasan a ser pobladores de ella. El que tiene oficio
+     * sigue igual (su cama, su huerta o su yunque, su producción) pero ahora lo atiende la aldea ({@link WorkerSupply}); el que
+     * no tiene oficio queda como aldeano libre al lado del Campamento (se le da oficio desde Gestión). Devuelve cuántos pasaron.
+     */
+    public static int toVillage(ServerLevel level, BlockPos camp) {
+        Data d = Data.get(level);
+        int n = 0;
+        for (Rec r : new ArrayList<>(d.of(camp))) if (settle(level, d, camp, r)) n++;
+        return n;
+    }
+
+    /** Uno pasa a la aldea. False si todavía no se pudo (no está cargado): se vuelve a probar cada 1 s. */
+    private static boolean settle(ServerLevel level, Data d, BlockPos camp, Rec r) {
+        Entity ent = r.away ? null : level.getEntity(r.worker);
+        if (ent == null && !r.away) return false;
+        if (ent instanceof AbstractWorkerEntity w) {
+            w.getPersistentData().remove(TAG);   // desde ahora lo atiende la aldea (su cama y su producción siguen)
+        } else {
+            if (ent != null) ent.discard();   // el que esperaba o venía: aldeano libre al lado del Campamento
+            Villager v = spawn(level, Vec3.atBottomCenterOf(spotNear(level, camp)), camp);
+            if (v != null) v.getPersistentData().remove(TAG);
+        }
+        WALKING.remove(r.worker);
+        SMITH_CARRY.remove(r.worker);
+        List<Rec> l = d.byCamp.get(camp.asLong());
+        if (l != null) {
+            l.remove(r);
+            if (l.isEmpty()) d.byCamp.remove(camp.asLong());
+        }
+        d.setDirty();
+        return true;
     }
 
     private static void forget(ServerLevel level, Data d, BlockPos camp, Rec r) {

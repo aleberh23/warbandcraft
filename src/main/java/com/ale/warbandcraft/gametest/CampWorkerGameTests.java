@@ -101,6 +101,50 @@ public class CampWorkerGameTests {
         h.succeed();
     }
 
+    /** Fundar aldea: el que esperaba queda como aldeano libre y el Herrero sigue, ahora de la aldea (sin la marca). */
+    @GameTest(template = TEMPLATE)
+    public static void campWorkersJoinFoundedVillage(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        UUID owner = UUID.nameUUIDFromBytes(("warbandcraft-cwv@" + h.absolutePos(BlockPos.ZERO).toShortString()).getBytes());
+        BlockPos campAbs = h.absolutePos(new BlockPos(4, 2, 4));
+        level.setBlockAndUpdate(campAbs, ModBlocks.CAMP.get().defaultBlockState());
+        check(level.getBlockEntity(campAbs) instanceof CampBlockEntity, "sin Campamento");
+        CampBlockEntity camp = (CampBlockEntity) level.getBlockEntity(campAbs);
+        camp.setOwner(owner);
+        FakePlayer player = FakePlayerFactory.get(level, new GameProfile(owner, "ale-cwv"));
+        h.setBlock(new BlockPos(1, 2, 6), Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.FOOT));
+        h.setBlock(new BlockPos(1, 2, 7), Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.HEAD));
+        h.setBlock(new BlockPos(7, 2, 2), Blocks.ANVIL);
+        CampWorkers.hire(player, campAbs, Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(5, 2, 5))));
+        CampWorkers.tick(level);
+        CampWorkers.assign(player, camp, VillageManagement.Job.SMITH);
+        CampWorkers.Rec smithRec = CampWorkers.Data.get(level).withJob(campAbs, CampWorkers.SMITH);
+        check(smithRec != null, "no se hizo Herrero");
+        Entity smith = level.getEntity(smithRec.worker);
+        CampWorkers.hire(player, campAbs, Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(5, 2, 3))));
+        UUID waitingId = CampWorkers.Data.get(level).of(campAbs).get(1).worker;
+        camp.insert(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD, com.ale.warbandcraft.village.Founding.COST));
+        com.ale.warbandcraft.village.Founding.found(level, owner, campAbs, null);
+        try {
+            check(com.ale.warbandcraft.village.VillageCamps.villageOf(level, campAbs) != null, "no se fundó la aldea");
+            check(CampWorkers.Data.get(level).of(campAbs).isEmpty(), "el Campamento sigue con trabajadores propios");
+            check(smith.isAlive() && smith instanceof SmithEntity && !smith.getPersistentData().contains(CampWorkers.TAG),
+                    "el Herrero tendría que seguir, sin la marca de Campamento");
+            check(level.getEntity(waitingId) == null, "el que esperaba tendría que haberse cambiado por un aldeano libre");
+            check(!level.getEntitiesOfClass(Villager.class, new net.minecraft.world.phys.AABB(campAbs).inflate(4),
+                    x -> !x.isNoAi() && !x.getPersistentData().contains(CampWorkers.TAG)).isEmpty(), "no quedó un aldeano libre");
+        } finally {
+            for (Villager x : level.getEntitiesOfClass(Villager.class, new net.minecraft.world.phys.AABB(campAbs).inflate(16))) x.discard();
+            if (smith != null) smith.discard();
+            com.ale.warbandcraft.village.VillageData.Village v = com.ale.warbandcraft.village.VillageCamps.villageOf(level, campAbs);
+            if (v != null) {
+                com.ale.warbandcraft.village.VillageStorehouse.forget(level, v);
+                com.ale.warbandcraft.village.VillageData.get(level).add(v.withOwner(null).withLootedUntil(Long.MAX_VALUE));
+            }
+        }
+        h.succeed();
+    }
+
     /** La taberna: el primer día hay uno, nunca más que el tope del nivel. */
     @GameTest(template = TEMPLATE)
     public static void tavernWorkersCapped(GameTestHelper h) {

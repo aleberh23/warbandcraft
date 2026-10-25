@@ -290,6 +290,7 @@
   "msg.warbandcraft.camp_worker.smith_ok": "Listo: es Herrero. Trabaja de día al lado del yunque.",
   "msg.warbandcraft.camp_worker.farmer_ok": "Listo: es Granjero.",
   "msg.warbandcraft.camp_worker.dismissed": "Se fue.",
+  "msg.warbandcraft.found.workers": "Sus %s trabajadores pasan a ser pobladores de la aldea.",
   "msg.warbandcraft.camp_worker.job_taken": "Este Campamento ya tiene uno con ese oficio.",
   "gui.warbandcraft.camp_worker.room": "Hay lugar para un Herrero y un Granjero.",
   "gui.warbandcraft.camp_worker.dismiss_new": "Despedir al que viene",
