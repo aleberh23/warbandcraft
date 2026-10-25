@@ -425,9 +425,9 @@ public final class WorkZones {
         area.setWidthSize(box.width() + 1);
         area.setHeightSize(box.height());
         area.setDepthSize(box.depth() + 1);
-        area.setTeamAccess(false);
         area.setPlayerUUID(player.getUUID());
         area.setPlayerName(player.getGameProfile().getName());
+        WorkerZone.share(area);
         if (!WorkerZone.place(area, box)) {
             area.discard();
             return error("failed");
@@ -508,9 +508,9 @@ public final class WorkZones {
         area.setWidthSize(box.width() + 1);
         area.setHeightSize(box.height());
         area.setDepthSize(box.depth() + 1);
-        area.setTeamAccess(false);
         area.setPlayerUUID(player.getUUID());
         area.setPlayerName(player.getGameProfile().getName());
+        WorkerZone.share(area);
         BlockPos store = VillageData.get(level).storehouse(v.center());
         boolean placed = area instanceof MiningArea mine
                 ? placeStairs(mine, ax, az, bx, bz, ground, store != null ? store : v.center())

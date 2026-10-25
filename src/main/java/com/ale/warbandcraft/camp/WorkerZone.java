@@ -33,6 +33,33 @@ public final class WorkerZone {
 
     private WorkerZone() {}
 
+    /**
+     * Pedido de Ale ("mi compañero no puede ni abrir el Campamento"): Workers no deja tocar cofres ni bloques adentro de una zona
+     * que no es tuya salvo que la zona tenga acceso de equipo. Las zonas de un jugador con facción de Recruits quedan abiertas a
+     * todo su equipo (sin facción, como estaban).
+     */
+    public static void share(AbstractWorkAreaEntity area) {
+        String team = com.ale.warbandcraft.faction.Allies.factionOf(area.getPlayerUUID());
+        if (team == null) return;
+        if (!area.getTeamAccess()) area.setTeamAccess(true);
+        if (!team.equals(area.getTeamStringID())) area.setTeamStringID(team);
+    }
+
+    /**
+     * Antes de que Workers mire un click (sus zonas a 8 de {@code pos}, como él): las zonas de un compañero de facción se abren
+     * al equipo. Así andan también las zonas de antes y las de alguien que entró a la facción después.
+     */
+    public static void shareAround(net.minecraft.world.entity.player.Player player, net.minecraft.world.level.Level level, BlockPos pos) {
+        shareAround(player, level, pos, 8);
+    }
+
+    public static void shareAround(net.minecraft.world.entity.player.Player player, net.minecraft.world.level.Level level, BlockPos pos, int radius) {
+        for (AbstractWorkAreaEntity area : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(pos).inflate(radius))) {
+            UUID owner = area.getPlayerUUID();
+            if (owner != null && !owner.equals(player.getUUID()) && com.ale.warbandcraft.faction.Allies.same(owner, player.getUUID())) share(area);
+        }
+    }
+
     /** La caja (en bloques, inclusiva) que encierra al Campamento y sus vinculados, +1 de margen y mínimo 5. */
     public static BoundingBox boxFor(CampBlockEntity camp) {
         BlockPos c = camp.getBlockPos();
@@ -77,9 +104,9 @@ public final class WorkerZone {
         area.setWidthSize(box.width() + 1);   // Workers arma la caja un bloque más corta
         area.setHeightSize(box.height());
         area.setDepthSize(box.depth() + 1);
-        area.setTeamAccess(false);
         area.setPlayerUUID(owner);
         area.setPlayerName(ownerName);
+        share(area);
         area.setCustomName(name);
         area.setStorageTypes(area.getStorageMask(EnumSet.allOf(StorageArea.StorageType.class)));
         if (!place(area, box)) {

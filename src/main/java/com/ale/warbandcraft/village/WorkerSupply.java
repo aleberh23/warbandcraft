@@ -469,7 +469,7 @@ public final class WorkerSupply {
         home.setDepthSize(4);
         home.setHeightSize(3);
         home.setPlayerUUID(owner);
-        home.setTeamAccess(false);
+        com.ale.warbandcraft.camp.WorkerZone.share(home);
         if (!com.ale.warbandcraft.camp.WorkerZone.place(home, new com.ale.warbandcraft.camp.WorkerZone.BoundingBox(
                 b.getX() - 1, b.getY(), b.getZ() - 1, b.getX() + 1, b.getY() + 2, b.getZ() + 1))) return false;
         home.setResident(w.getUUID(), w.getName().getString());

@@ -31,6 +31,29 @@ public class CommonEvents {
         event.addListener(com.ale.warbandcraft.market.Prices.INSTANCE);   // H24
     }
 
+    /** Las zonas de Workers de un compañero de facción se abren al equipo antes de que Workers mire el click (ver {@code WorkerZone.share}). */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onRightClickBlockShare(PlayerInteractEvent.RightClickBlock event) {
+        if (!event.getLevel().isClientSide()) com.ale.warbandcraft.camp.WorkerZone.shareAround(event.getEntity(), event.getLevel(), event.getPos());
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onLeftClickBlockShare(PlayerInteractEvent.LeftClickBlock event) {
+        if (!event.getLevel().isClientSide()) com.ale.warbandcraft.camp.WorkerZone.shareAround(event.getEntity(), event.getLevel(), event.getPos());
+    }
+
+    /** Workers también corta el click en el cliente (ahí no llega al servidor): cada 5 s se abren las zonas cerca de cada jugador. */
+    @SubscribeEvent
+    public void onServerTickShare(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || event.getServer().getTickCount() % 100 != 0) return;
+        for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
+            com.ale.warbandcraft.camp.WorkerZone.shareAround(player, player.level(), player.blockPosition(), SHARE_RADIUS);
+        }
+    }
+
+    /** Hasta dónde de cada jugador se abren al equipo las zonas de Workers de sus compañeros. */
+    private static final int SHARE_RADIUS = 48;
+
     /** Ya arrancó Recruits (sus managers de facciones existen): registra las facciones NPC en su menú. */
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {

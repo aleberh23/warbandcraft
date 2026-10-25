@@ -236,6 +236,10 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   (vista aérea, Batalla, zapadores, al barracón; el cliente elige también a los de tu equipo), quién es amigo en peleas
   (`Quarters`, `Morale`, `Escort`). Al **sacar** del barracón, **armar** con el Bastón u ordenar **seguir/proteger** (estados
   1/4/5) a un soldado de un compañero, pasa a ser del que lo pidió (`Barracks.handTo`: Recruits sigue siempre a su dueño).
+- **Zonas de Villager Workers**: Workers no deja tocar contenedores/bloques a ≤8 de una zona suya (`VillagerEvents.disableInteractionInPermissionArea`,
+  también en el cliente: ahí el click ni llega al servidor) salvo dueño o `teamAccess` + mismo equipo. `WorkerZone.share` abre al equipo
+  del dueño toda zona que creamos; `CommonEvents` lo hace con las de un compañero antes de cada click (HIGHEST) y cada 5 s a ≤48 de cada
+  jugador (zonas viejas, o de alguien que entró después a la facción). Era el "mi compañero no puede ni abrir el Campamento".
 - No compartido: kits y doctrinas (cada jugador tiene los suyos), datos internos del Mercado (`MarketData.owner`), qué aldea elige
   la IA para invadir, la Hueste (es contra un dueño, aunque el aviso y el mapa los ven todos), `VillageData` al cambiar de dueño
   (cambiar entre compañeros también vacía el almacén de números).
