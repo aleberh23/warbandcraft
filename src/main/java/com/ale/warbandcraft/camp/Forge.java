@@ -16,7 +16,8 @@ import java.util.Set;
 
 /**
  * Herreros (H10): aldeanos de vanilla con oficio de herrero, armero o fabricante de herramientas dentro de
- * la jurisdicción del Campamento. Cada día convierten hierro + carbón del almacén en armamento.
+ * la jurisdicción del Campamento. Cada día convierten hierro + carbón del almacén en armamento, y desguazan lo
+ * marcado ({@link Scrap}).
  * Cuenta perezosa como la comida del barracón: los días que el Campamento estuvo descargado se cobran al
  * volver a cargarse (con los herreros que haya en ese momento).
  */
@@ -45,9 +46,10 @@ public final class Forge {
     /** Un día de trabajo con {@code smiths} herreros. Devuelve cuánto armamento salió. */
     public static int workDay(ServerLevel level, CampBlockEntity camp, int smiths) {
         if (smiths <= 0) return 0;
+        int scrapped = Scrap.work(camp, smiths * Scrap.PIECES_PER_SMITH);   // lo marcado para desguazar
         int coal = camp.count(Items.COAL) + camp.count(Items.CHARCOAL);
         int iron = Math.min(smiths * IRON_PER_SMITH, Math.min(camp.count(Items.IRON_INGOT), coal));
-        if (iron <= 0) return 0;
+        if (iron <= 0) return scrapped;
         camp.take(Items.IRON_INGOT, iron);
         int fromCoal = camp.take(Items.COAL, iron);
         camp.take(Items.CHARCOAL, iron - fromCoal);
@@ -57,7 +59,7 @@ public final class Forge {
             BlockPos p = camp.getBlockPos();
             Containers.dropItemStack(level, p.getX() + 0.5, p.getY() + 1.1, p.getZ() + 0.5, rest);
         }
-        return made;
+        return made + scrapped;
     }
 
     /** Cobra los días que pasaron desde la última vez (máx. {@link #MAX_CATCH_UP_DAYS}). Devuelve el armamento. */

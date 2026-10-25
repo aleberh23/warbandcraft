@@ -1034,6 +1034,12 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   (máx. 4). Por día: 1 lingote + 1 carbón (o vegetal) → 2 de armamento, hasta 8 lingotes por herrero. Perezoso
   (`lastForgeDay` en el NBT del Campamento, `NEVER` = Long.MIN_VALUE; máx. 7 días atrasados). Corre en
   `BarracksEvents` (10 s, no en `GameTestServer`).
+- **Desguace** (pedido de Ale, a probar; números sin Ale): `camp/Scrap`. Pestaña Cofre → botón "Desguace: SÍ/NO"; con el modo
+  prendido, click en una pieza (almacén o inventario) = `ScrapMessage` marca/desmarca ese ítem en `CampBlockEntity.scrap` (NBT
+  `Scrap`; vuelve `ScrapListMessage`, lo marcado se pinta de rojo). Solo armas/armaduras (`canBeDepleted`) con valor en la tabla
+  de armamento. Los herreros sacan del almacén lo marcado (sin nombre puesto a mano) → valor × `YIELD` (0,5) × vida que le queda
+  (mín. 1): aldeanos de H10 `PIECES_PER_SMITH` (16)/día en `Forge.workDay`; el Herrero de H16 `PIECES_PER_JOB` (4) por vuelta en
+  vez del lingote (cuenta para su tope del día). Prueba: `H10GameTests.smithScrapsMarkedPieces`.
 - Pestaña Cofre: línea de totales arriba (`CampStats`, ContainerData, se recalcula 1 vez por segundo; los valores
   viajan como short) y botón "Zona de trabajo" (`WorkerZoneMessage` → `WorkerZone.create`: StorageArea de Workers
   que encierra Campamento + vinculados, +1 de margen, mínimo 5; prueba orientaciones hasta que la caja empiece

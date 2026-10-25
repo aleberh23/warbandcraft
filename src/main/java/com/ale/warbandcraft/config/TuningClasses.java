@@ -26,6 +26,7 @@ final class TuningClasses {
             "camp.CampFinder",
             "camp.Forge",
             "camp.Prisoners",
+            "camp.Scrap",
             "camp.Training",
             "camp.WorkerZone",
             "castle.CastleDesigns",

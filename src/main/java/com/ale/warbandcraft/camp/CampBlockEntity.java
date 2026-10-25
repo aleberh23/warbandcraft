@@ -44,6 +44,8 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
     /** H16: centro de la aldea/castillo de la que este Campamento es el almacén (null = Campamento común). */
     @Nullable
     private BlockPos village;
+    /** Desguace: piezas que los herreros convierten en armamento si las ven en el almacén ({@link Scrap}). */
+    private final java.util.Set<net.minecraft.resources.ResourceLocation> scrap = new java.util.LinkedHashSet<>();
 
     public CampBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CAMP.get(), pos, state);
@@ -233,6 +235,27 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
         setChanged();
     }
 
+    public boolean hasScrap() {
+        return !scrap.isEmpty();
+    }
+
+    public boolean isScrap(Item item) {
+        return scrap.contains(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item));
+    }
+
+    public java.util.Set<net.minecraft.resources.ResourceLocation> scrapList() {
+        return java.util.Set.copyOf(scrap);
+    }
+
+    /** Marca o desmarca una pieza para desguazar. Devuelve si quedó marcada. */
+    public boolean toggleScrap(Item item) {
+        net.minecraft.resources.ResourceLocation id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item);
+        boolean on = !scrap.remove(id);
+        if (on) scrap.add(id);
+        setChanged();
+        return on;
+    }
+
     public List<BlockPos> getLinked() {
         return List.copyOf(linked);
     }
@@ -412,6 +435,11 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
         for (long l : tag.getLongArray("Linked")) linked.add(BlockPos.of(l));
         lastForgeDay = tag.contains("LastForgeDay") ? tag.getLong("LastForgeDay") : NEVER;
         village = tag.contains("Village") ? BlockPos.of(tag.getLong("Village")) : null;
+        scrap.clear();
+        for (net.minecraft.nbt.Tag t : tag.getList("Scrap", net.minecraft.nbt.Tag.TAG_STRING)) {
+            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(t.getAsString());
+            if (id != null) scrap.add(id);
+        }
     }
 
     @Override
@@ -422,5 +450,10 @@ public class CampBlockEntity extends BaseContainerBlockEntity {
         if (!linked.isEmpty()) tag.putLongArray("Linked", linked.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putLong("LastForgeDay", lastForgeDay);
         if (village != null) tag.putLong("Village", village.asLong());
+        if (!scrap.isEmpty()) {
+            net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+            for (net.minecraft.resources.ResourceLocation id : scrap) list.add(net.minecraft.nbt.StringTag.valueOf(id.toString()));
+            tag.put("Scrap", list);
+        }
     }
 }

@@ -141,6 +141,30 @@ public class H10GameTests {
         h.succeed();
     }
 
+    /** Desguace: las cotas marcadas se vuelven armamento (8 × 0,5 = 4 c/u; gastada a la mitad, 2); lo con nombre y lo no marcado, no. */
+    @GameTest(template = TEMPLATE)
+    public static void smithScrapsMarkedPieces(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CampBlockEntity camp = placeCamp(h);
+        camp.insert(new ItemStack(Items.CHAINMAIL_CHESTPLATE));
+        ItemStack worn = new ItemStack(Items.CHAINMAIL_CHESTPLATE);
+        worn.setDamageValue(worn.getMaxDamage() / 2);
+        camp.insert(worn);
+        ItemStack named = new ItemStack(Items.CHAINMAIL_CHESTPLATE);
+        named.setHoverName(net.minecraft.network.chat.Component.literal("La mía"));
+        camp.insert(named);
+        camp.insert(new ItemStack(Items.IRON_CHESTPLATE));
+        check(!com.ale.warbandcraft.camp.Scrap.scrappable(Items.IRON_INGOT), "un lingote no se desguaza");
+        check(Forge.workDay(level, camp, 1) == 0, "sin nada marcado no tendría que desguazar");
+        check(camp.toggleScrap(Items.CHAINMAIL_CHESTPLATE), "no quedó marcada");
+        int made = Forge.workDay(level, camp, 1);
+        check(made == 6, "debería dar 6 de armamento (4 + 2), dio " + made);
+        check(camp.count(Items.CHAINMAIL_CHESTPLATE) == 1, "la cota con nombre no se toca");
+        check(camp.count(Items.IRON_CHESTPLATE) == 1, "la pechera de hierro no estaba marcada");
+        check(!camp.toggleScrap(Items.CHAINMAIL_CHESTPLATE) && !camp.hasScrap(), "no se desmarcó");
+        h.succeed();
+    }
+
     /** Días atrasados: 3 días con 1 herrero = 24 lingotes → 48 de armamento (tope de 8 por día). */
     @GameTest(template = TEMPLATE)
     public static void smithCatchesUpMissedDays(GameTestHelper h) {

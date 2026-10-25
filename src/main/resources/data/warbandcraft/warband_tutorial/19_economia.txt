@@ -10,6 +10,9 @@ Sale de: herreros, castillos tuyos, botín de batalla y cofres de mazmorras.
 
 ## Herreros de aldeano
 Los aldeanos armero, herrero o fabricante de herramientas a 24 bloques de un Campamento (hasta 4) convierten cada día 1 lingote + 1 carbón en 2 de armamento.
+
+## Desguace
+¿Te llenás de armaduras oxidadas o cotas que no querés? En la pestaña Cofre del Campamento prendé "Desguace" y hacé click en una pieza: queda en rojo. Los herreros desguazan todo lo de ese tipo que vean en el almacén y te dan armamento (la mitad de lo que vale, menos si está gastada). Lo que tiene nombre puesto a mano no lo tocan. Click de nuevo para desmarcar.
 ---
 ## Almacén de las aldeas
 Las aldeas y castillos tuyos producen cada día impuestos, comida y (castillos) armamento, hasta un tope de 7 días.

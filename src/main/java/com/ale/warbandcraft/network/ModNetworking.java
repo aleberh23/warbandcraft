@@ -10,7 +10,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * aldea ganada), las órdenes de la vista aérea (H5) y las pestañas del Campamento y el Zapador (H6) y el barracón (H8).
  */
 public final class ModNetworking {
-    private static final String PROTOCOL_VERSION = "10";
+    private static final String PROTOCOL_VERSION = "11";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(WarbandCraft.MODID, "main"),
@@ -117,5 +117,10 @@ public final class ModNetworking {
                 OpenMarketMessage::encode, OpenMarketMessage::decode, OpenMarketMessage::handle);
         CHANNEL.registerMessage(nextId++, MarketActionMessage.class,
                 MarketActionMessage::encode, MarketActionMessage::decode, MarketActionMessage::handle);
+        // Desguace: qué piezas convierten los herreros en armamento
+        CHANNEL.registerMessage(nextId++, ScrapMessage.class,
+                ScrapMessage::encode, ScrapMessage::decode, ScrapMessage::handle);
+        CHANNEL.registerMessage(nextId++, ScrapListMessage.class,
+                ScrapListMessage::encode, ScrapListMessage::decode, ScrapListMessage::handle);
     }
 }

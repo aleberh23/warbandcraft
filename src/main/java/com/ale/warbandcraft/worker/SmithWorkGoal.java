@@ -1,6 +1,7 @@
 package com.ale.warbandcraft.worker;
 
 import com.ale.warbandcraft.camp.CampBlockEntity;
+import com.ale.warbandcraft.camp.Scrap;
 import com.ale.warbandcraft.kit.Armament;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -18,7 +19,8 @@ import java.util.EnumSet;
 
 /**
  * El trabajo del Herrero (H16): de día va a su lugar de trabajo y martilla. Cada {@link #WORK_TICKS} saca 1 lingote de
- * hierro y 1 carbón (o carbón vegetal) del almacén y deja {@link SmithEntity#ARMAMENT_PER_IRON} de armamento.
+ * hierro y 1 carbón (o carbón vegetal) del almacén y deja {@link SmithEntity#ARMAMENT_PER_IRON} de armamento. Si hay
+ * piezas marcadas para desguazar en el almacén, esa vuelta desguaza {@link Scrap#PIECES_PER_JOB} en vez del lingote.
  */
 public class SmithWorkGoal extends Goal {
     /** Cada cuánto termina un lingote (30 s) y a qué distancia del lugar cuenta como "llegó". */
@@ -100,6 +102,10 @@ public class SmithWorkGoal extends Goal {
     public boolean forge(ServerLevel level) {
         CampBlockEntity camp = camp(level, smith);
         if (camp == null || smith.ironLeftToday(level.getDayTime() / 24000L) <= 0) return false;
+        if (Scrap.work(camp, Scrap.PIECES_PER_JOB) > 0) {   // primero lo marcado para desguazar
+            smith.forged();
+            return true;
+        }
         Item coal = camp.count(Items.COAL) > 0 ? Items.COAL : camp.count(Items.CHARCOAL) > 0 ? Items.CHARCOAL : null;
         if (coal == null || camp.count(Items.IRON_INGOT) <= 0) return false;
         camp.take(Items.IRON_INGOT, 1);

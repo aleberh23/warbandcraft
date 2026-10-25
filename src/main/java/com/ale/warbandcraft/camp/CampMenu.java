@@ -23,6 +23,8 @@ public class CampMenu extends ChestMenu {
     private final boolean village;
     /** H10: totales del almacén ({@link CampStats}), se actualizan solos. */
     private final ContainerData stats;
+    /** Desguace: lo marcado (solo en el cliente; el servidor lo manda al abrir y después de cada cambio). */
+    private java.util.Set<net.minecraft.resources.ResourceLocation> scrap = java.util.Set.of();
 
     public CampMenu(int id, Inventory inventory, Container container, BlockPos campPos, boolean owner, boolean ally, boolean village, ContainerData stats) {
         super(ModMenus.CAMP.get(), id, inventory, container, 6);
@@ -35,8 +37,30 @@ public class CampMenu extends ChestMenu {
     }
 
     public static CampMenu fromNetwork(int id, Inventory inventory, FriendlyByteBuf buf) {
-        return new CampMenu(id, inventory, new SimpleContainer(CampBlockEntity.SIZE), buf.readBlockPos(), buf.readBoolean(),
+        CampMenu menu = new CampMenu(id, inventory, new SimpleContainer(CampBlockEntity.SIZE), buf.readBlockPos(), buf.readBoolean(),
                 buf.readBoolean(), buf.readBoolean(), new SimpleContainerData(CampStats.SIZE));
+        menu.setScrap(readScrap(buf));
+        return menu;
+    }
+
+    public static void writeScrap(FriendlyByteBuf buf, java.util.Collection<net.minecraft.resources.ResourceLocation> ids) {
+        buf.writeVarInt(ids.size());
+        for (net.minecraft.resources.ResourceLocation id : ids) buf.writeResourceLocation(id);
+    }
+
+    public static java.util.Set<net.minecraft.resources.ResourceLocation> readScrap(FriendlyByteBuf buf) {
+        int n = buf.readVarInt();
+        java.util.Set<net.minecraft.resources.ResourceLocation> out = new java.util.HashSet<>();
+        for (int i = 0; i < n; i++) out.add(buf.readResourceLocation());
+        return out;
+    }
+
+    public java.util.Set<net.minecraft.resources.ResourceLocation> scrap() {
+        return scrap;
+    }
+
+    public void setScrap(java.util.Set<net.minecraft.resources.ResourceLocation> scrap) {
+        this.scrap = scrap;
     }
 
     /** Un total del almacén (índices de {@link CampStats}). */

@@ -81,6 +81,7 @@ public final class CampTabs {
                 buf.writeBoolean(owner);
                 buf.writeBoolean(ally);
                 buf.writeBoolean(camp.getVillage() != null);
+                CampMenu.writeScrap(buf, camp.scrapList());
             });
         }
     }

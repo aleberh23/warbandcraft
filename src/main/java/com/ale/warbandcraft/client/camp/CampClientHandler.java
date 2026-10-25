@@ -24,4 +24,11 @@ public final class CampClientHandler {
             mc.setScreen(new BarracksScreen(msg));
         }
     }
+
+    /** Desguace: la lista nueva de lo marcado, si sigue abierta la pestaña Cofre de ese Campamento. */
+    public static void scrapList(com.ale.warbandcraft.network.ScrapListMessage msg) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.containerMenu instanceof com.ale.warbandcraft.camp.CampMenu menu
+                && menu.campPos().equals(msg.camp)) menu.setScrap(msg.items);
+    }
 }

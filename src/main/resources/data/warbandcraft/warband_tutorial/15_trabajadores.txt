@@ -23,7 +23,7 @@ Los trabajadores reciben del almacén lo que necesitan (herramientas, comida, se
 Sobre cada zona se ve qué le pasa: "Falta en el almacén", "Almacén lleno", "Con hambre", "Trabajando"...
 ---
 ## Herrero
-Convierte 1 hierro + 1 carbón en 2 de armamento, hasta 8 por día. Trabaja en la Herrería o al lado de un yunque.
+Convierte 1 hierro + 1 carbón en 2 de armamento, hasta 8 por día. Trabaja en la Herrería o al lado de un yunque. También desguaza lo que marques en la pestaña Cofre (Desguace).
 
 ## Minero
 Su zona es una escalera: marcá un rectángulo largo y angosto (mínimo 8 de largo, máximo 5 de ancho). Baja desde la punta más cerca del almacén. Abajo de todo sigue cavando pasillos por el territorio.
