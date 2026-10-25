@@ -127,7 +127,10 @@ public class LoginPositionEvents {
         if (level == null) return;
         double x = pos.getDouble("x"), y = pos.getDouble("y"), z = pos.getDouble("z");
         if (p.level() == level && p.distanceToSqr(x, y, z) < 4.0) {
-            WarbandCraft.LOGGER.info("Login: {} ya estaba en su lugar", p.getName().getString());
+            // En el servidor ya está, pero ese mod pudo devolverlo sin avisarle al cliente (que sigue viéndose en el
+            // spawn: "moved too quickly"). Se le manda la posición igual.
+            p.connection.teleport(p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot());
+            WarbandCraft.LOGGER.info("Login: {} ya estaba en su lugar (se le avisa al cliente)", p.getName().getString());
             return;
         }
         p.stopRiding();
