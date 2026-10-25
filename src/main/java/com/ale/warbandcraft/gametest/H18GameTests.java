@@ -254,7 +254,9 @@ public class H18GameTests {
                     + mine.getPersistentData().getInt(WorkerSupply.TAG_STAGE));
             check(mine.getMode() == MiningArea.MiningMode.CUSTOM, "el pasillo no es una caja común");
             AABB corridor = mine.getArea();
-            check(corridor.maxY - corridor.minY == 3 && corridor.minY < box.maxY - 6, "el pasillo no está abajo: " + corridor + " escalera " + box);
+            // Al pie de la escalera (en el mundo de prueba la roca madre corta la escalera: no se mide contra la boca)
+            check(corridor.maxY - corridor.minY == 3 && corridor.minY <= box.minY + 3 && corridor.minY < box.maxY - 3,
+                    "el pasillo no está abajo: " + corridor + " escalera " + box);
         } finally {
             cleanup(level, v, around);
         }
