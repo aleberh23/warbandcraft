@@ -842,5 +842,18 @@
   "msg.warbandcraft.tavern.no_treasure": "\"No treasure stories lately.\" (Not charged.)",
   "entity.warbandcraft.tavern_guard": "Tavern guard",
   "entity.warbandcraft.mercenary": "Mercenary (level %s)",
-  "msg.warbandcraft.world_tavern.welcome": "A safe tavern: the guards keep the peace, mercenaries wait for work and the innkeeper knows things. Don't start trouble here."
+  "msg.warbandcraft.world_tavern.welcome": "A safe tavern: the guards keep the peace, mercenaries wait for work and the innkeeper knows things. Don't start trouble here.",
+  "msg.warbandcraft.report.while_away": "War reports from while you were away:",
+  "msg.warbandcraft.report.day": "(day %s)",
+  "msg.warbandcraft.report.yours": "",
+  "msg.warbandcraft.report.of": " (%s's)",
+  "msg.warbandcraft.report.lost": "Lost %2$s%1$s to %3$s.",
+  "msg.warbandcraft.report.won": "%2$s%1$s held against %3$s.",
+  "msg.warbandcraft.report.repelled": "%2$s%1$s repelled %3$s: all of them fell.",
+  "msg.warbandcraft.report.retreated": "%2$s%1$s held: %3$s retreated.",
+  "msg.warbandcraft.report.forces": "%s soldiers of %s against a garrison of %s.",
+  "msg.warbandcraft.report.fought": "It was fought for real.",
+  "msg.warbandcraft.report.auto": "It was auto-resolved (nobody was nearby).",
+  "msg.warbandcraft.report.lost_guards": "%s of ours fell.",
+  "cmd.warbandcraft.reports.none": "No war reports: nobody has attacked your villages yet."
 }

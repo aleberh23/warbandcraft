@@ -324,7 +324,14 @@ public final class Invasions {
         if (Assault.tick(level, inv, v, left)) return;   // se retiraron
         SiegeDefense.tick(level, inv, v);
         bar(level, inv, left.size() + inv.reserve);
+        int defs = defenders(level, inv);
+        if (defs > inv.peakDefenders) {
+            inv.peakDefenders = defs;
+            data.changed();
+        }
         if (left.isEmpty() && inv.reserve <= 0) {
+            WarReports.record(level, inv, WarReports.Outcome.REPELLED, true, inv.attackers, inv.peakDefenders,
+                    Math.max(0, inv.peakDefenders - defs));
             Assault.end(level, inv);
             data.remove(inv.target);
             com.ale.warbandcraft.village.Popularity.attacked(level, inv.target);   // H21: la gente se asustó
@@ -332,7 +339,7 @@ public final class Invasions {
                     .withStyle(ChatFormatting.GREEN));
             return;
         }
-        if (defenders(level, inv) > 0) {
+        if (defs > 0) {
             if (inv.noDefendersSince != Long.MIN_VALUE) {
                 inv.noDefendersSince = Long.MIN_VALUE;
                 data.changed();
@@ -345,6 +352,9 @@ public final class Invasions {
         }
         // Sin resistencia van al almacén (ver Assault: objective); el primero que llega se queda con la aldea
         if (reachedStorehouse(level, v, left)) {
+            int guards = guardsAt(level, inv.owner, inv.target).size();
+            WarReports.record(level, inv, WarReports.Outcome.LOST, true, inv.attackers, Math.max(inv.peakDefenders, guards),
+                    inv.peakDefenders + guards);
             Assault.end(level, inv);
             lose(level, inv, v, guardsAt(level, inv.owner, inv.target).size());
             for (AbstractRecruitEntity s : left) s.getPersistentData().remove(TAG_INVADER);   // quedan de guarnición
@@ -395,6 +405,8 @@ public final class Invasions {
         if (defense >= attack) {
             int lost = (int) Math.round(guards.size() * Math.min(1.0, attack / Math.max(defense, 1e-6)) * 0.5);
             removeGuards(level, inv.owner, guards, lost);
+            WarReports.record(level, inv, WarReports.Outcome.WON, inv.state == InvasionData.State.FIGHTING,
+                    Math.max(inv.attackers, inv.size), Math.max(inv.peakDefenders, guards.size()), lost);
             InvasionData.get(level).remove(inv.target);
             com.ale.warbandcraft.village.Popularity.attacked(level, inv.target);   // H21
             tell(level, inv.owner, Component.translatable("msg.warbandcraft.invasion.auto_won", placeName(level, inv),
@@ -402,6 +414,8 @@ public final class Invasions {
             return new Result(true, attack, defense, lost);
         }
         int lost = guards.size();
+        WarReports.record(level, inv, WarReports.Outcome.LOST, inv.state == InvasionData.State.FIGHTING,
+                Math.max(inv.attackers, inv.size), Math.max(inv.peakDefenders, lost), lost);
         lose(level, inv, v, lost);
         // H15b: los que quedaron del ejército entran de guarnición (ya o cuando se cargue)
         InvasionData.get(level).setPendingGarrison(inv.target, Math.max(1, (int) Math.round(inv.size * (1 - defense / attack))));

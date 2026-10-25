@@ -53,12 +53,15 @@ public class InvasionData extends SavedData {
         public final java.util.List<Long> ladders = new java.util.ArrayList<>();
         /** H23: los que esperan para entrar (tamaño de batalla): aparecen a medida que caen los de adelante. */
         public int reserve;
+        /** Parte de guerra: cuántos vinieron en total (con los que se sumaron) y la mayor cantidad de defensores tuyos a la vez. */
+        public int attackers, peakDefenders;
 
         public Invasion(BlockPos target, ResourceLocation faction, UUID owner, int size, long arriveTick, BlockPos from) {
             this.target = target;
             this.faction = faction;
             this.owner = owner;
             this.size = size;
+            this.attackers = size;
             this.arriveTick = arriveTick;
             this.from = from;
             this.startTick = arriveTick - Invasions.COUNTDOWN_TICKS;
@@ -79,6 +82,8 @@ public class InvasionData extends SavedData {
             t.putInt("StartSize", startSize);
             t.putLongArray("Ladders", ladders.stream().mapToLong(Long::longValue).toArray());
             t.putInt("Reserve", reserve);
+            t.putInt("Attackers", attackers);
+            t.putInt("PeakDefenders", peakDefenders);
             return t;
         }
 
@@ -101,6 +106,8 @@ public class InvasionData extends SavedData {
             i.startSize = t.getInt("StartSize");
             for (long l : t.getLongArray("Ladders")) i.ladders.add(l);
             i.reserve = t.getInt("Reserve");
+            if (t.contains("Attackers")) i.attackers = t.getInt("Attackers");
+            i.peakDefenders = t.getInt("PeakDefenders");
             return i;
         }
     }

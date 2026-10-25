@@ -9,6 +9,9 @@ Si los invasores llegan al almacén de la aldea sin defensores, la perdés: vuel
 
 Una facción en paz con vos puede querer recuperar una aldea que era suya (reconquista).
 
+## Parte de guerra
+Cada invasión deja un parte: fecha y hora, quién atacó, cuántos contra cuántos y qué pasó. Si no estabas conectado, te lo muestran al entrar (a todos los de tu facción). /warband partes muestra los últimos.
+
 ## Defenderse
 Murallas, torres, cuartel y entrenamiento ayudan mucho (libros 16 y 18).
 ---

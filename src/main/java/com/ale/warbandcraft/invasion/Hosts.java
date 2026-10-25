@@ -505,6 +505,7 @@ public final class Hosts {
         InvasionData.Invasion inv = data.at(h.target);
         if (inv != null) {   // ya había una: se suman
             inv.size += h.size;
+            inv.attackers += h.size;
             if (inv.state == InvasionData.State.FIGHTING) inv.reserve += h.size;
             else inv.kind = InvasionData.Kind.ARMY;
             data.changed();

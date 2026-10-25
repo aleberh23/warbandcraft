@@ -299,6 +299,11 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   la facción (sin dueño) y los invasores quedan de guarnición. Aldea descargada en medio = se autoresuelve lo que quede.
 - Invasor que se carga sin su invasión peleando: si la aldea es de su facción queda de guarnición; si no, no entra.
 - `/warband prueba invasion [cantidad]`: guerra con la facción más cercana y ejército contra tu aldea más cercana (llega en el acto, ver H17).
+- **Parte de guerra** (pedido de Ale: "me fui con una aldea y al volver la perdí"): `invasion/WarReports` (SavedData del overworld,
+  últimos 60). Cada final de invasión (perdida / resistida autoresuelta / rechazada / se retiraron) anota hora real (Argentina),
+  día del juego, lugar, facción, `Invasion.attackers` (total, con lo que suma la Hueste) contra `peakDefenders` (o las fichas de
+  guardia) y caídos; va al log ("Parte de guerra: ...") y a los de la facción del dueño (`Allies.members`): conectado en el acto,
+  si no al entrar (`InvasionEvents.onLogin`). `/warband partes` = los últimos 10.
 - H15b (a probar): `InvasionData.March` = campaña de una facción contra otra (guerras en `wars`, "a|b" → día de fin);
   `AiWars.onNewDay` declara/termina guerras y lanza marchas, `AiWars.tick` las resuelve al llegar (números, o batalla real
   si estás cerca); `take` cambia la facción de la aldea y deja `pendingGarrison` (aparece al cargarse). Posición de un

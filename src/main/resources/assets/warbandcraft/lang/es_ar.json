@@ -842,5 +842,18 @@
   "msg.warbandcraft.tavern.no_treasure": "—De tesoros no se habla últimamente. (No se te cobró.)",
   "entity.warbandcraft.tavern_guard": "Guardia de la taberna",
   "entity.warbandcraft.mercenary": "Mercenario (nivel %s)",
-  "msg.warbandcraft.world_tavern.welcome": "Una taberna segura: los guardias cuidan la paz, hay mercenarios buscando trabajo y el tabernero sabe cosas. Acá no armes lío."
+  "msg.warbandcraft.world_tavern.welcome": "Una taberna segura: los guardias cuidan la paz, hay mercenarios buscando trabajo y el tabernero sabe cosas. Acá no armes lío.",
+  "msg.warbandcraft.report.while_away": "Partes de guerra de mientras no estabas:",
+  "msg.warbandcraft.report.day": "(día %s)",
+  "msg.warbandcraft.report.yours": "",
+  "msg.warbandcraft.report.of": " (de %s)",
+  "msg.warbandcraft.report.lost": "Se perdió %2$s%1$s a manos de %3$s.",
+  "msg.warbandcraft.report.won": "%2$s%1$s resistió a %3$s.",
+  "msg.warbandcraft.report.repelled": "%2$s%1$s rechazó a %3$s: cayeron todos.",
+  "msg.warbandcraft.report.retreated": "%2$s%1$s aguantó: %3$s se retiró.",
+  "msg.warbandcraft.report.forces": "%s soldados de %s contra una guarnición de %s.",
+  "msg.warbandcraft.report.fought": "Se peleó de verdad.",
+  "msg.warbandcraft.report.auto": "Se resolvió sola (no había nadie cerca).",
+  "msg.warbandcraft.report.lost_guards": "Cayeron %s de los nuestros.",
+  "cmd.warbandcraft.reports.none": "No hay partes de guerra: nadie atacó tus aldeas todavía."
 }

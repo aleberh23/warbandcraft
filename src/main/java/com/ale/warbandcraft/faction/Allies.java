@@ -69,6 +69,12 @@ public final class Allies {
                 : server.getProfileCache().get(player).map(com.mojang.authlib.GameProfile::getName).orElse(null);
     }
 
+    /** El nombre del jugador para mostrar (desconectado: el de la caché; si no se sabe, el comienzo del UUID). */
+    public static String playerName(UUID player) {
+        String n = server == null ? null : nameOf(player);
+        return n != null ? n : player.toString().substring(0, 8);
+    }
+
     /** El mismo jugador, o los dos en la misma facción de Recruits. */
     public static boolean same(@Nullable UUID a, @Nullable UUID b) {
         if (a == null || b == null) return false;

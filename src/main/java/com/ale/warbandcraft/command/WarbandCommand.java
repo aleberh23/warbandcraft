@@ -73,6 +73,7 @@ public final class WarbandCommand {
                 .then(Commands.literal("retirar").executes(WarbandCommand::withdraw))
                 .then(Commands.literal("fundar").executes(WarbandCommand::found))
                 .then(Commands.literal("mazmorras").executes(WarbandCommand::dungeons))   // H25
+                .then(Commands.literal("partes").executes(WarbandCommand::reports))
                 .then(Commands.literal("mercado").executes(WarbandCommand::market))
                 .then(Commands.literal("tutorial").executes(WarbandCommand::tutorialWhere)   // salón del tutorial
                         .then(Commands.literal("construir").requires(s -> s.hasPermission(2)).executes(WarbandCommand::tutorialBuild)))
@@ -122,6 +123,15 @@ public final class WarbandCommand {
     }
 
     /** H25: las mazmorras que conocés y tu contrato. */
+    /** Los últimos partes de guerra de tu facción (invasiones a tus aldeas). */
+    private static int reports(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        java.util.List<Component> list = com.ale.warbandcraft.invasion.WarReports.recent(player);
+        if (list.isEmpty()) ctx.getSource().sendSuccess(() -> Component.translatable("cmd.warbandcraft.reports.none"), false);
+        for (Component c : list) ctx.getSource().sendSuccess(() -> c, false);
+        return 1;
+    }
+
     private static int dungeons(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         ServerLevel level = player.serverLevel();
