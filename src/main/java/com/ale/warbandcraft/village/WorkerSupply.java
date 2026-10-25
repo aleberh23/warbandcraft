@@ -2,17 +2,21 @@ package com.ale.warbandcraft.village;
 
 import com.ale.warbandcraft.camp.Barracks;
 import com.ale.warbandcraft.camp.CampBlockEntity;
+import com.ale.warbandcraft.camp.CampRegistry;
 import com.ale.warbandcraft.worker.SmithEntity;
 import com.talhanation.workers.entities.AbstractWorkerEntity;
 import com.talhanation.workers.entities.MinerEntity;
 import com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity;
+import com.talhanation.workers.entities.workarea.AnimalPenArea;
 import com.talhanation.workers.entities.workarea.CropArea;
 import com.talhanation.workers.entities.workarea.HomeArea;
 import com.talhanation.workers.entities.workarea.LumberArea;
 import com.talhanation.workers.entities.workarea.MiningArea;
 import com.talhanation.workers.init.ModEntityTypes;
 import com.talhanation.workers.world.NeededItem;
+import com.ale.warbandcraft.camp.WorkerZone;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -57,6 +61,18 @@ public final class WorkerSupply {
     public static int MEAL_POINTS = 6;
     /** Comida que se puede quedar en la mochila. */
     public static int KEEP_FOOD = 4;
+    /** Atenciones seguidas sin encontrarlo (con su lugar cargado) hasta darlo por muerto. */
+    public static int MISSING_CHECKS = 6;
+    /** Un puesto de afuera: más lejos que esto de su zona, vuelve a su cofre. */
+    public static int OUTPOST_LEASH = 48;
+    /** Se avisa lo producido sin cargar si fue por más que esto (2 min). */
+    public static int TELL_GAP_TICKS = 2400;
+    /** Lo esperado por día de cada oficio hasta medir lo de verdad: troncos, pan, zanahorias/papas, carne, piedra, pescado. */
+    public static int EST_LOGS = 32, EST_BREAD = 16, EST_ROOTS = 40, EST_MEAT = 8, EST_STONE = 48, EST_FISH = 16;
+    /** El minero, después de la escalera: pasillos de este largo y cuántos. */
+    public static int CORRIDOR_LENGTH = 8, CORRIDORS = 16;
+    /** Cada cuánto se mira si la escalera o el pasillo ya están. */
+    public static int ADVANCE_EVERY_TICKS = 200;
 
     private static final String TAG_LOWERED = "warbandcraft:lowered", TAG_BED = "warbandcraft:bed";
 
@@ -98,7 +114,7 @@ public final class WorkerSupply {
     private enum Kind { MISSING, FULL, HUNGRY }
 
     private static final Map<UUID, Note> NOTES = new HashMap<>();
-    private static final Map<UUID, Long> LAST_COLLECT = new HashMap<>(), LAST_MINE = new HashMap<>();
+    private static final Map<UUID, Long> LAST_COLLECT = new HashMap<>(), LAST_MINE = new HashMap<>(), LAST_ADVANCE = new HashMap<>();
 
     private static void note(AbstractWorkerEntity w, Kind kind, Component what) {
         NOTES.put(w.getUUID(), new Note(kind, what, w.level().getGameTime()));
@@ -112,21 +128,64 @@ public final class WorkerSupply {
 
     // ------------------------------------------------------------------ cada 5 s
 
-    /** Todas tus aldeas cargadas: sus trabajadores. */
+    /**
+     * Todas tus aldeas cargadas: sus trabajadores (también los de los puestos de afuera que estén cargados). Los que no se
+     * pudieron atender (sin cargar) producen "en papel": lo de su producción por día por el tiempo que pasó, al almacén.
+     */
     public static void tick(ServerLevel level) {
+        WorkerOutput out = WorkerOutput.get(level);
+        long now = level.getGameTime();
         for (VillageData.Village v : new ArrayList<>(VillageData.get(level).all())) {
             if (!v.isConquered() || !level.isPositionEntityTicking(v.center())) continue;
             CampBlockEntity camp = VillageStorehouse.camp(level, v);
-            for (AbstractWorkerEntity w : VillageManagement.workers(level, v.center(), v.owner())) serve(level, v, camp, w);
+            java.util.Set<UUID> served = new java.util.HashSet<>();
+            List<ItemStack> paid = new ArrayList<>();
+            for (AbstractWorkerEntity w : VillageManagement.workers(level, v.center(), v.owner())) {
+                serve(level, v, camp, w, paid);
+                served.add(w.getUUID());
+            }
             releaseEmptyHomes(level, v);
+            if (camp != null) {
+                for (WorkerOutput.Rec r : out.of(v.center())) {
+                    if (served.contains(r.worker)) continue;
+                    if (level.getEntity(r.worker) == null && level.isPositionEntityTicking(r.pos)) {
+                        if (out.missing(r, MISSING_CHECKS)) continue;   // murió o lo sacaron
+                    } else {
+                        out.found(r);
+                    }
+                    long gap = now - r.lastTick;
+                    if (gap <= WorkerOutput.GAP_TICKS) continue;
+                    r.lastTick = now;
+                    List<ItemStack> got = pay(level, v, camp, out.owed(r, gap));
+                    if (gap >= TELL_GAP_TICKS) paid.addAll(got);
+                }
+            }
+            if (!paid.isEmpty()) tellPaid(level, v, paid);
         }
         NOTES.keySet().removeIf(id -> level.getEntity(id) == null && level.getGameTime() - NOTES.get(id).tick > NOTE_TICKS);
     }
 
     /** Un trabajador: equipo, comida, juntar, cama y la veta del minero. */
     public static void serve(ServerLevel level, VillageData.Village v, @Nullable CampBlockEntity camp, AbstractWorkerEntity w) {
+        serve(level, v, camp, w, new ArrayList<>());
+    }
+
+    /** Ídem; lo que se paga por el tiempo sin cargar va a {@code paid} (para avisar). */
+    static void serve(ServerLevel level, VillageData.Village v, @Nullable CampBlockEntity camp, AbstractWorkerEntity w, List<ItemStack> paid) {
         if (camp == null) return;
         long now = level.getGameTime();
+        WorkerOutput out = WorkerOutput.get(level);
+        WorkerOutput.Rec rec = out.ensure(w.getUUID(), v.center(), w.blockPosition(), now);
+        rec.pos = w.blockPosition();
+        rec.village = v.center();
+        out.found(rec);
+        rec.estimate.clear();
+        rec.estimate.putAll(estimate(level, w));
+        long gap = out.seen(rec, now);
+        if (gap > 0) {
+            List<ItemStack> got = pay(level, v, camp, out.owed(rec, gap));
+            if (gap >= TELL_GAP_TICKS) paid.addAll(got);
+        }
         supply(camp, w);
         feed(camp, w);
         Long last = LAST_COLLECT.get(w.getUUID());
@@ -134,8 +193,9 @@ public final class WorkerSupply {
             LAST_COLLECT.put(w.getUUID(), now);
             collect(camp, w);
         }
-        if (w.homeAreaUUID == null) home(level, v, w);
-        if (w instanceof MinerEntity miner) mine(level, camp, miner, now);
+        if (rec.outpost) outpost(level, camp, w, rec);
+        else if (w.homeAreaUUID == null) home(level, v, w);
+        if (w instanceof MinerEntity miner) mine(level, v, camp, miner, now);
     }
 
     /** Lo que le falta (su equipo y lo que pidió Workers), del almacén a su mochila. Lo que no hay queda anotado. */
@@ -195,8 +255,12 @@ public final class WorkerSupply {
         else note(w, Kind.HUNGRY, Component.empty());
     }
 
-    /** Lo que juntó (salvo su equipo y un poco de comida) pasa al almacén. Si no entra, queda anotado. */
+    /**
+     * Lo que juntó (salvo su equipo y un poco de comida) pasa al almacén y queda anotado como producción. Si no entra,
+     * queda anotado. El trigo del granjero se hace pan (3 → 1): la aldea no come trigo.
+     */
     static void collect(CampBlockEntity camp, AbstractWorkerEntity w) {
+        if (WorkZones.jobOf(w) == VillageManagement.Job.FARMER) bake(w);
         List<Kit> kit = kit(w);
         int[] kept = new int[kit.size()];
         int food = 0;
@@ -219,7 +283,10 @@ public final class WorkerSupply {
             }
             if (keep >= s.getCount()) continue;
             ItemStack out = s.split(s.getCount() - keep);
+            int moving = out.getCount();
+            Item item = out.getItem();
             ItemStack back = camp.insert(out);
+            made(w, new ItemStack(item, moving - back.getCount()));
             if (!back.isEmpty()) {
                 s.grow(back.getCount());
                 full = true;
@@ -232,6 +299,155 @@ public final class WorkerSupply {
         } else {
             w.farmedItems = 0;
             w.forcedDeposit = false;
+        }
+    }
+
+    /** Anota {@code s} como producción del trabajador. */
+    private static void made(AbstractWorkerEntity w, ItemStack s) {
+        if (s.isEmpty() || !(w.level() instanceof ServerLevel level)) return;
+        WorkerOutput out = WorkerOutput.get(level);
+        WorkerOutput.Rec r = out.of(w.getUUID());
+        if (r != null) out.made(r, s);
+    }
+
+    /** El trigo de la mochila se hace pan (de a 3). */
+    static void bake(AbstractWorkerEntity w) {
+        Container inv = w.getInventory();
+        int wheat = 0;
+        for (int i = 6; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(Items.WHEAT)) wheat += inv.getItem(i).getCount();
+        int bread = wheat / 3, remove = bread * 3;
+        if (bread == 0) return;
+        for (int i = 6; i < inv.getContainerSize() && remove > 0; i++) {
+            ItemStack s = inv.getItem(i);
+            if (!s.is(Items.WHEAT)) continue;
+            int n = Math.min(remove, s.getCount());
+            s.shrink(n);
+            remove -= n;
+            if (s.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+        }
+        ItemStack left = w.addItem(new ItemStack(Items.BREAD, bread));
+        if (!left.isEmpty()) w.spawnAtLocation(left);
+        inv.setChanged();
+    }
+
+    /** Lo producido sin cargar: al almacén de la aldea (lo que no entra, a otro Campamento tuyo o pendiente). */
+    static List<ItemStack> pay(ServerLevel level, VillageData.Village v, CampBlockEntity camp, List<ItemStack> stacks) {
+        List<ItemStack> rest = new ArrayList<>();
+        for (ItemStack s : stacks) {
+            ItemStack back = camp.insert(s.copy());
+            if (!back.isEmpty()) rest.add(back);
+        }
+        if (!rest.isEmpty() && v.owner() != null) CampRegistry.get(level).deliver(level, v.owner(), rest, camp.getBlockPos());
+        return stacks;
+    }
+
+    /** "Mientras no estabas, los trabajadores de X dejaron: ..." (al dueño, si está conectado). */
+    private static void tellPaid(ServerLevel level, VillageData.Village v, List<ItemStack> paid) {
+        if (v.owner() == null) return;
+        net.minecraft.server.level.ServerPlayer p = level.getServer().getPlayerList().getPlayer(v.owner());
+        if (p == null) return;
+        Map<Item, Integer> sum = new HashMap<>();
+        for (ItemStack s : paid) sum.merge(s.getItem(), s.getCount(), Integer::sum);
+        List<Map.Entry<Item, Integer>> list = new ArrayList<>(sum.entrySet());
+        list.sort(Map.Entry.<Item, Integer>comparingByValue().reversed());
+        MutableComponent items = Component.empty();
+        for (int i = 0; i < list.size() && i < 6; i++) {
+            if (i > 0) items.append(", ");
+            items.append(list.get(i).getValue() + " ").append(new ItemStack(list.get(i).getKey()).getHoverName());
+        }
+        p.sendSystemMessage(Component.translatable("msg.warbandcraft.manage.offline_output", VillageCamps.displayName(level, v, Component.literal(VillageCamps.nameFor(v))), items)
+                .withStyle(net.minecraft.ChatFormatting.GOLD));
+    }
+
+    /** Lo que se espera que dé por día cada oficio (hasta que se mida lo de verdad). Ítem → cantidad. */
+    static Map<String, Double> estimate(ServerLevel level, AbstractWorkerEntity w) {
+        Map<String, Double> out = new HashMap<>();
+        VillageManagement.Job job = WorkZones.jobOf(w);
+        if (job == null) return out;
+        AbstractWorkAreaEntity area = WorkZones.areaFor(level, w);
+        switch (job) {
+            case LUMBERJACK -> {
+                Item sapling = area instanceof LumberArea l && !l.getSaplingStack().isEmpty() ? l.getSaplingStack().getItem() : Items.OAK_SAPLING;
+                out.put(WorkerOutput.key(logOf(sapling)), (double) EST_LOGS);
+            }
+            case FARMER -> {
+                Item seed = area instanceof CropArea c && !c.getSeedStack().isEmpty() ? c.getSeedStack().getItem() : Items.WHEAT_SEEDS;
+                if (seed == Items.CARROT || seed == Items.POTATO) out.put(WorkerOutput.key(seed), (double) EST_ROOTS);
+                else if (seed == Items.BEETROOT_SEEDS) out.put(WorkerOutput.key(Items.BEETROOT), (double) EST_ROOTS);
+                else out.put(WorkerOutput.key(Items.BREAD), (double) EST_BREAD);
+            }
+            case ANIMAL_FARMER -> {
+                AnimalPenArea.AnimalTypes type = area instanceof AnimalPenArea pen ? pen.getAnimalType() : AnimalPenArea.AnimalTypes.COW;
+                switch (type) {
+                    case COW -> {
+                        out.put(WorkerOutput.key(Items.BEEF), (double) EST_MEAT);
+                        out.put(WorkerOutput.key(Items.LEATHER), EST_MEAT / 2.0);
+                    }
+                    case SHEEP -> {
+                        out.put(WorkerOutput.key(Items.MUTTON), (double) EST_MEAT);
+                        out.put(WorkerOutput.key(Items.WHITE_WOOL), (double) EST_MEAT);
+                    }
+                    case PIG -> out.put(WorkerOutput.key(Items.PORKCHOP), EST_MEAT * 1.5);
+                    case CHICKEN -> {
+                        out.put(WorkerOutput.key(Items.EGG), (double) EST_MEAT);
+                        out.put(WorkerOutput.key(Items.FEATHER), (double) EST_MEAT);
+                    }
+                    case RABBIT -> {
+                        out.put(WorkerOutput.key(Items.RABBIT), (double) EST_MEAT);
+                        out.put(WorkerOutput.key(Items.RABBIT_HIDE), EST_MEAT / 2.0);
+                    }
+                    case GOAT -> out.put(WorkerOutput.key(Items.MUTTON), (double) EST_MEAT);
+                    default -> out.put(WorkerOutput.key(Items.LEATHER), (double) EST_MEAT);
+                }
+            }
+            case MINER -> {
+                boolean deep = area != null && area.getArea() != null && area.getArea().minY < 0;
+                out.put(WorkerOutput.key(deep ? Items.COBBLED_DEEPSLATE : Items.COBBLESTONE), (double) EST_STONE);
+                out.put(WorkerOutput.key(Items.COAL), EST_STONE / 8.0);
+                out.put(WorkerOutput.key(Items.RAW_IRON), EST_STONE / 10.0);
+            }
+            case FISHERMAN -> out.put(WorkerOutput.key(Items.COD), (double) EST_FISH);
+            default -> {
+            }
+        }
+        return out;
+    }
+
+    /** El tronco del árbol de un retoño (roble si no se sabe). */
+    private static Item logOf(Item sapling) {
+        var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(sapling);
+        if (id == null) return Items.OAK_LOG;
+        String path = id.getPath().replace("_sapling", "_log").replace("_propagule", "_log");
+        Item log = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation(id.getNamespace(), path));
+        return log == null || log == Items.AIR ? Items.OAK_LOG : log;
+    }
+
+    /**
+     * Un puesto de afuera (leñador fuera del territorio): lo que deja en su cofre pasa en el acto al almacén de la aldea, y
+     * si se alejó mucho de su zona vuelve a su cofre (no vuelve a la aldea: su cama está ahí).
+     */
+    static void outpost(ServerLevel level, CampBlockEntity camp, AbstractWorkerEntity w, WorkerOutput.Rec rec) {
+        AbstractWorkAreaEntity area = WorkZones.areaFor(level, w);
+        if (area == null || area.getArea() == null) return;
+        BlockPos chestPos = WorkZones.chestOf(area);
+        if (chestPos != null && level.isLoaded(chestPos) && level.getBlockEntity(chestPos) instanceof Container chest) {
+            for (int i = 0; i < chest.getContainerSize(); i++) {
+                ItemStack s = chest.getItem(i);
+                if (s.isEmpty()) continue;
+                if (s.is(ItemTags.SAPLINGS) && w.countMatchingItems(x -> x.is(ItemTags.SAPLINGS)) < 8) continue;   // para replantar
+                int moving = s.getCount();
+                Item item = s.getItem();
+                ItemStack back = camp.insert(s.copy());
+                made(w, new ItemStack(item, moving - back.getCount()));
+                chest.setItem(i, back);
+                if (!back.isEmpty()) note(w, Kind.FULL, Component.empty());
+            }
+            chest.setChanged();
+        }
+        if (w.distanceToSqr(area.getArea().getCenter()) > (double) OUTPOST_LEASH * OUTPOST_LEASH && !w.isPassenger()) {
+            BlockPos to = chestPos != null ? chestPos.above() : BlockPos.containing(area.getArea().getCenter());
+            w.teleportTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5);
+            w.getNavigation().stop();
         }
     }
 
@@ -278,6 +494,22 @@ public final class WorkerSupply {
         }
     }
 
+    /** Deja su zona Hogar (la cama vuelve a estar libre): se muda a un puesto o vuelve de uno. */
+    public static void leaveHome(ServerLevel level, AbstractWorkerEntity w) {
+        if (w.homeAreaUUID == null) return;
+        if (level.getEntity(w.homeAreaUUID) instanceof HomeArea h) {
+            if (h.getPersistentData().contains(TAG_BED)) {
+                try {
+                    level.getPoiManager().release(BlockPos.of(h.getPersistentData().getLong(TAG_BED)));
+                } catch (RuntimeException ignored) {
+                    // ya estaba libre
+                }
+            }
+            h.discard();
+        }
+        w.homeAreaUUID = null;
+    }
+
     /** ¿Tiene cama? */
     public static boolean hasHome(AbstractWorkerEntity w) {
         return w.homeAreaUUID != null;
@@ -310,20 +542,101 @@ public final class WorkerSupply {
 
     /**
      * El minero, trabajando en su mina (de día, con pico, cerca): cada {@link #MINE_EVERY_TICKS} saca algo de la veta
-     * al almacén. Si la mina quedó vacía, se baja (hasta {@link #MINE_LOWERINGS} veces); después sigue sacando de la veta.
+     * al almacén. Mina en escalera (la de Workers): terminada la escalera, sigue con pasillos de {@link #CORRIDOR_LENGTH}
+     * por el territorio ({@link #CORRIDORS}). Mina vieja (pozo): si quedó vacía, se baja (hasta {@link #MINE_LOWERINGS} veces).
      */
-    static void mine(ServerLevel level, CampBlockEntity camp, MinerEntity miner, long now) {
+    static void mine(ServerLevel level, VillageData.Village v, CampBlockEntity camp, MinerEntity miner, long now) {
         MiningArea area = miner.currentMiningArea;
         if (area == null || !area.isAlive()) return;
         if (!area.getKeepOn()) area.setKeepOn(true);   // que no quede "terminada" para siempre
+        if (area.getPersistentData().contains(TAG_STAGE)
+                && now - LAST_ADVANCE.getOrDefault(area.getUUID(), 0L) >= ADVANCE_EVERY_TICKS) {
+            LAST_ADVANCE.put(area.getUUID(), now);
+            advance(level, v, area);
+        }
         if (miner.needsToSleep() || miner.countMatchingItems(s -> s.is(ItemTags.PICKAXES)) == 0) return;
         if (miner.distanceToSqr(area.getArea().getCenter()) > 32 * 32) return;
         if (now - LAST_MINE.getOrDefault(miner.getUUID(), now - MINE_EVERY_TICKS / 2) < MINE_EVERY_TICKS) return;
         LAST_MINE.put(miner.getUUID(), now);
         ItemStack found = vein(level, (int) area.getArea().minY);
+        int count = found.getCount();
+        Item item = found.getItem();
         ItemStack back = camp.insert(found);
+        made(miner, new ItemStack(item, count - back.getCount()));
         if (!back.isEmpty()) note(miner, Kind.FULL, Component.empty());
-        if (isEmpty(level, area.getArea())) lower(area);
+        if (!area.getPersistentData().contains(TAG_STAGE) && isEmpty(level, area.getArea())) lower(area);
+    }
+
+    /** Marcas de la mina en escalera: etapa (0 = escalera, n = pasillo n), hacia dónde va, el final y el medio de la escalera. */
+    public static final String TAG_STAGE = "warbandcraft:mine_stage", TAG_DIR = "warbandcraft:mine_dir",
+            TAG_END = "warbandcraft:mine_end";
+
+    /** La escalera terminada → primer pasillo; pasillo vacío → el siguiente (derecho, y si se sale del territorio, dobla). */
+    public static void advance(ServerLevel level, VillageData.Village v, MiningArea area) {
+        CompoundTag pd = area.getPersistentData();
+        int stage = pd.getInt(TAG_STAGE);
+        if (stage >= CORRIDORS) return;
+        Direction dir = Direction.from2DDataValue(pd.getInt(TAG_DIR));
+        if (stage == 0) {
+            if (!stairsDone(level, area)) return;
+            BlockPos end = BlockPos.of(pd.getLong(TAG_END));
+            Integer floor = stairFloor(level, area, end);
+            if (floor == null) return;
+            corridor(level, v, area, new BlockPos(end.getX(), floor, end.getZ()), dir, 1);
+        } else if (isEmpty(level, area.getArea())) {
+            corridor(level, v, area, BlockPos.of(pd.getLong(TAG_END)), dir, stage + 1);
+        }
+    }
+
+    /** ¿Workers ya sacó todo lo de la escalera? */
+    private static boolean stairsDone(ServerLevel level, MiningArea area) {
+        AABB box = area.getArea();
+        for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(box.minX, box.minY, box.minZ),
+                BlockPos.containing(box.maxX - 1, box.maxY - 1, box.maxZ - 1))) {
+            if (!area.isStairsAir(p)) continue;
+            BlockState s = level.getBlockState(p);
+            if (!s.isAir() && s.getFluidState().isEmpty() && !area.shouldIgnore(s) && s.getDestroySpeed(level, p) >= 0) return false;
+        }
+        return true;
+    }
+
+    /** El escalón de abajo de todo en la columna {@code end} (el aire más bajo con piso firme): su altura, o null. */
+    @Nullable
+    private static Integer stairFloor(ServerLevel level, MiningArea area, BlockPos end) {
+        AABB box = area.getArea();
+        for (int y = (int) box.minY; y < box.maxY; y++) {
+            BlockPos p = new BlockPos(end.getX(), y, end.getZ());
+            if (level.getBlockState(p).isAir() && level.getBlockState(p.above()).isAir()
+                    && level.getBlockState(p.below()).isFaceSturdy(level, p.below(), Direction.UP)) return y;
+        }
+        return null;
+    }
+
+    /**
+     * El pasillo número {@code stage}: {@link #CORRIDOR_LENGTH} hacia {@code dir} desde {@code from} (3 de ancho y de alto);
+     * si se sale del territorio prueba doblar a la derecha y a la izquierda. Sin lugar, la mina queda como está.
+     */
+    private static void corridor(ServerLevel level, VillageData.Village v, MiningArea area, BlockPos from, Direction dir, int stage) {
+        CompoundTag pd = area.getPersistentData();
+        for (Direction d : new Direction[]{dir, dir.getClockWise(), dir.getCounterClockWise()}) {
+            BlockPos end = from.relative(d, CORRIDOR_LENGTH);
+            if (!WorkZones.inTerritory(level, v, end) || !WorkZones.inTerritory(level, v, from.relative(d))) continue;
+            Direction side = d.getClockWise();
+            BlockPos a = from.relative(d).relative(side, -1), b = end.relative(side);
+            WorkerZone.BoundingBox box = new WorkerZone.BoundingBox(Math.min(a.getX(), b.getX()), from.getY(), Math.min(a.getZ(), b.getZ()),
+                    Math.max(a.getX(), b.getX()), from.getY() + 2, Math.max(a.getZ(), b.getZ()));
+            area.setMode(MiningArea.MiningMode.CUSTOM.getIndex());
+            area.setWidthSize(box.width() + 1);
+            area.setHeightSize(box.height());
+            area.setDepthSize(box.depth() + 1);
+            if (!WorkerZone.place(area, box)) continue;
+            area.resetWork();
+            pd.putInt(TAG_STAGE, stage);
+            pd.putInt(TAG_DIR, d.get2DDataValue());
+            pd.putLong(TAG_END, end.asLong());
+            return;
+        }
+        pd.putInt(TAG_STAGE, CORRIDORS);   // no hay para dónde seguir
     }
 
     /** ¿Ya no queda nada para picar en la caja (salvo el piso)? */
@@ -383,5 +696,6 @@ public final class WorkerSupply {
         NOTES.clear();
         LAST_COLLECT.clear();
         LAST_MINE.clear();
+        LAST_ADVANCE.clear();
     }
 }

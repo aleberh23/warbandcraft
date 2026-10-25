@@ -70,6 +70,7 @@ public class ManageMessage {
                 bb.writeInt(a.color());
                 bb.writeComponent(a.status());
                 bb.writeInt(a.statusColor());
+                bb.writeComponent(a.production());
             });
             b.writeLongArray(d.territory());
             d.housing().write(b);
@@ -91,6 +92,7 @@ public class ManageMessage {
                 bb.writeVarInt(s.rot());
                 bb.writeVarInt(s.size());
             });
+            b.writeComponent(d.production());
         });
     }
 
@@ -115,7 +117,7 @@ public class ManageMessage {
             var routes = b.readList(bb -> new VillageManagement.RouteRow(bb.readComponent(), bb.readVarInt()));
             Component sendTo = b.readComponent();
             var areas = b.readList(bb -> new com.ale.warbandcraft.village.WorkZones.AreaRow(bb.readUUID(), bb.readComponent(), bb.readBlockPos(),
-                    bb.readBlockPos(), bb.readInt(), bb.readComponent(), bb.readInt()));
+                    bb.readBlockPos(), bb.readInt(), bb.readComponent(), bb.readInt(), bb.readComponent()));
             long[] territory = b.readLongArray();
             var housing = com.ale.warbandcraft.village.Housing.Data.read(b);
             int quarters = b.readVarInt(), quartersCapacity = b.readVarInt(), patrolling = b.readVarInt();
@@ -124,9 +126,10 @@ public class ManageMessage {
                     bb.readVarInt(), bb.readVarInt()));
             var growth = com.ale.warbandcraft.village.Popularity.Info.read(b);
             var sites = b.readList(bb -> new VillageManagement.SiteRow(bb.readUtf(), bb.readBlockPos(), bb.readVarInt(), bb.readVarInt()));
+            Component production = b.readComponent();
             return new VillageManagement.Data(center, name, castle, storehouse, houseMin, houseMax, stats, daily, soldiers, capacity,
                     guards, invasion, invader, free, employed, workers, upgrades, routes, sendTo, areas, territory, housing,
-                    quarters, quartersCapacity, patrolling, towerPosts, onTowers, troops, growth, sites);
+                    quarters, quartersCapacity, patrolling, towerPosts, onTowers, troops, growth, sites, production);
         });
         return new ManageMessage(data, feedback);
     }

@@ -376,7 +376,7 @@ public class H16GameTests {
             BlockPos o = h.absolutePos(new BlockPos(1, 2, 1));
             CampBlockEntity zc = VillageStorehouse.ensure(level, v);
             check(zc != null, "no se puso el Campamento de la aldea");
-            var lacking = WorkZones.mark(player, v, miner.getUUID(), o.getX(), o.getZ(), o.getX() + 4, o.getZ() + 4);
+            var lacking = WorkZones.mark(player, v, miner.getUUID(), o.getX(), o.getZ(), o.getX() + 7, o.getZ() + 2);
             check(lacking.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t0
                     && t0.getKey().equals("msg.warbandcraft.zone.missing") && miner.getCurrentWorkArea() == null,
                     "creó la mina sin pico ni cofre en el almacén: " + lacking.getString());
@@ -384,11 +384,11 @@ public class H16GameTests {
             zc.insert(new ItemStack(Items.CHEST));
             check(!WorkZones.mark(player, v, miner.getUUID(), o.getX(), o.getZ(), o.getX() + 40, o.getZ() + 4).getString().isEmpty()
                     && miner.getCurrentWorkArea() == null, "aceptó una mina de 41 de lado");
-            WorkZones.mark(player, v, miner.getUUID(), o.getX(), o.getZ(), o.getX() + 4, o.getZ() + 4);
+            WorkZones.mark(player, v, miner.getUUID(), o.getX(), o.getZ(), o.getX() + 7, o.getZ() + 2);   // escalera de 8×3
             check(miner.getCurrentWorkArea() instanceof com.talhanation.workers.entities.workarea.MiningArea, "no se creó la mina enganchada al minero");
             AABB mineBox = miner.getCurrentWorkArea().getArea();
-            check(mineBox.minX <= o.getX() && mineBox.maxX >= o.getX() + 5 && mineBox.minZ <= o.getZ() && mineBox.maxZ >= o.getZ() + 5,
-                    "la mina no cubre los 5×5 marcados: " + mineBox);
+            check(mineBox.minX <= o.getX() && mineBox.maxX >= o.getX() + 8 && mineBox.minZ <= o.getZ() && mineBox.maxZ >= o.getZ() + 3,
+                    "la mina no cubre los 8×3 marcados: " + mineBox);
             check(WorkZones.areas(level, v.center(), owner).stream().anyMatch(z -> z.id().equals(miner.getCurrentWorkArea().getUUID())),
                     "la mina no aparece en la lista de zonas");
 
@@ -400,7 +400,7 @@ public class H16GameTests {
                     && t.getKey().equals("msg.warbandcraft.zone.no_water"), "creó una zona de pesca sin agua: " + noWater.getString());
 
             // Al lado de la mina, su cofre (con su zona de almacén) para dejar lo que saca
-            BlockPos chest = net.minecraft.core.BlockPos.betweenClosedStream(o.offset(-2, -3, -2), o.offset(7, 3, 7))
+            BlockPos chest = net.minecraft.core.BlockPos.betweenClosedStream(o.offset(-2, -3, -2), o.offset(9, 3, 7))
                     .filter(p -> level.getBlockState(p).is(Blocks.CHEST)).map(BlockPos::immutable).findFirst().orElse(null);
             check(chest != null, "no se puso el cofre de la mina");
 

@@ -899,6 +899,23 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   Lo que falla queda anotado en memoria 30 s (`NOTE_TICKS`). Las zonas Hogar no se listan.
 - Marcar zona: el territorio se pinta de verde (rojo = zonas existentes) y el rectángulo sale rojo con el motivo
   (`ManagePanel.rectProblem`, mismas reglas que `WorkZones.mark`).
+- **Producción por día y aunque no esté cargado** (pedido de Ale, a probar; números sin Ale): `village/WorkerOutput` (SavedData por
+  dimensión, por trabajador): cada `serve` anota lo que deja en el almacén (`collect`, veta, cofre del puesto) y el tiempo atendido
+  → ítems/día (`rate`: lo medido con ≥ `MIN_MEASURE_TICKS`, si no lo esperado del oficio `WorkerSupply.estimate`/`EST_*`). Tiempo
+  sin atenderlo (hueco > `GAP_TICKS`): al volver a atenderlo, o cada 5 s si el almacén de la aldea está cargado y él no
+  (`WorkerSupply.tick`), se paga rate × tiempo (máx. 7 días, fracciones en `carry`) al almacén; si fue >2 min, aviso por chat.
+  Sin su entidad con su lugar cargado `MISSING_CHECKS` veces → se olvida. Gestión: `AreaRow.production` (cartelito + lista) y
+  `Data.production` (Resumen, total de la aldea). El trigo del granjero se hace pan al juntarlo (`bake`, 3 → 1).
+- **Mina en escalera** (pedido de Ale): la zona del minero es `MiningMode.STAIRS_DOWN` de Workers (`WorkZones.placeStairs`:
+  rectángulo largo ≥ `MIN_MINE_LENGTH` y angosto ≤ `MAX_MINE_WIDTH`, baja desde la punta más cerca del almacén; Workers mide los
+  escalones desde la posición de la zona, parada sobre el piso). Marcas `warbandcraft:mine_stage/mine_dir/mine_end`. Cuando
+  `stairsDone`, `WorkerSupply.advance` la pasa a CUSTOM: pasillos 3×3 de `CORRIDOR_LENGTH` desde abajo, derecho y si se sale del
+  territorio dobla (hasta `CORRIDORS`). Minas viejas (pozo, sin marca) siguen bajando como antes.
+- **Puesto de leñador** (pedido de Ale): `WorkZones.mark` acepta una zona de tala fuera del territorio a ≤ `OUTPOST_RANGE` (200)
+  del centro, cargada y lejos de otras aldeas (`outpostProblem`). Cofre sin vincular + cama al lado (`outpostBed`), deja la cama de
+  la aldea (`WorkerSupply.leaveHome`), aparece ahí; `Rec.outpost` + marca `warbandcraft:outpost` (centro) en la zona. Cada 5 s
+  (`WorkerSupply.outpost`) el cofre pasa al almacén (deja retoños si le faltan) y a > `OUTPOST_LEASH` vuelve a su cofre.
+  `VillageManagement.workers` y `WorkZones.areas` incluyen los puestos cargados. Borrar la zona lo trae al almacén.
 
 ## Asedios (H17, a probar — plan en `plan-h17-asedios.md`; pedido de Ale, estilo Bannerlord, detalles a revisar)
 

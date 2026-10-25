@@ -101,6 +101,7 @@ final class TuningClasses {
             "village.VillageStorehouse",
             "village.Wanderers",
             "village.WorkZones",
+            "village.WorkerOutput",
             "village.WorkerSupply",
             "village.WorldTaverns",
             "village.ZoneCosts",

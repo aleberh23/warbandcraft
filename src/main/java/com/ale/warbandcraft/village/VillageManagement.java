@@ -110,7 +110,7 @@ public final class VillageManagement {
                        @Nullable Panel.VillageDetail upgrades, List<RouteRow> routes, Component sendTo, List<WorkZones.AreaRow> areas,
                        long[] territory, Housing.Data housing, int quarters, int quartersCapacity, int patrolling,
                        int towerPosts, int onTowers,
-                       List<Quarters.TroopRow> troops, Popularity.Info growth, List<SiteRow> sites) {}
+                       List<Quarters.TroopRow> troops, Popularity.Info growth, List<SiteRow> sites, Component production) {}
 
     /** Tu aldea/castillo con centro {@code center}, si estás cerca. */
     @Nullable
@@ -179,7 +179,22 @@ public final class VillageManagement {
                 Territory.get(level).of(v.center()).stream().mapToLong(net.minecraft.world.level.ChunkPos::toLong).toArray(),
                 Housing.of(level, v.center()), Quarters.count(level, v), Quarters.capacity(level, v),
                 Quarters.loaded(level, v.center()).size(), Quarters.posts(level, v).size(), Quarters.onTowers(level, v.center()),
-                Tavern.withRow(level, v, Quarters.rows(level, owner, v)), Popularity.info(level, v), sites(level, v.center()));
+                Tavern.withRow(level, v, Quarters.rows(level, owner, v)), Popularity.info(level, v), sites(level, v.center()),
+                production(level, v.center()));
+    }
+
+    /** Pedido de Ale: lo que producen por día todos los trabajadores de la aldea (lo que más dan primero). */
+    public static Component production(ServerLevel level, BlockPos center) {
+        List<java.util.Map.Entry<net.minecraft.world.item.Item, Double>> list = new ArrayList<>(WorkerOutput.get(level).total(center).entrySet());
+        list.removeIf(e -> e.getValue() < 0.5);
+        if (list.isEmpty()) return Component.translatable("status.warbandcraft.worker.produces_nothing");
+        list.sort(java.util.Map.Entry.<net.minecraft.world.item.Item, Double>comparingByValue().reversed());
+        net.minecraft.network.chat.MutableComponent out = Component.empty();
+        for (int i = 0; i < list.size() && i < 8; i++) {
+            if (i > 0) out.append(", ");
+            out.append(Math.round(list.get(i).getValue()) + " ").append(new ItemStack(list.get(i).getKey()).getHoverName());
+        }
+        return out;
     }
 
     /** H22: los terrenos de los edificios de la aldea (para dibujarlos en Construir). */
@@ -208,8 +223,13 @@ public final class VillageManagement {
 
     /** Tus trabajadores de Villager Workers cerca del centro. */
     public static List<AbstractWorkerEntity> workers(ServerLevel level, BlockPos center, UUID owner) {
-        return level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(center).inflate(RADIUS, 32, RADIUS),
+        List<AbstractWorkerEntity> out = level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(center).inflate(RADIUS, 32, RADIUS),
                 w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner));
+        for (WorkerOutput.Rec r : WorkerOutput.get(level).of(center)) {   // los de los puestos de afuera (si están cargados)
+            if (r.outpost && level.getEntity(r.worker) instanceof AbstractWorkerEntity w && w.isAlive()
+                    && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner) && !out.contains(w)) out.add(w);
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------ órdenes

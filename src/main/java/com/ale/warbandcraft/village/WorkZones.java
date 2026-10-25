@@ -58,7 +58,13 @@ import java.util.function.Consumer;
  */
 public final class WorkZones {
     /** Lado mínimo y máximo de una zona (la mina, más chica) y alturas por oficio. */
-    public static int MIN_SIDE = 3, MAX_SIDE = 32, MAX_MINE_SIDE = 16;
+    public static int MIN_SIDE = 3, MAX_SIDE = 32, MAX_MINE_SIDE = 32;
+    /** La mina en escalera: largo mínimo (por donde baja) y ancho máximo de la escalera. */
+    public static int MIN_MINE_LENGTH = 8, MAX_MINE_WIDTH = 5;
+    /** Pedido de Ale: un leñador puede tener su zona afuera del territorio (un puesto), hasta esta distancia del centro. */
+    public static int OUTPOST_RANGE = 200;
+    /** Un puesto no puede estar a menos de esto del centro de otra aldea/castillo. */
+    public static int OUTPOST_OTHER_VILLAGE = 64;
     public static int MINE_DEPTH = 8, LUMBER_HEIGHT = 24, FLAT_HEIGHT = 4, KITCHEN_HEIGHT = 6;
     /** Hasta dónde del centro se puede marcar (la aldea + un poco). */
     public static int REACH = VillageCamps.MANAGE_RADIUS + 16;
@@ -70,7 +76,8 @@ public final class WorkZones {
     private WorkZones() {}
 
     /** Una zona en el modo Gestión: qué es, dónde está (bloques, inclusive) y su color. */
-    public record AreaRow(UUID id, Component kind, BlockPos min, BlockPos max, int color, Component status, int statusColor) {}
+    public record AreaRow(UUID id, Component kind, BlockPos min, BlockPos max, int color, Component status, int statusColor,
+                          Component production) {}
 
     /** El oficio de un trabajador (null = no es un trabajador que sepamos manejar). */
     @Nullable
@@ -135,34 +142,48 @@ public final class WorkZones {
         return null;
     }
 
-    /** Tus zonas de Workers cerca de la aldea y los lugares de tus herreros. */
+    /** Tus zonas de Workers cerca de la aldea (y las de sus puestos de afuera) y los lugares de tus herreros. */
     public static List<AreaRow> areas(ServerLevel level, BlockPos center, UUID owner) {
         List<AreaRow> out = new ArrayList<>();
         AABB around = new AABB(center).inflate(REACH, 48, REACH);
-        // H18: el estado de cada trabajador va sobre su zona (cartelito del modo Gestión)
+        // H18: el estado de cada trabajador va sobre su zona (cartelito del modo Gestión), con lo que produce por día
         Map<UUID, WorkerSupply.Status> byArea = new HashMap<>();
-        for (AbstractWorkerEntity w : level.getEntitiesOfClass(AbstractWorkerEntity.class, around,
-                w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner) && !(w instanceof SmithEntity))) {
+        Map<UUID, Component> made = new HashMap<>();
+        WorkerOutput output = WorkerOutput.get(level);
+        for (AbstractWorkerEntity w : VillageManagement.workers(level, center, owner)) {
+            if (w instanceof SmithEntity) continue;
             AbstractWorkAreaEntity a = areaFor(level, w);
-            if (a != null) byArea.putIfAbsent(a.getUUID(), WorkerSupply.status(level, w));
+            if (a == null) continue;
+            byArea.putIfAbsent(a.getUUID(), WorkerSupply.status(level, w));
+            made.putIfAbsent(a.getUUID(), WorkerOutput.text(output.of(w.getUUID())));
         }
-        for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, around,
-                a -> a.isAlive() && a.getArea() != null && owner.equals(a.getPlayerUUID()) && !(a instanceof HomeArea))) {
+        List<AbstractWorkAreaEntity> found = new ArrayList<>(level.getEntitiesOfClass(AbstractWorkAreaEntity.class, around,
+                a -> a.isAlive() && a.getArea() != null && owner.equals(a.getPlayerUUID()) && !(a instanceof HomeArea)));
+        for (WorkerOutput.Rec r : output.of(center)) {   // los puestos de afuera
+            if (!r.outpost) continue;
+            for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(r.pos).inflate(OUTPOST_SEARCH),
+                    a -> a.isAlive() && a.getArea() != null && a.getPersistentData().getLong(TAG_OUTPOST) == center.asLong())) {
+                if (found.stream().noneMatch(x -> x.getUUID().equals(a.getUUID()))) found.add(a);
+            }
+        }
+        for (AbstractWorkAreaEntity a : found) {
             AABB b = a.getArea();
             VillageManagement.Job job = jobOfArea(a);
             WorkerSupply.Status st = byArea.get(a.getUUID());
             if (st == null) st = job == null ? new WorkerSupply.Status(Component.empty(), WorkerSupply.GREY)
                     : new WorkerSupply.Status(Component.translatable("status.warbandcraft.worker.no_worker"), WorkerSupply.GREY);
-            out.add(new AreaRow(a.getUUID(), a.getType().getDescription(),
+            Component kind = a.getPersistentData().contains(TAG_OUTPOST)
+                    ? Component.translatable("gui.warbandcraft.manage.outpost", a.getType().getDescription()) : a.getType().getDescription();
+            out.add(new AreaRow(a.getUUID(), kind,
                     BlockPos.containing(b.minX, b.minY, b.minZ), BlockPos.containing(b.maxX - 1, b.maxY - 1, b.maxZ - 1), color(job),
-                    st.text(), st.color()));
+                    st.text(), st.color(), made.getOrDefault(a.getUUID(), Component.empty())));
         }
         for (SmithEntity s : level.getEntitiesOfClass(SmithEntity.class, around,
                 s -> s.isAlive() && s.getWorkplace() != null && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), owner))) {
             BlockPos p = s.getWorkplace();
             WorkerSupply.Status st = WorkerSupply.status(level, s);
             out.add(new AreaRow(s.getUUID(), Component.translatable("gui.warbandcraft.manage.smithy"), p, p.above(), color(VillageManagement.Job.SMITH),
-                    st.text(), st.color()));
+                    st.text(), st.color(), Component.empty()));
         }
         out.sort(Comparator.comparingDouble(r -> r.min().distSqr(center)));
         return out;
@@ -210,7 +231,9 @@ public final class WorkZones {
     private static AbstractWorkerEntity worker(ServerPlayer player, VillageData.Village v, UUID id) {
         Entity e = player.serverLevel().getEntity(id);
         if (!(e instanceof AbstractWorkerEntity w) || !w.isAlive() || !com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), player.getUUID())) return null;
-        return VillageData.horizontalDistSq(w.blockPosition(), v.center()) <= (double) REACH * REACH ? w : null;
+        if (VillageData.horizontalDistSq(w.blockPosition(), v.center()) <= (double) REACH * REACH) return w;
+        WorkerOutput.Rec r = WorkerOutput.get(player.serverLevel()).of(id);
+        return r != null && r.outpost && r.village.equals(v.center()) ? w : null;
     }
 
     private static Component error(String key, Object... args) {
@@ -225,7 +248,13 @@ public final class WorkZones {
         if (job == null) return error("no_worker");
         int ax = Math.min(x0, x1), bx = Math.max(x0, x1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
         BlockPos mid = new BlockPos((ax + bx) / 2, v.center().getY(), (az + bz) / 2);
-        if (!inside(level, v, ax, az, bx, bz)) return error("outside");
+        boolean outpost = false;
+        if (!inside(level, v, ax, az, bx, bz)) {
+            if (job != VillageManagement.Job.LUMBERJACK) return error("outside");
+            Component far = outpostProblem(level, v, ax, az, bx, bz);
+            if (far != null) return far;
+            outpost = true;
+        }
         if (job == VillageManagement.Job.INNKEEPER) {   // H19: atiende donde marcaste (un click)
             Integer gy = Blueprints.groundY(level, mid.getX(), mid.getZ(), v.center().getY());
             ((com.ale.warbandcraft.worker.InnkeeperEntity) w).setWorkplace(gy == null ? mid : new BlockPos(mid.getX(), gy + 1, mid.getZ()));
@@ -250,7 +279,11 @@ public final class WorkZones {
         int max = job == VillageManagement.Job.MINER ? MAX_MINE_SIDE : MAX_SIDE;
         if (bx - ax + 1 < MIN_SIDE || bz - az + 1 < MIN_SIDE) return error("too_small", MIN_SIDE);
         if (bx - ax + 1 > max || bz - az + 1 > max) return error("too_big", max);
-        return create(player, v, w, job, ax, az, bx, bz);
+        if (job == VillageManagement.Job.MINER) {   // escalera: larga por donde baja, angosta de costado
+            int len = Math.max(bx - ax + 1, bz - az + 1), wide = Math.min(bx - ax + 1, bz - az + 1);
+            if (len < MIN_MINE_LENGTH || wide > MAX_MINE_WIDTH) return error("mine_shape", MIN_MINE_LENGTH, MAX_MINE_WIDTH);
+        }
+        return create(player, v, w, job, ax, az, bx, bz, outpost);
     }
 
     /** Auto: la zona sugerida para el oficio del trabajador. */
@@ -289,30 +322,30 @@ public final class WorkZones {
                 BoundingBox farm = VillageManagement.findFarm(level, c);
                 if (farm == null) farm = freeSite(level, v);   // sin huerta hecha: un terreno libre (el granjero ara)
                 if (farm == null) return error("no_suggestion");
-                return create(player, v, w, job, farm.minX(), farm.minZ(), farm.maxX(), farm.maxZ());
+                return create(player, v, w, job, farm.minX(), farm.minZ(), farm.maxX(), farm.maxZ(), false);
             }
             case ANIMAL_FARMER -> {
                 BoundingBox pen = freeSite(level, v);
                 if (pen == null) return error("no_suggestion");
-                return create(player, v, w, job, pen.minX(), pen.minZ(), pen.maxX(), pen.maxZ());
+                return create(player, v, w, job, pen.minX(), pen.minZ(), pen.maxX(), pen.maxZ(), false);
             }
             case LUMBERJACK -> {
                 BlockPos tree = nearestTree(level, v);
                 if (tree == null) return error("no_suggestion");
                 int h = SUGGEST_LUMBER / 2;
-                return create(player, v, w, job, tree.getX() - h, tree.getZ() - h, tree.getX() + h - 1, tree.getZ() + h - 1);
+                return create(player, v, w, job, tree.getX() - h, tree.getZ() - h, tree.getX() + h - 1, tree.getZ() + h - 1, false);
             }
             case FISHERMAN -> {
                 BlockPos water = nearestWater(level, v);
                 if (water == null) return error("no_suggestion");
                 int h = SUGGEST_WATER / 2;
-                return create(player, v, w, job, water.getX() - h, water.getZ() - h, water.getX() + h, water.getZ() + h);
+                return create(player, v, w, job, water.getX() - h, water.getZ() - h, water.getX() + h, water.getZ() + h, false);
             }
             case COOK -> {
                 BlockPos store = VillageData.get(level).storehouse(c);
                 BoundingBox house = store == null ? null : VillageStorehouse.biggestHouse(level, c);
                 if (house == null) return error("no_suggestion");
-                return create(player, v, w, job, house.minX(), house.minZ(), house.maxX(), house.maxZ());
+                return create(player, v, w, job, house.minX(), house.minZ(), house.maxX(), house.maxZ(), false);
             }
             default -> {
                 return error("mark_it");
@@ -328,6 +361,7 @@ public final class WorkZones {
             return Component.translatable("msg.warbandcraft.zone.deleted").withStyle(ChatFormatting.YELLOW);
         }
         if (!(e instanceof AbstractWorkAreaEntity a) || !player.getUUID().equals(a.getPlayerUUID())) return error("no_area");
+        if (a.getPersistentData().contains(TAG_OUTPOST)) endOutpost(player.serverLevel(), v, a);
         removeChest(player.serverLevel(), v, a);
         a.discard();
         return Component.translatable("msg.warbandcraft.zone.deleted").withStyle(ChatFormatting.YELLOW);
@@ -336,9 +370,9 @@ public final class WorkZones {
     // ------------------------------------------------------------------ crear la zona de Workers
 
     private static Component create(ServerPlayer player, VillageData.Village v, AbstractWorkerEntity w, VillageManagement.Job job,
-                                    int ax, int az, int bx, int bz) {
+                                    int ax, int az, int bx, int bz, boolean outpost) {
         ServerLevel level = player.serverLevel();
-        if (!inside(level, v, ax, az, bx, bz)) return error("outside");
+        if (!outpost && !inside(level, v, ax, az, bx, bz)) return error("outside");
         // Lo que la zona saca del almacén (herramienta, semillas/retoños/trigo, el cofre): sin eso no se crea
         com.ale.warbandcraft.camp.CampBlockEntity camp = VillageStorehouse.camp(level, v);
         List<ZoneCosts.Need> needs = ZoneCosts.needs(job);
@@ -348,8 +382,9 @@ public final class WorkZones {
             if (miss != null) return miss;
         }
         BlockPos mid = new BlockPos((ax + bx) / 2, v.center().getY(), (az + bz) / 2);
-        Integer g = Blueprints.groundY(level, mid.getX(), mid.getZ(), v.center().getY());
-        int ground = g == null ? v.center().getY() - 1 : g;
+        int hint = hintY(level, v, mid.getX(), mid.getZ(), outpost);
+        Integer g = Blueprints.groundY(level, mid.getX(), mid.getZ(), hint);
+        int ground = g == null ? hint - 1 : g;
         int y0, height;
         switch (job) {
             case MINER -> {
@@ -388,8 +423,8 @@ public final class WorkZones {
                 a.setSaplingStack(saplingOf(level, box));
             });
             case MINER -> make(level, ModEntityTypes.MININGAREA.get(), a -> {
-                a.setMode(MiningArea.MiningMode.CUSTOM.getIndex());
-                a.setKeepOn(true);   // H18: vacía no queda "terminada" (se baja y sigue sacando de la veta)
+                a.setMode(MiningArea.MiningMode.STAIRS_DOWN.getIndex());   // pedido de Ale: escalera, no un pozo
+                a.setKeepOn(true);   // H18: no queda "terminada" (después siguen los pasillos y la veta)
             });
             case FISHERMAN -> make(level, ModEntityTypes.FISHINGAREA.get(), a -> {});
             case ANIMAL_FARMER -> make(level, ModEntityTypes.ANIMAL_PEN_AREA.get(), a -> a.setAnimalType(animalType(level, box.aabb())));
@@ -404,10 +439,15 @@ public final class WorkZones {
         area.setTeamAccess(false);
         area.setPlayerUUID(player.getUUID());
         area.setPlayerName(player.getGameProfile().getName());
-        if (!WorkerZone.place(area, box)) {
+        BlockPos store = VillageData.get(level).storehouse(v.center());
+        boolean placed = area instanceof MiningArea mine
+                ? placeStairs(mine, ax, az, bx, bz, ground, store != null ? store : v.center())
+                : WorkerZone.place(area, box);
+        if (!placed) {
             area.discard();
             return error("failed");
         }
+        if (outpost) area.getPersistentData().putLong(TAG_OUTPOST, v.center().asLong());
         area.setDone(false);
         level.addFreshEntity(area);
         bind(w, area);
@@ -421,9 +461,13 @@ public final class WorkZones {
             else if (n.toWorker()) for (ItemStack s : taken) give(w, s);
             else forChest.addAll(taken);
         }
-        if (chestPaid && !zoneChest(level, v, area, box, player, forChest)) {
+        if (chestPaid && !zoneChest(level, v, area, box, player, forChest, outpost)) {
             camp.insert(new ItemStack(Items.CHEST));   // no hubo lugar para el cofre: vuelve al almacén
             for (ItemStack s : forChest) camp.insert(s);
+        }
+        if (outpost) {
+            startOutpost(level, v, w, area);
+            return Component.translatable("msg.warbandcraft.zone.outpost_created").withStyle(ChatFormatting.GREEN);
         }
         if (area instanceof AnimalPenArea pen && entityOf(pen.getAnimalType()) != null) {
             return Component.translatable("msg.warbandcraft.zone.pen_created", entityOf(pen.getAnimalType()).getDescription())
@@ -640,7 +684,7 @@ public final class WorkZones {
      * que el trabajador deje ahí lo que junta, y vinculado al Campamento de la aldea: lo de adentro cuenta como almacén.
      */
     private static boolean zoneChest(ServerLevel level, VillageData.Village v, AbstractWorkAreaEntity area, WorkerZone.BoundingBox box,
-                                     ServerPlayer player, List<ItemStack> contents) {
+                                     ServerPlayer player, List<ItemStack> contents, boolean outpost) {
         com.ale.warbandcraft.camp.CampBlockEntity camp = VillageStorehouse.camp(level, v);
         BlockPos toward = camp != null ? camp.getBlockPos() : v.center();
         List<BlockPos> ring = new ArrayList<>();
@@ -654,10 +698,10 @@ public final class WorkZones {
         }
         ring.sort(Comparator.comparingDouble(p -> VillageData.horizontalDistSq(p, toward)));
         for (BlockPos c : ring) {
-            Integer g = Blueprints.groundY(level, c.getX(), c.getZ(), v.center().getY());
+            Integer g = Blueprints.groundY(level, c.getX(), c.getZ(), hintY(level, v, c.getX(), c.getZ(), outpost));
             if (g == null) continue;
             BlockPos p = new BlockPos(c.getX(), g + 1, c.getZ());
-            if (!free(level, p) || !inTerritory(level, v, p)) continue;
+            if (!free(level, p) || (!outpost && !inTerritory(level, v, p))) continue;
             level.setBlockAndUpdate(p, Blocks.CHEST.defaultBlockState());
             Component name = Component.translatable("msg.warbandcraft.zone.chest", area.getType().getDescription());
             if (level.getBlockEntity(p) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
@@ -666,7 +710,7 @@ public final class WorkZones {
             }
             var storage = WorkerZone.storage(level, new WorkerZone.BoundingBox(p.getX(), p.getY(), p.getZ(), p.getX(), p.getY() + 1, p.getZ()),
                     player.getUUID(), player.getGameProfile().getName(), name);
-            if (camp != null && !camp.getLinked().contains(p)) camp.toggleLink(p);
+            if (!outpost && camp != null && !camp.getLinked().contains(p)) camp.toggleLink(p);   // el del puesto se vacía solo al almacén
             area.getPersistentData().putLong(TAG_CHEST, p.asLong());
             if (storage != null) area.getPersistentData().putUUID(TAG_STORAGE, storage.getUUID());
             return true;
@@ -786,5 +830,165 @@ public final class WorkZones {
             if (free(level, s)) return s;
         }
         return null;
+    }
+
+    // ------------------------------------------------------------------ la mina en escalera
+
+    /**
+     * La zona de mina en escalera de Workers (STAIRS_DOWN) justo sobre el rectángulo: baja a lo largo del lado largo,
+     * empezando por la punta más cerca de {@code toward} (el almacén). Workers mide los escalones desde la posición de la
+     * zona, que va parada sobre el piso ({@code ground} + 1). Anota hacia dónde baja y dónde termina (para los pasillos).
+     */
+    private static boolean placeStairs(MiningArea area, int ax, int az, int bx, int bz, int ground, BlockPos toward) {
+        int lx = bx - ax + 1, lz = bz - az + 1, len = Math.max(lx, lz), wide = Math.min(lx, lz);
+        Direction.Axis run = lx >= lz ? Direction.Axis.X : Direction.Axis.Z;
+        Direction bestFacing = null;
+        int bestX = 0, bestZ = 0, bestW = 0, bestD = 0;
+        double bestDist = Double.MAX_VALUE;
+        int[][] sizes = {{len, wide}, {wide, len}};   // ancho = hacia adelante (por donde baja); por las dudas, al revés también
+        for (int[] size : sizes) {
+            area.setWidthSize(size[0] + 1);
+            area.setDepthSize(size[1] + 1);
+            area.setHeightSize(len + 1);
+            for (Direction facing : Direction.Plane.HORIZONTAL) {
+                if (lx != lz && facing.getAxis() != run) continue;
+                area.setFacing(facing);
+                for (int x : new int[]{ax, bx + 1, bx, ax - 1}) {
+                    for (int z : new int[]{az, bz + 1, bz, az - 1}) {
+                        area.moveTo(x + 0.5, ground + 1, z + 0.5, 0, 0);
+                        AABB m = area.createArea();
+                        if (m.minX != ax || m.minZ != az || m.maxX != bx + 1 || m.maxZ != bz + 1) continue;
+                        double d = VillageData.horizontalDistSq(new BlockPos(x, 0, z), toward);
+                        if (d < bestDist) {
+                            bestDist = d;
+                            bestFacing = facing;
+                            bestX = x;
+                            bestZ = z;
+                            bestW = size[0];
+                            bestD = size[1];
+                        }
+                    }
+                }
+            }
+            if (bestFacing != null) break;
+        }
+        if (bestFacing == null) return false;
+        area.setWidthSize(bestW + 1);
+        area.setDepthSize(bestD + 1);
+        area.setHeightSize(len + 1);
+        area.setFacing(bestFacing);
+        area.moveTo(bestX + 0.5, ground + 1, bestZ + 0.5, 0, 0);
+        area.area = area.createArea();
+        // Baja alejándose de la punta donde está la zona: la otra punta es el final de la escalera
+        Direction.Axis axis = bestFacing.getAxis();
+        BlockPos end;
+        Direction dir;
+        if (axis == Direction.Axis.X) {
+            boolean farMax = Math.abs(bx - bestX) >= Math.abs(ax - bestX);
+            end = new BlockPos(farMax ? bx : ax, ground, (az + bz) / 2);
+            dir = farMax ? Direction.EAST : Direction.WEST;
+        } else {
+            boolean farMax = Math.abs(bz - bestZ) >= Math.abs(az - bestZ);
+            end = new BlockPos((ax + bx) / 2, ground, farMax ? bz : az);
+            dir = farMax ? Direction.SOUTH : Direction.NORTH;
+        }
+        var pd = area.getPersistentData();
+        pd.putInt(WorkerSupply.TAG_STAGE, 0);
+        pd.putInt(WorkerSupply.TAG_DIR, dir.get2DDataValue());
+        pd.putLong(WorkerSupply.TAG_END, end.asLong());
+        return true;
+    }
+
+    // ------------------------------------------------------------------ el puesto de afuera (leñador)
+
+    /** Marca en la zona de un puesto: el centro de su aldea. */
+    public static final String TAG_OUTPOST = "warbandcraft:outpost";
+    /** Dónde se buscan las zonas de un puesto alrededor de su trabajador. */
+    private static final int OUTPOST_SEARCH = 48;
+
+    /** Desde dónde buscar el piso: en la aldea, su altura; afuera, la del terreno ahí. */
+    private static int hintY(ServerLevel level, VillageData.Village v, int x, int z, boolean outpost) {
+        if (!outpost) return v.center().getY();
+        return level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+    }
+
+    /** ¿Se puede poner un puesto acá? Null = sí; si no, por qué. */
+    @Nullable
+    private static Component outpostProblem(ServerLevel level, VillageData.Village v, int ax, int az, int bx, int bz) {
+        BlockPos mid = new BlockPos((ax + bx) / 2, v.center().getY(), (az + bz) / 2);
+        if (VillageData.horizontalDistSq(mid, v.center()) > (double) OUTPOST_RANGE * OUTPOST_RANGE) return error("outpost_far", OUTPOST_RANGE);
+        if (!level.isLoaded(mid)) return error("outpost_far", OUTPOST_RANGE);
+        Territory t = Territory.get(level);
+        for (VillageData.Village o : VillageData.get(level).all()) {
+            if (o.center().equals(v.center())) continue;
+            if (VillageData.horizontalDistSq(mid, o.center()) < (double) OUTPOST_OTHER_VILLAGE * OUTPOST_OTHER_VILLAGE
+                    || (t.has(o.center()) && t.contains(o.center(), mid))) return error("outpost_village");
+        }
+        return null;
+    }
+
+    /**
+     * El leñador se muda al puesto: cama al lado del cofre (deja la de la aldea), queda anotado como puesto (lo que deja en
+     * el cofre va al almacén de la aldea) y aparece ahí.
+     */
+    private static void startOutpost(ServerLevel level, VillageData.Village v, AbstractWorkerEntity w, AbstractWorkAreaEntity area) {
+        WorkerOutput.Rec rec = WorkerOutput.get(level).ensure(w.getUUID(), v.center(), w.blockPosition(), level.getGameTime());
+        rec.outpost = true;
+        BlockPos chest = chestOf(area);
+        BlockPos near = chest != null ? chest : BlockPos.containing(area.getArea().getCenter());
+        BlockPos head = outpostBed(level, near);
+        if (head != null) {
+            WorkerSupply.leaveHome(level, w);
+            level.getPoiManager().take(h -> h.is(net.minecraft.world.entity.ai.village.poi.PoiTypes.HOME), (h, p) -> p.equals(head), head, 2);
+            WorkerSupply.homeAt(level, v.owner() != null ? v.owner() : w.getOwnerUUID(), w, head);
+        }
+        BlockPos to = (head != null ? head : near).above();
+        w.teleportTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5);
+        w.getNavigation().stop();
+        rec.pos = w.blockPosition();
+    }
+
+    /** Una cama al lado de {@code near} (el cofre del puesto). Devuelve la cabecera, o null si no hubo lugar. */
+    @Nullable
+    private static BlockPos outpostBed(ServerLevel level, BlockPos near) {
+        for (int r = 1; r <= 3; r++) {
+            for (BlockPos c : BlockPos.betweenClosed(near.offset(-r, -1, -r), near.offset(r, 1, r))) {
+                if (!free(level, c)) continue;
+                for (Direction d : Direction.Plane.HORIZONTAL) {
+                    BlockPos foot = c.immutable(), head = foot.relative(d);
+                    if (!free(level, head) || head.equals(near)) continue;
+                    BlockState bed = Blocks.RED_BED.defaultBlockState().setValue(net.minecraft.world.level.block.BedBlock.FACING, d);
+                    level.setBlock(foot, bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
+                            net.minecraft.world.level.block.state.properties.BedPart.FOOT), 3);
+                    level.setBlock(head, bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
+                            net.minecraft.world.level.block.state.properties.BedPart.HEAD), 3);
+                    return head;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Se borra la zona de un puesto: el leñador vuelve a la aldea (y a buscar cama ahí). */
+    private static void endOutpost(ServerLevel level, VillageData.Village v, AbstractWorkAreaEntity area) {
+        WorkerOutput out = WorkerOutput.get(level);
+        for (WorkerOutput.Rec r : out.of(v.center())) {
+            if (!r.outpost || !(level.getEntity(r.worker) instanceof AbstractWorkerEntity w)) continue;
+            AbstractWorkAreaEntity a = areaFor(level, w);
+            if (a != null && !a.getUUID().equals(area.getUUID())) continue;
+            r.outpost = false;
+            WorkerSupply.leaveHome(level, w);
+            BlockPos store = VillageData.get(level).storehouse(v.center());
+            BlockPos to = (store != null ? store : v.center()).above();
+            w.teleportTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5);
+            w.getNavigation().stop();
+        }
+    }
+
+    /** El cofre de una zona (null si no tiene). */
+    @Nullable
+    public static BlockPos chestOf(AbstractWorkAreaEntity area) {
+        var pd = area.getPersistentData();
+        return pd.contains(TAG_CHEST) ? BlockPos.of(pd.getLong(TAG_CHEST)) : null;
     }
 }

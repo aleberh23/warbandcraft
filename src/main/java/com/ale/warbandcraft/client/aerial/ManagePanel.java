@@ -368,6 +368,12 @@ final class ManagePanel {
         y = line(gfx, font, "Por día", y, GOLD);
         y = line(gfx, font, data.daily().emeralds() + " esmeraldas · " + data.daily().food() + " panes · "
                 + data.daily().armament() + " armamento", y, 0xFFFFFFFF);
+        // Pedido de Ale: lo que producen los trabajadores por día (también cuando la aldea no está cargada)
+        List<net.minecraft.util.FormattedCharSequence> made = font.split(Component.literal("Trabajadores: " + data.production().getString()), W - 8);
+        for (int i = 0; i < made.size() && i < 2; i++) {
+            gfx.drawString(font, made.get(i), X + 4, y, 0xFF9FE870);
+            y += 11;
+        }
         y += 4;
         y = line(gfx, font, "Guarnición", y, GOLD);
         y = line(gfx, font, "Barracón: " + data.soldiers() + " / " + data.capacity(), y, 0xFFFFFFFF);
@@ -418,7 +424,13 @@ final class ManagePanel {
             int ry = ay + 16 + i * ROW;
             gfx.fill(X + 4, ry, X + 10, ry + 6, a.color());
             int w = a.max().getX() - a.min().getX() + 1, d = a.max().getZ() - a.min().getZ() + 1;
-            gfx.drawString(font, font.plainSubstrByWidth(a.kind().getString() + " " + w + "×" + d, W - 70), X + 14, ry, 0xFFFFFFFF);
+            String kind = a.kind().getString() + " " + w + "×" + d;
+            gfx.drawString(font, font.plainSubstrByWidth(kind, W - 70), X + 14, ry, 0xFFFFFFFF);
+            int px = X + 14 + font.width(kind + " · ");
+            if (!a.production().getString().isEmpty() && px < X + W - 60) {   // pedido de Ale: cuánto produce por día
+                gfx.drawString(font, font.plainSubstrByWidth("· " + a.production().getString(), X + W - 56 - px + font.width("· ")),
+                        px - font.width("· "), ry, 0xFF9FE870);
+            }
         }
     }
 
@@ -752,7 +764,8 @@ final class ManagePanel {
             Vec3[] c = {new Vec3(x0, yb, z0), new Vec3(x1, yb, z0), new Vec3(x1, yb, z1), new Vec3(x0, yb, z1)};
             for (int i = 0; i < 4; i++) dots(gfx, camera, c[i], c[(i + 1) % 4], a.color(), sw, sh);
             double[] s = AerialScreen.worldToScreen(camera, new Vec3((x0 + x1) / 2, yb + 0.5, (z0 + z1) / 2), sw, sh);
-            if (s != null) sign(gfx, font, (int) s[0], (int) s[1], a.kind().getString(), a.color(), a.status().getString(), a.statusColor());
+            if (s != null) sign(gfx, font, (int) s[0], (int) s[1], a.kind().getString(), a.color(), a.status().getString(), a.statusColor(),
+                    a.production().getString());
         }
         if (tab == TAB_UPGRADES || placing != null) renderSites(gfx, font, camera, sw, sh);
         Minecraft mc = Minecraft.getInstance();
@@ -820,7 +833,7 @@ final class ManagePanel {
             Vec3[] c = {new Vec3(x0, yb, z0), new Vec3(x1, yb, z0), new Vec3(x1, yb, z1), new Vec3(x0, yb, z1)};
             for (int i = 0; i < 4; i++) dots(gfx, camera, c[i], c[(i + 1) % 4], 0xFF7FC8FF, sw, sh);
             double[] p = AerialScreen.worldToScreen(camera, new Vec3((x0 + x1) / 2, yb + 4, (z0 + z1) / 2), sw, sh);
-            if (p != null) sign(gfx, font, (int) p[0], (int) p[1], siteLabel(s.key()), 0xFF7FC8FF, "", 0);
+            if (p != null) sign(gfx, font, (int) p[0], (int) p[1], siteLabel(s.key()), 0xFF7FC8FF, "", 0, "");
         }
     }
 
@@ -1084,13 +1097,19 @@ final class ManagePanel {
         }
     }
 
-    /** H18: el cartelito de una zona: su nombre y, abajo, cómo está su trabajador (qué le falta). */
-    private static void sign(GuiGraphics gfx, Font font, int x, int y, String title, int titleColor, String status, int statusColor) {
-        int w = Math.max(font.width(title), Math.min(font.width(status), 220));
-        int h = status.isEmpty() ? 10 : 20;
+    /** H18: el cartelito de una zona: su nombre, cómo está su trabajador (qué le falta) y lo que produce por día. */
+    private static void sign(GuiGraphics gfx, Font font, int x, int y, String title, int titleColor, String status, int statusColor,
+                             String production) {
+        int w = Math.max(font.width(title), Math.max(Math.min(font.width(status), 220), Math.min(font.width(production), 220)));
+        int h = 10 + (status.isEmpty() ? 0 : 10) + (production.isEmpty() ? 0 : 10);
         gfx.fill(x - w / 2 - 3, y - 3, x + w / 2 + 3, y + h, 0xB0000000);
         gfx.drawCenteredString(font, title, x, y, titleColor);
-        if (!status.isEmpty()) gfx.drawCenteredString(font, font.plainSubstrByWidth(status, 220), x, y + 10, statusColor);
+        int ly = y + 10;
+        if (!status.isEmpty()) {
+            gfx.drawCenteredString(font, font.plainSubstrByWidth(status, 220), x, ly, statusColor);
+            ly += 10;
+        }
+        if (!production.isEmpty()) gfx.drawCenteredString(font, font.plainSubstrByWidth(production, 220), x, ly, 0xFF9FE870);
     }
 
     @Nullable
@@ -1139,10 +1158,22 @@ final class ManagePanel {
         int ax = Math.min(x0, x1), bx = Math.max(x0, x1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
         if (markingJob == VillageManagement.Job.SMITH.ordinal() || markingJob == VillageManagement.Job.INNKEEPER.ordinal()
                 || markingJob == VillageManagement.Job.MERCHANT.ordinal()) return markable(ax, az) ? null : "Afuera del territorio";
-        if (!markable(ax, az) || !markable(bx, az) || !markable(ax, bz) || !markable(bx, bz)) return "Afuera del territorio";
+        if (!markable(ax, az) || !markable(bx, az) || !markable(ax, bz) || !markable(bx, bz)) {
+            // Pedido de Ale: el leñador puede tener un puesto afuera (con su cofre y su cama)
+            if (markingJob != VillageManagement.Job.LUMBERJACK.ordinal()) return "Afuera del territorio";
+            double dx = (ax + bx) / 2.0 - data.center().getX(), dz = (az + bz) / 2.0 - data.center().getZ();
+            if (dx * dx + dz * dz > (double) WorkZones.OUTPOST_RANGE * WorkZones.OUTPOST_RANGE) {
+                return "Muy lejos para un puesto (máximo " + WorkZones.OUTPOST_RANGE + ")";
+            }
+        }
         int max = markingJob == VillageManagement.Job.MINER.ordinal() ? WorkZones.MAX_MINE_SIDE : WorkZones.MAX_SIDE;
         if (bx - ax + 1 < WorkZones.MIN_SIDE || bz - az + 1 < WorkZones.MIN_SIDE) return "Muy chica (mínimo " + WorkZones.MIN_SIDE + ")";
         if (bx - ax + 1 > max || bz - az + 1 > max) return "Muy grande (máximo " + max + ")";
+        if (markingJob == VillageManagement.Job.MINER.ordinal()) {
+            int len = Math.max(bx - ax + 1, bz - az + 1), wide = Math.min(bx - ax + 1, bz - az + 1);
+            if (len < WorkZones.MIN_MINE_LENGTH) return "Escalera muy corta (mínimo " + WorkZones.MIN_MINE_LENGTH + " de largo)";
+            if (wide > WorkZones.MAX_MINE_WIDTH) return "Escalera muy ancha (máximo " + WorkZones.MAX_MINE_WIDTH + ")";
+        }
         for (WorkZones.AreaRow a : data.areas()) {
             if (ax <= a.max().getX() && bx >= a.min().getX() && az <= a.max().getZ() && bz >= a.min().getZ()) return "Se pisa con otra zona";
         }
