@@ -48,10 +48,10 @@ jobs:
           JAR=$(ls build/libs/warbandcraft-*.jar | grep -v -e sources -e slim | head -n1)
           python3 tools/make_pack.py
           EXTRA=""
-          for kind in juego prism; do
+          for kind in juego prism mac; do
             f=$(ls dist/WarbandCraft-*-$kind.zip 2>/dev/null | head -n1)
             if [ -n "$f" ]; then
-              [ "$kind" = prism ] && dest=WarbandCraft-Prism.zip || dest=WarbandCraft-juego.zip
+              case "$kind" in prism) dest=WarbandCraft-Prism.zip ;; mac) dest=WarbandCraft-Mac.zip ;; *) dest=WarbandCraft-juego.zip ;; esac
               cp "$f" "$dest"; EXTRA="$EXTRA $dest"
             fi
           done

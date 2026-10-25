@@ -1,0 +1,37 @@
+WARBAND CRAFT PARA MAC
+======================
+
+Minecraft 1.20.1 convertido en un Mount & Blade: facciones, aldeas, castillos, ejércitos, asedios y mazmorras.
+
+DESCARGA
+Siempre la última versión: https://github.com/aleberh23/warbandcraft/releases/download/ultima/WarbandCraft-Mac.zip
+Servidor: gs-04.baires.host:25830 (la primera vez: /register <contraseña> <contraseña>; después: /login <contraseña>)
+
+INSTALAR (launcher oficial de Minecraft, Java Edition)
+1. Necesitás el launcher oficial de Minecraft con tu cuenta. Abrilo al menos una vez y CERRALO (Cmd+Q).
+2. Descomprimí este .zip (doble click) y entrá a la carpeta.
+3. Click DERECHO en "Instalar Warband Craft.command" > Abrir > Abrir.
+   Si la Mac no te deja ("no se puede abrir porque es de un desarrollador no identificado"):
+   Ajustes del Sistema > Privacidad y seguridad > abajo de todo "Abrir igualmente", y volvé a abrirlo.
+   Si igual no anda: abrí la app Terminal, escribí  bash  (con un espacio después), arrastrá el archivo
+   instalar.sh de esta carpeta a la ventana de la Terminal y apretá Enter.
+4. Tarda unos minutos: baja Java, Forge y los mods. Te deja en el escritorio "Jugar Warband Craft".
+   ENTRÁ SIEMPRE POR AHÍ: se actualiza solo y después abre el launcher. Elegí el perfil "Warband Craft" y dale a Jugar.
+
+Todo queda aparte de tus otros mods y mundos, en  ~/Library/Application Support/warbandcraft
+
+PACK DE TEXTURAS (John Smith Legacy)
+La primera vez el instalador te abre la página oficial (johnsmithlegacy.co.uk): descargá "John Smith Legacy 1.20.1 v4"
+(sección Java, Trails & Tales) y listo, el instalador lo encuentra en Descargas y lo deja activado. Es opcional.
+
+SHADERS
+Vienen prendidos (Complementary Reimagined). Si anda lento, apagalos: tecla O > "Shaders: ON" para que quede en OFF.
+En Macs con chip M1/M2/M3 andan bien; en Macs viejas con Intel conviene apagarlos.
+
+GUÍA
+El juego explica todo en el salón del tutorial (aparecés adentro en cada mundo nuevo; /spawn para volver).
+En la carpeta del juego queda GUIA-WARBAND-CRAFT.md: pasásela a Claude o a la IA que uses y preguntale lo que necesites.
+
+TECLAS DE WARBAND CRAFT
+V vista aérea · K panel de control · J rutas y viaje · B meterse en una batalla / asediar · M mapa de Recruits
+R órdenes de Recruits · U facción de Recruits · O shaders

@@ -86,6 +86,25 @@ def main():
             z.writestr(top + GUIDE, guide(v))
         print(f"{out.relative_to(ROOT)}  ({out.stat().st_size // 1024} KB)")
 
+    # Mac: scripts de bash con LF y permiso de ejecución guardado en el zip (la Utilidad de Archivo de macOS lo respeta).
+    out = dist / f"WarbandCraft-{v}-mac.zip"
+    top = f"WarbandCraft-{v}-mac/"
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for p in sorted((PACK / "mac").iterdir()):
+            if p.suffix in (".sh", ".command"):
+                info = zipfile.ZipInfo(top + p.name, date_time=(2026, 1, 1, 0, 0, 0))
+                info.create_system = 3   # Unix: si no, se ignoran los permisos
+                info.external_attr = 0o100755 << 16
+                info.compress_type = zipfile.ZIP_DEFLATED
+                text = p.read_text(encoding="utf-8-sig").replace(CR + LF, LF)
+                z.writestr(info, text.encode("utf-8"))
+            else:
+                z.write(p, top + p.name)
+        z.write(PACK / "mods.json", top + "mods.json")
+        z.write(jar, top + jar.name)
+        z.writestr(top + GUIDE, guide(v))
+    print(f"{out.relative_to(ROOT)}  ({out.stat().st_size // 1024} KB)")
+
     # Instancia de Prism Launcher: Minecraft + Forge, y antes de abrir corre actualizar.ps1 (baja mods y mod nuestro).
     # Se importa en Prism con Agregar instancia > Importar > link de la release.
     out = dist / f"WarbandCraft-{v}-prism.zip"

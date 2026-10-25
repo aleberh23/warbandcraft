@@ -1242,6 +1242,11 @@ se copian los fuentes a `Descargas\warbandcraft` y Ale corre `probar.bat`; el lo
   creativo C/X). `options.txt` nuevo lleva `version:3465` (sin eso Minecraft lo descarta). Shaders prendidos (`oculus.properties`).
 - Rendimiento (en vez de OptiFine, que no se puede repartir y choca con Forge): Embeddium, Oculus + Complementary
   Reimagined, ModernFix, FerriteCore, Entity Culling, ImmediatelyFast.
+- **Mac** (pedido de Ale, sin probar en una Mac): `pack/mac/` (`instalar.sh`, `actualizar.sh`, `Instalar Warband Craft.command`) hace
+  lo mismo que `instalar.ps1` con lo que trae macOS (bash 3.2, curl, shasum, JSON con `osascript -l JavaScript`): Java 17 de
+  Adoptium (arm64/x64), Forge en `~/Library/Application Support/minecraft`, juego en `.../warbandcraft`, perfil, teclas, John
+  Smith, `Jugar Warband Craft.command` en el escritorio. `make_pack.py` → `-mac.zip` (LF + permiso de ejecución en el zip);
+  `build.yml` lo sube como `WarbandCraft-Mac.zip`. Cambiar algo de `instalar.ps1` = cambiarlo también en `instalar.sh`.
 - Servidor: `Instalar servidor.bat` (Forge `--installServer` en la misma carpeta, mods sin los de solo cliente, EULA con S/N,
   `server.properties` de partida, memoria en `user_jvm_args.txt`) + `Iniciar servidor.bat`.
 - Probado (16/10/2026): servidor dedicado arranca y anda; el juego entra a ese servidor con shaders (portablemc sin cuenta).
