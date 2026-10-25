@@ -6,9 +6,11 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
@@ -66,7 +68,8 @@ public final class Blueprints {
 
     /** Bloques que ponemos en los muros y torres (al pasar de madera a piedra se reemplazan). */
     private static boolean ours(BlockState s) {
-        return s.is(Blocks.STONE_BRICKS) || s.is(Blocks.STONE_BRICK_WALL) || s.is(Blocks.SPRUCE_LOG) || s.is(Blocks.LADDER);
+        return s.is(Blocks.STONE_BRICKS) || s.is(Blocks.STONE_BRICK_WALL) || s.is(Blocks.SPRUCE_LOG) || s.is(Blocks.LADDER)
+                || s.getBlock() instanceof FenceGateBlock;
     }
 
     /** Piso natural (no el piso de una casa). */
@@ -150,29 +153,176 @@ public final class Blueprints {
         return g;
     }
 
-    /** Empalizada (troncos de 3) o muralla (ladrillo de piedra de 4 con almenas). Puertas en los caminos. */
+    /** Cuánto se corre el muro hacia afuera (y si no, hacia adentro) para rodear una casa en vez de dejar un hueco. */
+    public static int RING_DETOUR_OUT = 10, RING_DETOUR_IN = 5;
+    /** Agua más honda que esto: el muro no la cruza (queda hueco). Menos honda: pilotes desde el fondo. */
+    public static int RING_WATER_DEPTH = 12;
+
+    /** Una columna de muro: bloques de {@code bottom + 1} a {@code top} (en el agua, desde el fondo hasta arriba del agua). */
+    private record Post(int x, int z, int bottom, int top) {}
+
+    /**
+     * Dónde va el muro en esa columna, o null si no se puede (casa, block entity, agua muy honda, sin cargar). En el
+     * agua (o al lado) el muro sube desde el fondo hasta {@code height} arriba de la superficie, como pilotes.
+     */
+    @Nullable
+    private static Post post(ServerLevel level, int x, int z, int height, int extra, int hintY) {
+        Integer g = groundY(level, x, z, hintY);
+        if (g == null) return null;
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos(x, g, z);
+        BlockState gs = level.getBlockState(p);
+        if (!gs.getFluidState().isEmpty()) {
+            if (!gs.getFluidState().is(FluidTags.WATER)) return null;
+            int bed = g;
+            while (bed > g - RING_WATER_DEPTH - 1 && !level.getFluidState(p.setY(bed)).isEmpty()) bed--;
+            BlockState b = level.getBlockState(p.setY(bed));
+            if (!b.getFluidState().isEmpty() || clearable(b) && !natural(b)) return null;   // muy hondo
+            g = bed;
+        } else if (!natural(gs)) {
+            return null;
+        }
+        // Agua en la columna o pegada: el muro tiene que asomar arriba de ella
+        int surface = Integer.MIN_VALUE;
+        int[][] around = {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int[] d : around) {
+            for (int y = g + 1; y <= g + RING_WATER_DEPTH + 1; y++) {
+                if (level.getFluidState(p.set(x + d[0], y, z + d[1])).is(FluidTags.WATER)) surface = Math.max(surface, y);
+            }
+        }
+        int top = Math.max(g + height, surface + height);
+        for (int y = g + 1; y <= top + extra; y++) {
+            p.set(x, y, z);
+            if (!clearable(level.getBlockState(p)) || level.getBlockEntity(p) != null) return null;
+        }
+        return new Post(x, z, g, top);
+    }
+
+    /**
+     * Empalizada (troncos de 3) o muralla (ladrillo de piedra de 4 con almenas) que cierra la aldea entera (pedido de
+     * Ale): en cada camino un portón (puertas de cerco de 2 de alto con dintel, en línea recta), en el agua pilotes desde
+     * el fondo, y donde hay una casa el muro se corre para rodearla. Solo queda hueco si no hay forma (agua muy honda).
+     */
     public static Plan ring(ServerLevel level, BlockPos center, int r, boolean stone) {
         Plan plan = new Plan();
+        int height = stone ? 4 : 3, extra = stone ? 1 : 0, hint = center.getY();
+        BlockState body = stone ? Blocks.STONE_BRICKS.defaultBlockState()
+                : Blocks.SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
         List<int[]> cols = ringColumns(center, r);
         int n = cols.size();
         boolean[] path = new boolean[n];
         for (int i = 0; i < n; i++) {
-            Integer g = groundY(level, cols.get(i)[0], cols.get(i)[1], center.getY());
+            Integer g = groundY(level, cols.get(i)[0], cols.get(i)[1], hint);
             path[i] = g != null && level.getBlockState(new BlockPos(cols.get(i)[0], g, cols.get(i)[1])).is(Blocks.DIRT_PATH);
         }
-        int height = stone ? 4 : 3;
-        BlockState log = Blocks.SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
+        boolean[] gate = new boolean[n];
+        int paths = 0;
         for (int i = 0; i < n; i++) {
-            if (path[i] || path[(i + 1) % n] || path[(i + n - 1) % n]) continue;   // puerta de 3
+            if (!path[i]) continue;
+            paths++;
+            gate[(i + n - 1) % n] = gate[i] = gate[(i + 1) % n] = true;   // portón de 3 por lo menos
+        }
+        if (paths * 2 > n) Arrays.fill(gate, false);   // un anillo que es casi todo camino: sin portones raros
+
+        // Columnas del muro (fuera de los portones): en el anillo o corridas para rodear lo que estorba
+        Post[] posts = new Post[n];
+        for (int i = 0; i < n; i++) {
+            if (gate[i]) continue;
             int x = cols.get(i)[0], z = cols.get(i)[1];
-            Integer g = wallBase(level, x, z, stone ? height + 1 : height, center.getY());
-            if (g == null) continue;   // agua o casa: hueco
-            for (int dy = 1; dy <= height; dy++) {
-                plan.put(new BlockPos(x, g + dy, z), stone ? Blocks.STONE_BRICKS.defaultBlockState() : log);
+            posts[i] = post(level, x, z, height, extra, hint);
+            if (posts[i] != null) continue;
+            double a = Math.atan2(z - center.getZ(), x - center.getX());
+            for (int k = 1; k <= RING_DETOUR_OUT + RING_DETOUR_IN && posts[i] == null; k++) {
+                int rr = k <= RING_DETOUR_OUT ? r + k : r - (k - RING_DETOUR_OUT);
+                posts[i] = post(level, center.getX() + (int) Math.round(rr * Math.cos(a)),
+                        center.getZ() + (int) Math.round(rr * Math.sin(a)), height, extra, hint);
             }
-            if (stone && i % 2 == 0) plan.put(new BlockPos(x, g + height + 1, z), Blocks.STONE_BRICK_WALL.defaultBlockState());
+        }
+        for (int i = 0; i < n; i++) {
+            if (posts[i] == null) continue;
+            wall(plan, posts[i], body, stone, i);
+            if (!gate[(i + 1) % n]) connect(level, plan, posts[i], posts[(i + 1) % n], height, extra, hint, body, stone);
+        }
+
+        // Portones: cada tramo de camino, derecho, con un poste en cada punta pegado al muro de al lado
+        for (int i = 0; i < n; i++) {
+            if (!gate[i] || gate[(i + n - 1) % n]) continue;   // el comienzo de un tramo
+            int len = 0;
+            while (len < n && gate[(i + len) % n]) len++;
+            List<int[]> run = new ArrayList<>();
+            for (int k = 0; k < len; k++) run.add(cols.get((i + k) % n));
+            gate(level, plan, run, posts[(i + n - 1) % n], posts[(i + len) % n], height, extra, hint, body, stone);
         }
         return plan;
+    }
+
+    private static void wall(Plan plan, Post p, BlockState body, boolean stone, int i) {
+        for (int y = p.bottom() + 1; y <= p.top(); y++) plan.put(new BlockPos(p.x(), y, p.z()), body);
+        if (stone && i % 2 == 0) plan.put(new BlockPos(p.x(), p.top() + 1, p.z()), Blocks.STONE_BRICK_WALL.defaultBlockState());
+    }
+
+    /** Une dos columnas que no se tocan (un desvío): una línea de muro entre las dos (en diagonal ya cierra). */
+    private static void connect(ServerLevel level, Plan plan, Post a, @Nullable Post b, int height, int extra, int hint,
+                                BlockState body, boolean stone) {
+        if (b == null) return;
+        int dx = b.x() - a.x(), dz = b.z() - a.z();
+        int steps = Math.max(Math.abs(dx), Math.abs(dz));
+        if (steps <= 1 || steps > 2 * (RING_DETOUR_OUT + RING_DETOUR_IN)) return;
+        for (int k = 1; k < steps; k++) {
+            int x = a.x() + (int) Math.round((double) dx * k / steps), z = a.z() + (int) Math.round((double) dz * k / steps);
+            Post p = post(level, x, z, height, extra, hint);
+            if (p != null) wall(plan, p, body, stone, k);
+        }
+    }
+
+    /** Un portón derecho sobre el tramo {@code run} del anillo, con postes en las puntas unidos al muro de cada lado. */
+    private static void gate(ServerLevel level, Plan plan, List<int[]> run, @Nullable Post before, @Nullable Post after,
+                             int height, int extra, int hint, BlockState body, boolean stone) {
+        int[] a = run.get(0), b = run.get(run.size() - 1);
+        boolean xAxis = Math.abs(b[0] - a[0]) >= Math.abs(b[1] - a[1]);   // para dónde corre el muro ahí
+        double sum = 0;
+        for (int[] c : run) sum += xAxis ? c[1] : c[0];
+        int line = (int) Math.round(sum / run.size());
+        int a0 = xAxis ? a[0] : a[1], b0 = xAxis ? b[0] : b[1];
+        int lo = Math.min(a0, b0), hi = Math.max(a0, b0);
+        while (hi - lo < 2) {   // 3 de ancho por lo menos
+            if ((hi - lo) % 2 == 0) hi++;
+            else lo--;
+        }
+        BlockState gateBlock = (stone ? Blocks.DARK_OAK_FENCE_GATE : Blocks.SPRUCE_FENCE_GATE).defaultBlockState()
+                .setValue(FenceGateBlock.FACING, xAxis ? Direction.NORTH : Direction.EAST).setValue(FenceGateBlock.OPEN, false);
+        for (int u = lo; u <= hi; u++) {
+            int x = xAxis ? u : line, z = xAxis ? line : u;
+            Post p = post(level, x, z, height, extra, hint);
+            if (p == null) continue;
+            plan.put(new BlockPos(x, p.bottom() + 1, z), gateBlock);
+            plan.put(new BlockPos(x, p.bottom() + 2, z), gateBlock);
+            for (int y = p.bottom() + 3; y <= p.top(); y++) plan.put(new BlockPos(x, y, z), body);   // dintel
+            if (stone && (u - lo) % 2 == 0) plan.put(new BlockPos(x, p.top() + 1, z), Blocks.STONE_BRICK_WALL.defaultBlockState());
+        }
+        // Postes de las puntas, cada uno unido al muro de su lado
+        Post low = post(level, xAxis ? lo - 1 : line, xAxis ? line : lo - 1, height, extra, hint);
+        Post high = post(level, xAxis ? hi + 1 : line, xAxis ? line : hi + 1, height, extra, hint);
+        boolean lowFirst = Math.abs(lo - a0) <= Math.abs(hi - a0);
+        Post toBefore = lowFirst ? low : high, toAfter = lowFirst ? high : low;
+        if (toBefore != null) {
+            wall(plan, toBefore, body, stone, 0);
+            connect(level, plan, toBefore, before, height, extra, hint, body, stone);
+        }
+        if (toAfter != null) {
+            wall(plan, toAfter, body, stone, 0);
+            connect(level, plan, toAfter, after, height, extra, hint, body, stone);
+        }
+    }
+
+    /** Las puertas de cerco de abajo de cada portón del plan (las que abren y cierran, {@code Works.tickGates}). */
+    public static List<BlockPos> gatesOf(Plan plan) {
+        List<BlockPos> out = new ArrayList<>();
+        for (var e : plan.blocks.entrySet()) {
+            if (!(e.getValue().getBlock() instanceof FenceGateBlock)) continue;
+            BlockState below = plan.blocks.get(e.getKey().below());
+            if (below == null || !(below.getBlock() instanceof FenceGateBlock)) out.add(e.getKey());
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------ torres

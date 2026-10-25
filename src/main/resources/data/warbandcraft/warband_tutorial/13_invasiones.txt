@@ -3,7 +3,7 @@ cartel: Invasiones|y la Hueste
 ## Te van a atacar
 Las facciones en guerra con vos mandan ejércitos contra tus aldeas. Te avisan 5 minutos antes, el Panel (K) lo marca en rojo y sale en el mapa.
 
-Si estás cerca, la batalla es de verdad: tu cuartel, tus guardias y tus soldados cercanos defienden. Si no, se resuelve sola con números (fuerza de cada lado y defensas).
+Si estás cerca, la batalla es de verdad: tu cuartel, tus guardias y tus soldados cercanos defienden. Si no, se resuelve sola: cuenta cuántos son, su equipo (armadura y arma), si son arqueros, el nivel de tus guardias y las defensas de la aldea.
 ---
 Si los invasores llegan al almacén de la aldea sin defensores, la perdés: vuelve a la facción.
 

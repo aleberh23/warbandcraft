@@ -8,6 +8,7 @@ final class TuningClasses {
             "ai.HorseSpeed",
             "ai.Unstuck",
             "army.Armies",
+            "battle.AutoPower",
             "battle.BattleBar",
             "battle.BattleChoices",
             "battle.BattleEscape",

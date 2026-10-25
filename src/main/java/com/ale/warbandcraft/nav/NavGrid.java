@@ -291,7 +291,12 @@ public final class NavGrid {
         }
         boolean water = (f & WATER) != 0;
         if (water && !caps.water()) return;
-        if ((f & DOOR) != 0 && !caps.openDoors()) return;
+        boolean bash = false;   // un portón que no abre: lo rompe a golpes (si puede)
+        if ((f & DOOR) != 0 && !caps.openDoors()) {
+            BlockState gate = level.getBlockState(new BlockPos(nx, ny, nz));
+            if (!caps.bashGates() || !(gate.getBlock() instanceof FenceGateBlock)) return;
+            bash = !gate.getValue(FenceGateBlock.OPEN);
+        }
         if (fromWater && !water && ny > y) {
             // Salir del agua: de a un escalón
             if (ny - y > 1) return;
@@ -300,7 +305,7 @@ public final class NavGrid {
         if (ny > y) cost += 0.5F;
         if (ny < y) cost += 0.3F * (y - ny) + (y - ny > 3 ? 2.0F : 0);
         if (water) cost *= caps.waterCost();
-        if ((f & DOOR) != 0) cost += 2.0F;
+        if ((f & DOOR) != 0) cost += bash ? NavCaps.GATE_BASH_COST : 2.0F;
         Step.Kind kind = water ? Step.Kind.WATER : (f & DOOR) != 0 ? Step.Kind.DOOR : Step.Kind.WALK;
         out.edge(BlockPos.asLong(nx, ny, nz), cost, kind, 0);
     }

@@ -210,6 +210,55 @@ public class H22GameTests {
         h.succeed();
     }
 
+    /**
+     * Portón de una aldea de facción (pedido de Ale): se abre para su guarnición, se cierra con un bandido cerca y el
+     * bandido pegado al portón cerrado lo rompe a golpes.
+     */
+    @GameTest(template = TEMPLATE)
+    public static void factionGateOpensAndGetsBashed(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        openSky(h);
+        VillageData.Village v = new VillageData.Village(h.absolutePos(CENTER), new ResourceLocation(WarbandCraft.MODID, "norte"), 0);
+        VillageData.get(level).add(v);
+        VillageData.get(level).markTest(v.center());
+        TownData data = TownData.get(level);
+        java.util.List<net.minecraft.world.entity.Entity> spawned = new java.util.ArrayList<>();
+        try {
+            TownData.Town town = data.getOrCreate(v.center());
+            BlockState gateState = Blocks.SPRUCE_FENCE_GATE.defaultBlockState().setValue(FenceGateBlock.FACING, Direction.NORTH);
+            h.setBlock(new BlockPos(4, 2, 6), gateState);
+            h.setBlock(new BlockPos(4, 3, 6), gateState);
+            town.gates.add(h.absolutePos(new BlockPos(4, 2, 6)));
+
+            spawned.add(soldier(h, "warbandcraft:norte", new BlockPos(4, 2, 5)));
+            Works.tickGates(level);
+            check(h.getBlockState(new BlockPos(4, 2, 6)).getValue(FenceGateBlock.OPEN), "el portón no se abrió para su guarnición");
+
+            spawned.add(soldier(h, "warbandcraft:bandidos", new BlockPos(4, 2, 7)));
+            Works.tickGates(level);
+            check(!h.getBlockState(new BlockPos(4, 2, 6)).getValue(FenceGateBlock.OPEN), "el portón no se cerró con un bandido al lado");
+            for (int i = 0; i < Works.GATE_BASH_TICKS / 10 + 2; i++) Works.tickGates(level);
+            check(!(h.getBlockState(new BlockPos(4, 2, 6)).getBlock() instanceof FenceGateBlock), "el bandido no rompió el portón");
+            check(!(h.getBlockState(new BlockPos(4, 3, 6)).getBlock() instanceof FenceGateBlock), "quedó la puerta de arriba");
+        } finally {
+            for (var e : spawned) e.discard();
+            data.remove(v.center());
+            VillageData.get(level).remove(v.center());
+        }
+        h.succeed();
+    }
+
+    private static com.talhanation.recruits.entities.AbstractRecruitEntity soldier(GameTestHelper h, String faction, BlockPos rel) {
+        EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse("recruits:recruit"));
+        check(type != null, "Recruits no está cargado");
+        var e = h.spawn(type, rel);
+        check(e instanceof com.talhanation.recruits.entities.AbstractRecruitEntity, "recruits:recruit no es un recluta");
+        var r = (com.talhanation.recruits.entities.AbstractRecruitEntity) e;
+        r.getPersistentData().putString(com.ale.warbandcraft.village.VillageManager.TAG_FACTION, faction);
+        r.setNoAi(true);
+        return r;
+    }
+
     /** Demoler un tramo de muralla dibujada: se saca lo que está cerca del click y deja de contar para reparar. */
     @GameTest(template = TEMPLATE)
     public static void demolishWallStretch(GameTestHelper h) {

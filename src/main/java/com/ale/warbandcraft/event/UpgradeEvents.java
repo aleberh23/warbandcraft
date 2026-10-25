@@ -19,6 +19,17 @@ public class UpgradeEvents {
         if (level.getGameTime() % 10 == 3) com.ale.warbandcraft.upgrade.Works.tickGates(level);   // H22c: portones
     }
 
+    /** Un portón de muralla no lo abre con la mano un enemigo de la aldea (ni un jugador ajeno en una aldea de otro). */
+    @SubscribeEvent
+    public void onUseGate(PlayerInteractEvent.RightClickBlock event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        if (!(level.getBlockState(event.getPos()).getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock)) return;
+        if (!com.ale.warbandcraft.upgrade.Works.gateLocked(level, event.getPos(), event.getEntity())) return;
+        event.setCanceled(true);
+        event.getEntity().displayClientMessage(net.minecraft.network.chat.Component.translatable("msg.warbandcraft.gate_locked")
+                .withStyle(net.minecraft.ChatFormatting.RED), true);
+    }
+
     @SubscribeEvent
     public void onInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getTarget().getPersistentData().contains(Upgrades.TAG_BUILDER)) event.setCanceled(true);

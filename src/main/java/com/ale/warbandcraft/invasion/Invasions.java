@@ -399,7 +399,8 @@ public final class Invasions {
         RandomSource r = level.getRandom();
         List<BarracksData.Soldier> guards = guardsAt(level, inv.owner, inv.target);
         boolean army = inv.kind == InvasionData.Kind.ARMY;
-        double attack = inv.size * INVADER_POWER * (army ? GENERAL_POWER : 1) * (0.8 + 0.4 * r.nextDouble());
+        double attack = inv.size * INVADER_POWER * com.ale.warbandcraft.battle.AutoPower.faction(inv.faction, false)
+                * (army ? GENERAL_POWER : 1) * (0.8 + 0.4 * r.nextDouble());
         double defense = defense(level, v, guards, army) * (0.8 + 0.4 * r.nextDouble());
         // Los invasores que habían aparecido (pelea real que quedó a medias) se van o se quedan según el resultado
         if (defense >= attack) {
@@ -431,7 +432,9 @@ public final class Invasions {
     /** Igual; {@code sappers} = el atacante trae zapadores y escaleras: los muros valen menos. */
     public static double defense(ServerLevel level, VillageData.Village v, List<BarracksData.Soldier> guards, boolean sappers) {
         double d = v.castle() ? CASTLE_MILITIA : VILLAGE_MILITIA;
-        for (BarracksData.Soldier s : guards) d += GUARD_POWER + GUARD_PER_LEVEL * s.xpLevel;
+        for (BarracksData.Soldier s : guards) {
+            d += (GUARD_POWER + GUARD_PER_LEVEL * s.xpLevel) * com.ale.warbandcraft.battle.AutoPower.sheet(s, true);
+        }
         double mult = v.castle() ? CASTLE_DEFENSE : 1.0;
         TownData.Town t = TownData.get(level).at(v.center());
         if (t != null) {

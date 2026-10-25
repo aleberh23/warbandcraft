@@ -457,6 +457,7 @@
   "msg.warbandcraft.invasion.repelled": "You defended your %s: the army of %s fell to the last man.",
   "msg.warbandcraft.invasion.auto_won": "Your %s held against %s (%s soldiers). %s of your guards fell.",
   "msg.warbandcraft.invasion.lost": "You lost your %s: it now belongs to %s. %s of your guards fell.",
+  "msg.warbandcraft.gate_locked": "The gate is barred from the inside.",
   "msg.warbandcraft.invasion.village": "village at %s, %s",
   "msg.warbandcraft.invasion.castle": "castle at %s, %s",
   "msg.warbandcraft.bar.title": "%s %s  ⚔  %s %s  ·  %s",

@@ -37,6 +37,9 @@ public final class FactionTowns {
 
     private static final Map<String, Long> FAILED = new HashMap<>();
 
+    /** El anillo cerrado con portones (pedido de Ale): las empalizadas armadas antes se completan una vez. */
+    public static final int RING_VERSION = 2;
+
     private FactionTowns() {}
 
     /** Lo que tiene cada tamaño, en el orden en que se hace (las casas pueden repetirse). */
@@ -68,6 +71,14 @@ public final class FactionTowns {
                     || com.ale.warbandcraft.invasion.InvasionData.get(level).battleAt(c) != null) continue;   // no en medio de una pelea
             TownData.Town t = towns.getOrCreate(c);
             if (t.job != null) continue;   // ya hay una obra
+            if (t.ringWalls && t.ringVersion < RING_VERSION && instant < INSTANT_PER_SECOND) {   // empalizada de antes: se cierra y le salen portones
+                Blueprints.Plan fix = com.ale.warbandcraft.upgrade.WallRepair.missing(level, v);
+                if (fix.size() > 0) Upgrades.buildNow(level, t, Upgrade.REPAIR, fix);
+                t.ringVersion = RING_VERSION;
+                towns.changed();
+                instant++;
+                continue;
+            }
             if (t.npcTier == 0) {
                 t.npcTier = tierFor(level, c);
                 towns.changed();

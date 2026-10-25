@@ -198,7 +198,8 @@ public final class AiWars {
             return new Result(false, 0, 0);
         }
         RandomSource r = level.getRandom();
-        double attack = m.size * Invasions.INVADER_POWER * (0.8 + 0.4 * r.nextDouble());
+        double attack = m.size * Invasions.INVADER_POWER * com.ale.warbandcraft.battle.AutoPower.faction(m.attacker, false)
+                * (0.8 + 0.4 * r.nextDouble());
         double defense = (m.fighting ? defense(level, v, m.defenders) : defense(level, v)) * (0.8 + 0.4 * r.nextDouble());
         Faction att = FactionManager.INSTANCE.get(m.attacker), def = FactionManager.INSTANCE.get(v.faction());
         if (attack > defense) {
@@ -231,7 +232,7 @@ public final class AiWars {
             else if (t.has(Upgrade.PALISADE)) mult = Math.max(mult, Invasions.PALISADE_DEFENSE);
             if (t.has(Upgrade.TOWERS)) mult += Invasions.TOWERS_DEFENSE;
         }
-        return garrison * VILLAGE_GARRISON_POWER * mult;
+        return garrison * VILLAGE_GARRISON_POWER * com.ale.warbandcraft.battle.AutoPower.faction(v.faction(), true) * mult;
     }
 
     /**

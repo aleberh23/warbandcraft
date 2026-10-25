@@ -174,7 +174,15 @@ public final class Mover {
             r.failed = true;
             return;
         }
-        if (next.kind() == Step.Kind.DOOR) openDoor(level, next.blockPos());
+        if (next.kind() == Step.Kind.DOOR) {
+            if (r.caps.openDoors()) openDoor(level, next.blockPos());
+            else if (closedGate(level, next.blockPos())) {   // no lo abre: lo golpea hasta romperlo (Works.tickGates)
+                walk(s, np);
+                if (now % 20 == 0) s.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                r.bestTick = now;
+                return;
+            }
+        }
         walk(s, np);
         double horiz = horizontal(s.position(), np);
         boolean corner = r.i + 1 < r.path.size() && r.path.get(r.i + 1).kind() == Step.Kind.WALK;
@@ -279,6 +287,15 @@ public final class Mover {
         s.stopRiding();
         if (boat.getPersistentData().getBoolean(TAG_BOAT) && boat.getPassengers().isEmpty()) boat.discard();
         r.boat = null;
+    }
+
+    /** Una puerta de cerco cerrada (abajo o arriba): un portón de muralla. */
+    public static boolean closedGate(ServerLevel level, BlockPos p) {
+        for (BlockPos q : new BlockPos[]{p, p.above()}) {
+            BlockState s = level.getBlockState(q);
+            if (s.getBlock() instanceof FenceGateBlock && !s.getValue(FenceGateBlock.OPEN)) return true;
+        }
+        return false;
     }
 
     private static void openDoor(ServerLevel level, BlockPos p) {

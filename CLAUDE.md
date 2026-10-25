@@ -294,7 +294,10 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   Al llegar: dueño a ≤100 y aldea cargada → `startFight` (tropas de la facción a 30 bloques del lado de `from`, marca
   `warbandcraft:invader` + `TAG_VILLAGE` = la aldea, `restrictTo` 16; pelean por la guerra de `GarrisonDefense`);
   si no → `autoresolve` (ataque = tamaño × 1,2 × azar; defensa = milicia + fichas de guardia a ≤48 por defensas de H12
-  × azar). Pelea: sin invasores = ganaste; sin defensores (vos o tus soldados a ≤64) los que entraron van al almacén
+  × azar). Pedido de Ale (a probar, números sin Ale): cada soldado vale según equipo y clase (`battle/AutoPower`: armadura,
+  daño del arma, escudo, arquero ×1,2 defendiendo / ×0,7 atacando; soldado "normal" = 1; a pie, el caballo no cuenta).
+  Fichas: equipo del NBT de Recruits (`Items`, espacios 0-5); invasores y guarniciones de la IA: promedio de las tropas de
+  su facción (`AutoPower.faction`). También en `AiWars.resolve/defense`. Pelea: sin invasores = ganaste; sin defensores (vos o tus soldados a ≤64) los que entraron van al almacén
   (`SiegeLanes.Host.objective` → `Invasions.storehouse`) y uno a ≤3 de él = `lose`: la aldea vuelve a
   la facción (sin dueño) y los invasores quedan de guarnición. Aldea descargada en medio = se autoresuelve lo que quede.
 - Invasor que se carga sin su invasión peleando: si la aldea es de su facción queda de guarnición; si no, no entra.
@@ -1044,7 +1047,19 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `warbandcraft:builder` = `town:<centro>` (`upgrade/BuilderNpc`; no comercia; si se carga sin obra, no entra al mundo).
 - `Blueprints.groundY(level, x, z, hintY)`: baja desde la altura de la campana +16 y el piso es el primer bloque firme
   con aire encima (no usar el mapa de alturas: en las pruebas hay terreno real encima del área).
-  Anillo: radio = 90% de los POIs + 6 (16..56); camino (dirt_path) = puerta de 3, casa o agua = hueco.
+  Anillo: radio = 90% de los POIs + 6 (16..56). **Cerrado** (pedido de Ale, a probar): sobre cada camino (dirt_path) un
+  portón derecho (puertas de cerco de 2 + dintel, ≥3 de ancho, postes en las puntas unidos al muro); agua ≤`RING_WATER_DEPTH`
+  = pilotes desde el fondo hasta 3/4 arriba de la superficie; casa o block entity = el muro se corre hasta `RING_DETOUR_OUT`
+  afuera (o `RING_DETOUR_IN` adentro) y se une con líneas de muro (`Blueprints.connect`). Solo queda hueco con agua muy honda.
+  Al terminar la obra (PALISADE/WALL/REPAIR) las puertas de abajo van a `Town.gates` (`Upgrades.ringGates`). Empalizadas de
+  antes: aldeas de facción se completan solas una vez (`FactionTowns`, `Town.ringVersion` < `RING_VERSION`); tuyas, con
+  Reparar murallas. Portones (`Works.tickGates`, cada 10 ticks): tuyas = vos, compañeros, sus soldados y aldeanos; de facción =
+  su guarnición, aldeanos y jugadores en paz (y sus soldados); con un enemigo a `GATE_ENEMY_RANGE` cerrados. Un enemigo no lo
+  abre a mano (`UpgradeEvents.onUseGate` → `Works.gateLocked`). Soldado enemigo pegado a un portón cerrado lo golpea:
+  `GATE_BASH_TICKS` (600, ×2 si es de muralla; hasta `GATE_MAX_BASHERS` suman) y se rompe. Asedios: `NavCaps.bashGates`
+  (INVADER y `siege`) deja pasar por un portón cerrado con costo `GATE_BASH_COST` (12, menos que escalera o TNT) y `Mover` no
+  lo abre: se queda golpeándolo (sin teletransporte). Pruebas: `H12GameTests.ringClosesWithGates`,
+  `H22GameTests.factionGateOpensAndGetsBashed`.
   Edificios: terreno 9×9 con desnivel ≤2 sin caminos ni casas, adentro del anillo o si no afuera; castillos a 27-52.
 - GameTests: el área viene con techo de barreras; la prueba del anillo lo saca.
 

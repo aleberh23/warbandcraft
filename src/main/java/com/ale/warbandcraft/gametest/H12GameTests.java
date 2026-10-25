@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Pruebas del Hito 12 (mejoras visibles): el anillo se acomoda al terreno (puertas en caminos, huecos en casas),
+ * Pruebas del Hito 12 (mejoras visibles): el anillo cierra la aldea (portones en los caminos, rodea casas, pilotes en el agua),
  * una obra avanza con el tiempo y termina con su constructor, requisitos y costo, y los efectos de las mejoras.
  */
 @GameTestHolder(WarbandCraft.MODID)
@@ -43,46 +43,67 @@ import java.util.UUID;
 public class H12GameTests {
     private static final String TEMPLATE = "empty";
     private static final BlockPos CENTER = new BlockPos(4, 1, 4);
+    private static final String BIG = "empty_big";
+    private static final BlockPos BIG_CENTER = new BlockPos(8, 1, 8);
 
-    @GameTest(template = TEMPLATE)
-    public static void ringLeavesGatesAndGaps(GameTestHelper h) {
+    /**
+     * El anillo cierra la aldea entera (pedido de Ale): portón de puertas de cerco sobre el camino, rodea una casa en vez
+     * de dejar hueco y cruza el agua con pilotes. Se mira que desde el centro no se pueda salir caminando.
+     */
+    @GameTest(template = BIG)
+    public static void ringClosesWithGates(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        BlockPos center = h.absolutePos(CENTER);
-        int r = 4;
+        BlockPos center = h.absolutePos(BIG_CENTER);
+        int r = 5;
         // Las pruebas vienen con un techo de barreras: el muro necesita cielo
-        for (int x = -1; x <= 9; x++) for (int z = -1; z <= 9; z++) for (int y = 2; y <= 8; y++) {
+        for (int x = 0; x <= 16; x++) for (int z = 0; z <= 16; z++) for (int y = 2; y <= 17; y++) {
             if (h.getBlockState(new BlockPos(x, y, z)).is(Blocks.BARRIER)) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
         }
-        List<int[]> cols = Blueprints.ringColumns(center, r);
-        check(cols.size() >= 16, "el anillo tiene pocas columnas: " + cols.size());
-
-        int[] gate = cols.get(0);
-        int[] house = cols.get(cols.size() / 2);
-        Integer gg = Blueprints.groundY(level, gate[0], gate[1], center.getY());
-        Integer hg = Blueprints.groundY(level, house[0], house[1], center.getY());
-        check(gg != null && hg != null, "no encontró el piso");
-        level.setBlockAndUpdate(new BlockPos(gate[0], gg, gate[1]), Blocks.DIRT_PATH.defaultBlockState());
-        level.setBlockAndUpdate(new BlockPos(house[0], hg + 1, house[1]), Blocks.OAK_PLANKS.defaultBlockState());
-        level.setBlockAndUpdate(new BlockPos(house[0], hg + 2, house[1]), Blocks.OAK_PLANKS.defaultBlockState());
+        int cx = center.getX(), cz = center.getZ();
+        Integer g = Blueprints.groundY(level, cx, cz, center.getY());
+        check(g != null, "no encontró el piso");
+        // Un camino que cruza el anillo al este, una casa al oeste y agua al sur
+        for (int x = cx + 2; x <= cx + 7; x++) level.setBlockAndUpdate(new BlockPos(x, g, cz), Blocks.DIRT_PATH.defaultBlockState());
+        level.setBlockAndUpdate(new BlockPos(cx - r, g + 1, cz), Blocks.OAK_PLANKS.defaultBlockState());
+        level.setBlockAndUpdate(new BlockPos(cx - r, g + 2, cz), Blocks.OAK_PLANKS.defaultBlockState());
+        level.setBlockAndUpdate(new BlockPos(cx, g - 1, cz + r), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(new BlockPos(cx, g, cz + r), Blocks.WATER.defaultBlockState());
 
         Blueprints.Plan plan = Blueprints.ring(level, center, r, false);
-        check(!hasColumn(plan, gate[0], gate[1]), "puso empalizada sobre el camino");
-        int[] next = cols.get(1);
-        check(!hasColumn(plan, next[0], next[1]), "la puerta no tiene 3 de ancho");
-        check(!hasColumn(plan, house[0], house[1]), "puso empalizada adentro de una casa");
-        int[] wall = cols.get(cols.size() / 4);
-        Integer wg = Blueprints.groundY(level, wall[0], wall[1], center.getY());
-        check(wg != null, "sin piso en el muro");
-        for (int dy = 1; dy <= 3; dy++) {
-            BlockState s = plan.blocks.get(new BlockPos(wall[0], wg + dy, wall[1]));
-            check(s != null && s.is(Blocks.SPRUCE_LOG), "falta un tronco de la empalizada a " + dy + " del piso; plan " + plan.size()
-                    + ", piso " + h.relativePos(new BlockPos(wall[0], wg, wall[1])) + " = " + level.getBlockState(new BlockPos(wall[0], wg, wall[1]))
-                    + ", arriba " + level.getBlockState(new BlockPos(wall[0], wg + 1, wall[1])) + " / " + level.getBlockState(new BlockPos(wall[0], wg + 4, wall[1])));
+        BlockState gate = plan.blocks.get(new BlockPos(cx + r, g + 1, cz));
+        check(gate != null && gate.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock,
+                "no hay portón sobre el camino: " + gate);
+        check(gate.getValue(net.minecraft.world.level.block.FenceGateBlock.FACING).getAxis() == net.minecraft.core.Direction.Axis.X,
+                "el portón no cruza el muro: " + gate);
+        BlockState upper = plan.blocks.get(new BlockPos(cx + r, g + 2, cz));
+        check(upper != null && upper.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock, "el portón no tiene 2 de alto");
+        check(!Blueprints.gatesOf(plan).isEmpty(), "el plan no dice dónde están los portones");
+        check(!hasColumn(plan, cx - r, cz), "puso empalizada adentro de una casa");
+        BlockState piling = plan.blocks.get(new BlockPos(cx, g, cz + r));
+        check(piling != null && piling.is(Blocks.SPRUCE_LOG), "no puso pilote en el agua: " + piling);
+
+        // Cerrado: desde el centro, por el piso, sin pasar por el muro ni el portón (cerrado) ni la casa
+        java.util.Set<Long> blocked = new java.util.HashSet<>();
+        for (BlockPos p : plan.blocks.keySet()) if (p.getY() == g + 1) blocked.add(BlockPos.asLong(p.getX(), 0, p.getZ()));
+        blocked.add(BlockPos.asLong(cx - r, 0, cz));
+        java.util.ArrayDeque<int[]> todo = new java.util.ArrayDeque<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        todo.add(new int[]{cx, cz});
+        seen.add(BlockPos.asLong(cx, 0, cz));
+        while (!todo.isEmpty()) {
+            int[] c = todo.poll();
+            check(Math.abs(c[0] - cx) <= r + 3 && Math.abs(c[1] - cz) <= r + 3,
+                    "se puede salir de la empalizada por " + h.relativePos(new BlockPos(c[0], g, c[1])));
+            for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                long k = BlockPos.asLong(c[0] + d[0], 0, c[1] + d[1]);
+                if (blocked.contains(k) || !seen.add(k)) continue;
+                todo.add(new int[]{c[0] + d[0], c[1] + d[1]});
+            }
         }
 
         Blueprints.Plan stone = Blueprints.ring(level, center, r, true);
-        BlockState top = stone.blocks.get(new BlockPos(wall[0], wg + 4, wall[1]));
-        check(top != null && top.is(Blocks.STONE_BRICKS), "la muralla no tiene 4 de alto");
+        BlockState stoneGate = stone.blocks.get(new BlockPos(cx + r, g + 1, cz));
+        check(stoneGate != null && stoneGate.is(Blocks.DARK_OAK_FENCE_GATE), "la muralla no tiene portón: " + stoneGate);
         h.succeed();
     }
 

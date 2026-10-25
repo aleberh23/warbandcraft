@@ -457,6 +457,7 @@
   "msg.warbandcraft.invasion.repelled": "Defendiste tu %s: el ejército de %s cayó entero.",
   "msg.warbandcraft.invasion.auto_won": "Tu %s resistió a %s (%s soldados). Cayeron %s de tus guardias.",
   "msg.warbandcraft.invasion.lost": "Perdiste tu %s: ahora es de %s. Cayeron %s de tus guardias.",
+  "msg.warbandcraft.gate_locked": "El portón está trabado desde adentro.",
   "msg.warbandcraft.invasion.village": "aldea en %s, %s",
   "msg.warbandcraft.invasion.castle": "castillo en %s, %s",
   "msg.warbandcraft.bar.title": "%s %s  ⚔  %s %s  ·  %s",

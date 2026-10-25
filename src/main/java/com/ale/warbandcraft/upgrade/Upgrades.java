@@ -490,7 +490,11 @@ public final class Upgrades {
         if (job.upgrade.listed()) t.built.add(job.upgrade);
         else if (job.upgrade == Upgrade.HOUSE) t.houses++;
         if (job.upgrade == Upgrade.REPAIR) WallRepair.forget(t.center);
-        if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL) t.ringWalls = true;
+        if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL) {
+            t.ringWalls = true;
+            t.ringVersion = com.ale.warbandcraft.village.FactionTowns.RING_VERSION;
+        }
+        if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL || job.upgrade == Upgrade.REPAIR) ringGates(t, job);
         Works.finish(t, job);   // H22: muralla dibujada, portones, torres, demoler
         if (job.upgrade.defenseLevel() > 0 || job.upgrade == Upgrade.DEMOLISH) WallRepair.forget(t.center);
         if (job.upgrade.givesBuilder() > 0) {   // un taller más alto reemplaza al anterior
@@ -507,6 +511,13 @@ public final class Upgrades {
                         t.center.getX(), t.center.getZ()).withStyle(ChatFormatting.GREEN));
             }
         }
+    }
+
+    /** Los portones de la empalizada/muralla de anillo (puertas de cerco de abajo) pasan a abrir y cerrar solos. */
+    private static void ringGates(TownData.Town t, TownData.Job job) {
+        Blueprints.Plan plan = new Blueprints.Plan();
+        for (int i = 0; i < job.size(); i++) plan.put(job.pos(i), job.state(i));
+        for (BlockPos g : Blueprints.gatesOf(plan)) if (!t.gates.contains(g) && !t.gates.contains(g.below())) t.gates.add(g);
     }
 
     private static void removeBuilder(ServerLevel level, TownData.Job job) {

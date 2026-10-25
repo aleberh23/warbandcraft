@@ -230,7 +230,11 @@ public final class GarrisonLife {
         if (c != null && now - c.at() < 20 * 60) return c.gates();
         List<BlockPos> out = new ArrayList<>();
         TownData.Town t = TownData.get(level).at(v.center());
-        if (t != null && t.ringWalls && t.ringRadius > 0) {
+        if (t != null && !t.gates.isEmpty()) {   // portones de verdad (anillo cerrado o dibujados): uno por portón
+            for (BlockPos g : t.gates) {
+                if (out.stream().noneMatch(o -> o.distSqr(g) <= 16)) out.add(g);
+            }
+        } else if (t != null && t.ringWalls && t.ringRadius > 0) {
             List<int[]> cols = Blueprints.ringColumns(v.center(), t.ringRadius);
             int n = cols.size();
             boolean[] path = new boolean[n];

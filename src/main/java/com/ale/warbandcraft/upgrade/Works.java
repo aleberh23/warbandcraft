@@ -467,40 +467,134 @@ public final class Works {
 
     // ------------------------------------------------------------------ portones
 
-    /** Cada medio segundo: los portones de tus aldeas se abren con uno de los tuyos cerca y sin enemigos. */
+    /** Portón cerrado con un soldado enemigo pegado: lo rompe a golpes en tantos ticks (de madera; uno de muralla, el doble). */
+    public static int GATE_BASH_TICKS = 600;
+    /** Cuántos golpean a la vez como mucho (más no lo rompen más rápido). */
+    public static int GATE_MAX_BASHERS = 5;
+
+    /** Avance de cada portón que están golpeando (en memoria). */
+    private static final Map<String, Integer> BASH = new java.util.HashMap<>();
+
+    /**
+     * Cada medio segundo: los portones se abren con uno de los suyos cerca y sin enemigos; si no, quedan cerrados. Tus
+     * aldeas: vos, tus compañeros, sus soldados y los aldeanos. Aldeas de facción (pedido de Ale): su guarnición, sus
+     * aldeanos y los jugadores en paz con la facción (y sus soldados). Un soldado enemigo pegado a un portón cerrado lo
+     * golpea hasta romperlo (los asedios planean pasar por ahí: {@code NavCaps.bashGates}).
+     */
     public static void tickGates(ServerLevel level) {
         for (TownData.Town t : TownData.get(level).all()) {
             if (t.gates.isEmpty() || !level.isPositionEntityTicking(t.center)) continue;
             VillageData.Village v = VillageData.get(level).at(t.center);
-            UUID owner = v == null ? null : v.owner();
+            if (v == null) continue;
             for (BlockPos g : t.gates) {
                 if (!level.isLoaded(g)) continue;
                 BlockState s = level.getBlockState(g);
                 if (!(s.getBlock() instanceof FenceGateBlock)) continue;
-                boolean open = owner != null && !level.getEntitiesOfClass(LivingEntity.class,
-                        new AABB(g).inflate(GATE_OPEN_RANGE, 2, GATE_OPEN_RANGE), e -> friendly(e, owner)).isEmpty();
+                boolean open = level.getEntitiesOfClass(LivingEntity.class,
+                        new AABB(g).inflate(GATE_OPEN_RANGE, 2, GATE_OPEN_RANGE), e -> friendly(level, v, e)).size() > 0;
                 if (open) open = level.getEntitiesOfClass(LivingEntity.class,
-                        new AABB(g).inflate(GATE_ENEMY_RANGE, 3, GATE_ENEMY_RANGE), Works::hostile).isEmpty();
-                if (s.getValue(FenceGateBlock.OPEN) == open) continue;
-                level.setBlock(g, s.setValue(FenceGateBlock.OPEN, open), 10);
-                BlockState up = level.getBlockState(g.above());
-                if (up.getBlock() instanceof FenceGateBlock) level.setBlock(g.above(), up.setValue(FenceGateBlock.OPEN, open), 10);
-                level.playSound(null, g, open ? SoundEvents.FENCE_GATE_OPEN : SoundEvents.FENCE_GATE_CLOSE, SoundSource.BLOCKS, 0.6F, 1F);
+                        new AABB(g).inflate(GATE_ENEMY_RANGE, 3, GATE_ENEMY_RANGE), e -> hostile(level, v, e)).isEmpty();
+                if (s.getValue(FenceGateBlock.OPEN) != open) {
+                    level.setBlock(g, s.setValue(FenceGateBlock.OPEN, open), 10);
+                    BlockState up = level.getBlockState(g.above());
+                    if (up.getBlock() instanceof FenceGateBlock) level.setBlock(g.above(), up.setValue(FenceGateBlock.OPEN, open), 10);
+                    level.playSound(null, g, open ? SoundEvents.FENCE_GATE_OPEN : SoundEvents.FENCE_GATE_CLOSE, SoundSource.BLOCKS, 0.6F, 1F);
+                }
+                if (!open) bash(level, v, g, s);
             }
         }
     }
 
-    private static boolean friendly(LivingEntity e, UUID owner) {
-        if (!e.isAlive()) return false;
-        if (e instanceof Player p) return owner.equals(p.getUUID());
-        if (e instanceof AbstractRecruitEntity r) return com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner);
-        return e instanceof AbstractVillager;
+    /** Los soldados enemigos pegados al portón cerrado lo golpean; al llenarse, se rompe (las dos puertas de cerco). */
+    private static void bash(ServerLevel level, VillageData.Village v, BlockPos g, BlockState s) {
+        String key = level.dimension().location() + "@" + g.asLong();
+        List<AbstractRecruitEntity> at = level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(g).inflate(1.6, 1, 1.6),
+                e -> hostile(level, v, e));
+        int id = (int) (g.asLong() ^ (g.asLong() >>> 32)) | 0x40000000;
+        Integer before = BASH.get(key);
+        if (at.isEmpty()) {
+            if (before == null) return;
+            int left = before - 10;
+            if (left <= 0) {
+                BASH.remove(key);
+                level.destroyBlockProgress(id, g, -1);
+            } else {
+                BASH.put(key, left);
+            }
+            return;
+        }
+        int need = s.is(Blocks.DARK_OAK_FENCE_GATE) ? GATE_BASH_TICKS * 2 : GATE_BASH_TICKS;
+        int now = (before == null ? 0 : before) + 10 * Math.min(at.size(), GATE_MAX_BASHERS);
+        level.playSound(null, g, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.BLOCKS, 0.5F, 0.9F + level.random.nextFloat() * 0.2F);
+        for (AbstractRecruitEntity e : at) e.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (now < need) {
+            BASH.put(key, now);
+            level.destroyBlockProgress(id, g, Math.min(9, now * 10 / need));
+            return;
+        }
+        BASH.remove(key);
+        level.destroyBlockProgress(id, g, -1);
+        level.destroyBlock(g, false);
+        if (level.getBlockState(g.above()).getBlock() instanceof FenceGateBlock) level.destroyBlock(g.above(), false);
     }
 
-    private static boolean hostile(LivingEntity e) {
+    /** ¿Ese jugador no puede abrir a mano el portón de {@code pos}? (enemigo de la aldea, o una tuya que no es de tu facción) */
+    public static boolean gateLocked(ServerLevel level, BlockPos pos, Player player) {
+        if (player.isCreative() || player.isSpectator()) return false;
+        for (TownData.Town t : TownData.get(level).all()) {
+            if (t.gates.isEmpty() || t.center.distSqr(pos) > 160 * 160) continue;
+            if (!t.gates.contains(pos) && !t.gates.contains(pos.below())) continue;
+            VillageData.Village v = VillageData.get(level).at(t.center);
+            if (v == null) return false;
+            if (v.owner() != null) return !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner());
+            return hostile(level, v, player);
+        }
+        return false;
+    }
+
+    private static boolean friendly(ServerLevel level, VillageData.Village v, LivingEntity e) {
+        if (!e.isAlive()) return false;
+        if (e instanceof AbstractVillager) return true;
+        UUID owner = v.owner();
+        if (owner != null) {
+            if (e instanceof Player p) return com.ale.warbandcraft.faction.Allies.same(owner, p.getUUID());
+            if (e instanceof AbstractRecruitEntity r) return com.ale.warbandcraft.faction.Allies.same(r.getOwnerUUID(), owner);
+            return false;
+        }
+        if (e instanceof Player p) return !p.isSpectator() && !hostile(level, v, p);
+        if (e instanceof AbstractRecruitEntity r) {
+            if (r.getIsOwned()) return !hostile(level, v, r);
+            return v.faction().toString().equals(r.getPersistentData().getString(com.ale.warbandcraft.village.VillageManager.TAG_FACTION));
+        }
+        return false;
+    }
+
+    private static boolean hostile(ServerLevel level, VillageData.Village v, LivingEntity e) {
         if (!e.isAlive()) return false;
         if (e instanceof Enemy) return true;
         var d = e.getPersistentData();
-        return d.contains("warbandcraft:invader") || d.contains("warbandcraft:ai_attack") || d.contains("warbandcraft:field_army");
+        if (v.owner() != null) {   // una aldea tuya: invasores y ejércitos de la IA
+            return d.contains("warbandcraft:invader") || d.contains("warbandcraft:ai_attack") || d.contains("warbandcraft:field_army");
+        }
+        // Aldea de facción: quien la ataca o está en guerra con ella
+        UUID who = null;
+        if (e instanceof Player p) {
+            if (p.isCreative() || p.isSpectator()) return false;
+            who = p.getUUID();
+        } else if (e instanceof AbstractRecruitEntity r && r.getIsOwned()) {
+            who = r.getOwnerUUID();
+        }
+        if (who != null) {
+            com.ale.warbandcraft.raid.RaidManager.Raid raid = com.ale.warbandcraft.raid.RaidManager.get(level, v.center());
+            if (raid != null && who.equals(raid.attacker)) return true;
+            return com.ale.warbandcraft.faction.Relations.get(level.getServer()).atWar(who, v.faction());
+        }
+        if (!(e instanceof AbstractRecruitEntity)) return false;
+        net.minecraft.resources.ResourceLocation f =
+                net.minecraft.resources.ResourceLocation.tryParse(d.getString(com.ale.warbandcraft.village.VillageManager.TAG_FACTION));
+        if (f == null || f.getPath().isEmpty() || f.equals(v.faction())) return false;
+        com.ale.warbandcraft.faction.Faction other = com.ale.warbandcraft.faction.FactionManager.INSTANCE.get(f);
+        if (other != null && other.outlaw()) return true;   // bandidos
+        return com.ale.warbandcraft.invasion.AiWars.atWar(level, f, v.faction());
     }
 }

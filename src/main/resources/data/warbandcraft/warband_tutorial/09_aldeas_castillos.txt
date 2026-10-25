@@ -5,6 +5,8 @@ Cada aldea (una campana) tiene una guarnición de su facción que la defiende. A
 
 Las aldeas de facción crecen solas: aldea, pueblo o ciudad, con mercado, taberna, torres, empalizada o muralla según el tamaño.
 ---
+La empalizada o muralla cierra toda la aldea y tiene portones en los caminos. Se abren solos para su gente y para los que están en paz con la facción; si estás en guerra o la atacás, quedan cerrados.
+
 Dentro de una aldea de facción hay guardias en los portones, en el mercado, en la plaza y arqueros en las torres. También hay soldados de reserva que salen cuando la atacan.
 
 En el mercado podés comprar y vender con sus mercaderes, y el Tabernero te vende rumores (libro 24).

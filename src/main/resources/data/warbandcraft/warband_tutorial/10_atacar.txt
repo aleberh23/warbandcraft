@@ -6,7 +6,7 @@ Parado en una aldea o castillo de facción, apretá B (o /warband asediar) y con
 La facción te baja la opinión y toda la guarnición sale a pelear. Arriba ves la barra de quién va ganando.
 ---
 ## Tus soldados
-Los que tenés cerca reciben la orden Batalla y pelean con la IA táctica. En una aldea con murallas arman escaleras, abren huecos con zapadores y entran (libro 11).
+Los que tenés cerca reciben la orden Batalla y pelean con la IA táctica. En una aldea con murallas arman escaleras, abren huecos con zapadores o rompen un portón a golpes y entran (libro 11). Un portón cerrado no se abre con la mano.
 
 La aldea tiene soldados de reserva: mientras le queden, no cae.
 ---
