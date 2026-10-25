@@ -20,7 +20,8 @@ import java.util.EnumSet;
 /**
  * El trabajo del Herrero (H16): de día va a su lugar de trabajo y martilla. Cada {@link #WORK_TICKS} saca 1 lingote de
  * hierro y 1 carbón (o carbón vegetal) del almacén y deja {@link SmithEntity#ARMAMENT_PER_IRON} de armamento. Si hay
- * piezas marcadas para desguazar en el almacén, esa vuelta desguaza {@link Scrap#PIECES_PER_JOB} en vez del lingote.
+ * piezas marcadas para desguazar en el almacén (Campamento o vinculados), esa vuelta desguaza {@link Scrap#PIECES_PER_JOB} en vez
+ * del lingote, y no cuenta para el tope del día.
  */
 public class SmithWorkGoal extends Goal {
     /** Cada cuánto termina un lingote (30 s) y a qué distancia del lugar cuenta como "llegó". */
@@ -55,8 +56,18 @@ public class SmithWorkGoal extends Goal {
         }
         if (!(smith.level() instanceof ServerLevel level) || smith.getWorkplace() == null || !smith.shouldWork()) return false;
         if (smith.needsToSleep() || smith.isFleeing) return false;
-        return smith.ironLeftToday(level.getDayTime() / 24000L) > 0;
+        if (smith.ironLeftToday(level.getDayTime() / 24000L) > 0) return true;
+        // Sin lingotes del día: sigue si hay algo marcado para desguazar (eso no tiene tope). Se mira cada 1 s.
+        if (++scrapCheck >= 20) {
+            scrapCheck = 0;
+            CampBlockEntity camp = camp(level, smith);
+            scrapWaiting = camp != null && Scrap.any(camp);
+        }
+        return scrapWaiting;
     }
+
+    private int scrapCheck;
+    private boolean scrapWaiting;
 
     @Override
     public boolean canContinueToUse() {
@@ -101,7 +112,11 @@ public class SmithWorkGoal extends Goal {
     /** Un lingote: del almacén, hierro + carbón → armamento. */
     public boolean forge(ServerLevel level) {
         CampBlockEntity camp = camp(level, smith);
-        if (camp == null || smith.ironLeftToday(level.getDayTime() / 24000L) <= 0) return false;
+        if (camp == null) return false;
+        // Pedido de Ale ("cuando se terminan las piezas se queda parado"): desguazar no gasta los lingotes del día
+        if (Scrap.work(camp, Scrap.PIECES_PER_JOB) > 0) return true;
+        scrapWaiting = false;
+        if (smith.ironLeftToday(level.getDayTime() / 24000L) <= 0) return false;
         ItemStack left = workOnce(camp);
         if (left == null) return false;
         if (!left.isEmpty()) smith.spawnAtLocation(left);

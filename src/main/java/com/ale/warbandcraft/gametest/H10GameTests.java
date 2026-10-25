@@ -165,6 +165,23 @@ public class H10GameTests {
         h.succeed();
     }
 
+    /** Pedido de Ale: lo marcado que está en un cofre vinculado también se desguaza. */
+    @GameTest(template = TEMPLATE)
+    public static void scrapFromLinkedChest(GameTestHelper h) {
+        CampBlockEntity camp = placeCamp(h);
+        h.setBlock(CHEST_POS, Blocks.CHEST);
+        check(camp.toggleLink(h.absolutePos(CHEST_POS)) == CampBlockEntity.LinkResult.LINKED, "no se vinculó el cofre");
+        if (!(h.getBlockEntity(CHEST_POS) instanceof net.minecraft.world.Container chest)) throw new GameTestAssertException("sin cofre");
+        chest.setItem(0, new ItemStack(Items.CHAINMAIL_CHESTPLATE, 1));
+        camp.toggleScrap(Items.CHAINMAIL_CHESTPLATE);
+        check(com.ale.warbandcraft.camp.Scrap.any(camp), "no ve la pieza del cofre vinculado");
+        int made = com.ale.warbandcraft.camp.Scrap.work(camp, 4);
+        check(made > 0 && chest.getItem(0).isEmpty(), "no desguazó la pieza del cofre vinculado");
+        check(camp.count(com.ale.warbandcraft.kit.Armament.item()) == made, "el armamento no quedó en el almacén");
+        check(!com.ale.warbandcraft.camp.Scrap.any(camp), "quedó algo para desguazar");
+        h.succeed();
+    }
+
     /** Días atrasados: 3 días con 1 herrero = 24 lingotes → 48 de armamento (tope de 8 por día). */
     @GameTest(template = TEMPLATE)
     public static void smithCatchesUpMissedDays(GameTestHelper h) {

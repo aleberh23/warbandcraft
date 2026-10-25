@@ -342,6 +342,16 @@ public class H16GameTests {
             check(goal.forge(level), "no forjó con hierro y carbón en el almacén");
             check(camp.count(Items.IRON_INGOT) == 1 && camp.count(Items.COAL) == 1, "no gastó un lingote y un carbón");
             check(camp.count(com.ale.warbandcraft.kit.Armament.item()) == SmithEntity.ARMAMENT_PER_IRON, "no dejó el armamento");
+
+            // Pedido de Ale: con el tope del día gastado, lo marcado para desguazar lo sigue haciendo (y no gasta el tope)
+            long day = level.getDayTime() / 24000L;
+            while (smith.ironLeftToday(day) > 0) smith.forged();
+            camp.insert(new ItemStack(Items.CHAINMAIL_CHESTPLATE));
+            camp.toggleScrap(Items.CHAINMAIL_CHESTPLATE);
+            check(goal.forge(level), "con el tope gastado no desguazó lo marcado");
+            check(camp.count(Items.CHAINMAIL_CHESTPLATE) == 0, "la pieza marcada sigue en el almacén");
+            check(camp.count(com.ale.warbandcraft.kit.Armament.item()) > SmithEntity.ARMAMENT_PER_IRON, "el desguace no dejó armamento");
+            check(!goal.forge(level), "sin piezas y con el tope gastado no tendría que trabajar");
         } finally {
             for (SmithEntity s : level.getEntitiesOfClass(SmithEntity.class, around)) s.discard();
             villager.discard();

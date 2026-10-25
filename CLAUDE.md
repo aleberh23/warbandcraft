@@ -1083,7 +1083,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `Scrap`; vuelve `ScrapListMessage`, lo marcado se pinta de rojo). Solo armas/armaduras (`canBeDepleted`) con valor en la tabla
   de armamento. Los herreros sacan del almacén lo marcado (sin nombre puesto a mano) → valor × `YIELD` (0,5) × vida que le queda
   (mín. 1): aldeanos de H10 `PIECES_PER_SMITH` (16)/día en `Forge.workDay`; el Herrero de H16 `PIECES_PER_JOB` (4) por vuelta en
-  vez del lingote (cuenta para su tope del día). Prueba: `H10GameTests.smithScrapsMarkedPieces`.
+  vez del lingote (pedido de Ale: ya **no** cuenta para su tope del día de `IRON_PER_DAY`; con el tope gastado sigue si `Scrap.any`). Cada
+  desguace va al log ("Desguace en el Campamento ..."). Pruebas: `H10GameTests.smithScrapsMarkedPieces`, `scrapFromLinkedChest`.
 - Pestaña Cofre: línea de totales arriba (`CampStats`, ContainerData, se recalcula 1 vez por segundo; los valores
   viajan como short) y botón "Zona de trabajo" (`WorkerZoneMessage` → `WorkerZone.create`: StorageArea de Workers
   que encierra Campamento + vinculados, +1 de margen, mínimo 5; prueba orientaciones hasta que la caja empiece
@@ -1243,6 +1244,8 @@ Cada hito termina en algo jugable que Ale prueba antes de seguir.
 `probar.bat` corre los GameTests sin pantalla y deja todo en `test-log.txt` (busca "required tests passed"). Usan la
 carpeta `run-tests/` (no `run/`), así corren aunque el Minecraft de desarrollo esté abierto. El mundo de pruebas tiene
 semilla al azar: `h4CastilloSueltoConCapitanYGuarnicion` (busca terreno plano) falla de vez en cuando; volver a correr.
+El mundo `run-tests/world` junta datos de corridas anteriores y hace fallar pruebas (rutas, herreros, panel): si fallan
+varias que no tienen que ver, moverlo/borrarlo y volver a correr (25/10/2026: limpio, pasan las 206).
 Desde una sesión de Claude en la nube: el entorno no llega a Maven de Forge, así que se compila con `javac` contra las
 librerías copiadas de `C:\Users\alech\.gradle` (lista en `build/classpath/runGameTestServer_minecraftClasspath.txt`),
 se copian los fuentes a `Descargas\warbandcraft` y Ale corre `probar.bat`; el log se lee desde su carpeta.

@@ -41,6 +41,15 @@ public final class Scrap {
         return !stack.isEmpty() && !stack.hasCustomHoverName() && camp.isScrap(stack.getItem()) && scrappable(stack.getItem());
     }
 
+    /** ¿Hay algo marcado para desguazar en el almacén (Campamento o vinculados)? */
+    public static boolean any(CampBlockEntity camp) {
+        if (!camp.hasScrap()) return false;
+        for (Container c : camp.storages()) {
+            for (int i = 0; i < c.getContainerSize(); i++) if (wanted(camp, c.getItem(i))) return true;
+        }
+        return false;
+    }
+
     /** Desguaza hasta {@code maxPieces} piezas marcadas del almacén. Devuelve el armamento que salió (ya guardado). */
     public static int work(CampBlockEntity camp, int maxPieces) {
         if (maxPieces <= 0 || !camp.hasScrap()) return 0;
@@ -60,8 +69,15 @@ public final class Scrap {
             if (changed) c.setChanged();
             if (pieces >= maxPieces) break;
         }
+        if (pieces > 0) {
+            // Pedido de Ale ("no lo deja en ningún lado"): queda en el log cuánto salió y cuánto armamento hay después
+            com.ale.warbandcraft.WarbandCraft.LOGGER.info("Desguace en el Campamento {}: {} piezas -> {} de armamento",
+                    camp.getBlockPos().toShortString(), pieces, made);
+        }
         if (made > 0) {
             ItemStack rest = camp.insert(new ItemStack(Armament.item(), made));
+            com.ale.warbandcraft.WarbandCraft.LOGGER.info("Desguace en el Campamento {}: armamento en el almacén ahora {}{}",
+                    camp.getBlockPos().toShortString(), camp.count(Armament.item()), rest.isEmpty() ? "" : " (no entró " + rest.getCount() + ", al piso)");
             if (!rest.isEmpty() && camp.getLevel() != null) {
                 net.minecraft.core.BlockPos p = camp.getBlockPos();
                 net.minecraft.world.Containers.dropItemStack(camp.getLevel(), p.getX() + 0.5, p.getY() + 1.1, p.getZ() + 0.5, rest);
