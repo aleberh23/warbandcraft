@@ -604,7 +604,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 
 ## Trabajador de un Campamento común (pedido de Ale, a probar; números sin Ale)
 
-- `camp/CampWorkers` (SavedData `warbandcraft_camp_workers` por dimensión, uno por Campamento común: `Rec` worker/owner/away/bed).
+- `camp/CampWorkers` (SavedData `warbandcraft_camp_workers` por dimensión; por Campamento común hasta `MAX_PER_CAMP` (2): un Herrero y un
+  Granjero, pedido de Ale; `Rec` worker/owner/away/bed/job). La pantalla lista a todos; el id del botón lleva su acción ("pos:S,F,d0,d1").
   Se contrata al Tabernero (`village/TavernWorkers`: opción nueva del menú de `Rumors`, índice 3; cada taberna junta
   `PER_DAY` por día hasta `MAX_1..3` = 1/2/3 según `tavernLevel`, las del mundo nivel `WORLD_LEVEL` 2; clave = centro de la aldea
   o `WorldTaverns` id; `HIRE_COST` 10 con `Rumors.pay`). Elegís el Campamento (pantalla de H23, kind `tavern_worker`).

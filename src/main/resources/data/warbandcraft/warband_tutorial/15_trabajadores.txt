@@ -26,7 +26,7 @@ Sobre cada zona se ve qué le pasa: "Falta en el almacén", "Almacén lleno", "C
 Convierte 1 hierro + 1 carbón en 2 de armamento, hasta 8 por día. Trabaja en la Herrería o al lado de un yunque. También desguaza lo que marques en la pestaña Cofre (Desguace).
 
 ## Trabajador de un Campamento
-Un Campamento común (no el de una aldea) puede tener un trabajador: Herrero o Granjero.
+Un Campamento común (no el de una aldea) puede tener un Herrero y un Granjero.
 ---
 Se contrata hablándole al Tabernero de cualquier taberna (10 esmeraldas). Llega uno por día, hasta 1, 2 o 3 según el nivel de la taberna (las sueltas, 2). Elegís a qué Campamento va y va solo; si se traba, aparece ahí.
 ---

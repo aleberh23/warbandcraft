@@ -41,8 +41,8 @@ import java.util.UUID;
  * Trabajador de un Campamento común (pedido de Ale): se contrata en una taberna (al Tabernero) y va solo a tu Campamento,
  * como un soldado al barracón (si se traba, aparece ahí; si te alejás, llega "en papel" y aparece cuando el Campamento se
  * carga). Ahí espera quieto hasta que en la pestaña Cofre → "Trabajador" le das oficio: Herrero (al lado de un yunque a
- * ≤24 del Campamento) o Granjero (la huerta la elige él). Uno por Campamento; necesita una cama libre a ≤24 y come del
- * almacén. Los Campamentos de aldea no: ahí está el modo Gestión.
+ * ≤24 del Campamento) o Granjero (la huerta la elige él). Hasta uno de cada oficio por Campamento ({@link #MAX_PER_CAMP});
+ * cada uno necesita una cama libre a ≤24 y come del almacén. Los Campamentos de aldea no: ahí está el modo Gestión.
  */
 public final class CampWorkers {
     /** Marca en el aldeano / trabajador: el Campamento (long). */
@@ -62,6 +62,10 @@ public final class CampWorkers {
     /** Cada cuánto (en revisiones de 1 s) pasa al almacén lo que juntó. */
     public static int COLLECT_EVERY = 30;
 
+    /** Un Herrero y un Granjero (pedido de Ale): dos lugares por Campamento, uno por oficio. */
+    public static final int MAX_PER_CAMP = 2;
+    public static final String SMITH = "smith", FARMER = "farmer";
+
     private CampWorkers() {}
 
     // ------------------------------------------------------------------ guardado
@@ -73,20 +77,41 @@ public final class CampWorkers {
         public boolean away;
         @Nullable
         public BlockPos bed;
+        /** {@link #SMITH}, {@link #FARMER} o "" (todavía sin oficio). */
+        public String job = "";
         int missing;
     }
 
     public static final class Data extends SavedData {
         private static final String FILE = "warbandcraft_camp_workers";
-        final Map<Long, Rec> byCamp = new HashMap<>();
+        final Map<Long, List<Rec>> byCamp = new HashMap<>();
 
         public static Data get(ServerLevel level) {
             return level.getDataStorage().computeIfAbsent(Data::load, Data::new, FILE);
         }
 
+        /** Los de un Campamento (lista vacía si no tiene). */
+        public List<Rec> of(BlockPos camp) {
+            return byCamp.getOrDefault(camp.asLong(), List.of());
+        }
+
+        /** El primero de un Campamento, o null. */
         @Nullable
         public Rec at(BlockPos camp) {
-            return byCamp.get(camp.asLong());
+            List<Rec> l = of(camp);
+            return l.isEmpty() ? null : l.get(0);
+        }
+
+        /** El que tiene ese oficio, o null. */
+        @Nullable
+        public Rec withJob(BlockPos camp, String job) {
+            for (Rec r : of(camp)) if (job.equals(r.job)) return r;
+            return null;
+        }
+
+        void add(BlockPos camp, Rec r) {
+            byCamp.computeIfAbsent(camp.asLong(), k -> new ArrayList<>()).add(r);
+            setDirty();
         }
 
         static Data load(CompoundTag tag) {
@@ -98,7 +123,8 @@ public final class CampWorkers {
                 r.owner = c.getUUID("Owner");
                 r.away = c.getBoolean("Away");
                 r.bed = c.contains("Bed") ? BlockPos.of(c.getLong("Bed")) : null;
-                d.byCamp.put(c.getLong("Camp"), r);
+                r.job = c.getString("Job");
+                d.byCamp.computeIfAbsent(c.getLong("Camp"), k -> new ArrayList<>()).add(r);
             }
             return d;
         }
@@ -106,15 +132,16 @@ public final class CampWorkers {
         @Override
         public CompoundTag save(CompoundTag tag) {
             ListTag list = new ListTag();
-            byCamp.forEach((camp, r) -> {
+            byCamp.forEach((camp, recs) -> recs.forEach(r -> {
                 CompoundTag c = new CompoundTag();
                 c.putLong("Camp", camp);
                 c.putUUID("Worker", r.worker);
                 c.putUUID("Owner", r.owner);
                 c.putBoolean("Away", r.away);
                 if (r.bed != null) c.putLong("Bed", r.bed.asLong());
+                c.putString("Job", r.job);
                 list.add(c);
-            });
+            }));
             tag.put("Workers", list);
             return tag;
         }
@@ -122,10 +149,10 @@ public final class CampWorkers {
 
     // ------------------------------------------------------------------ contratar
 
-    /** ¿Este Campamento puede recibir un trabajador? (común, tuyo, sin otro). */
+    /** ¿Este Campamento puede recibir un trabajador? (común, tuyo, con lugar: uno por oficio). */
     public static boolean canTake(ServerLevel level, UUID player, BlockPos camp) {
         return CampRegistry.get(level).isCampOf(player, camp) && com.ale.warbandcraft.village.VillageCamps.villageOf(level, camp) == null
-                && Data.get(level).at(camp) == null;
+                && Data.get(level).of(camp).size() < MAX_PER_CAMP;
     }
 
     /** Lo que se muestra del Campamento al elegirlo: nombre y distancia. */
@@ -148,9 +175,7 @@ public final class CampWorkers {
         } else {
             r.away = true;
         }
-        Data d = Data.get(level);
-        d.byCamp.put(camp.asLong(), r);
-        d.setDirty();
+        Data.get(level).add(camp, r);
     }
 
     @Nullable
@@ -178,9 +203,13 @@ public final class CampWorkers {
         Data d = Data.get(level);
         if (d.byCamp.isEmpty()) return;
         ticks++;
-        for (Map.Entry<Long, Rec> e : new ArrayList<>(d.byCamp.entrySet())) {
-            BlockPos camp = BlockPos.of(e.getKey());
-            Rec r = e.getValue();
+        for (Map.Entry<Long, List<Rec>> e : new ArrayList<>(d.byCamp.entrySet())) {
+            for (Rec r : new ArrayList<>(e.getValue())) tickOne(level, d, BlockPos.of(e.getKey()), r);
+        }
+    }
+
+    private static void tickOne(ServerLevel level, Data d, BlockPos camp, Rec r) {
+        {
             boolean campLoaded = level.isPositionEntityTicking(camp);
             CampBlockEntity be = campLoaded && level.getBlockEntity(camp) instanceof CampBlockEntity c ? c : null;
             if (campLoaded && be == null) {   // rompieron el Campamento: queda suelto
@@ -188,22 +217,22 @@ public final class CampWorkers {
                 if (ent != null) ent.getPersistentData().remove(TAG);
                 if (ent instanceof Villager v) v.setNoAi(false);
                 forget(level, d, camp, r);
-                continue;
+                return;
             }
             if (r.away) {
-                if (be == null) continue;
+                if (be == null) return;
                 Villager v = spawn(level, Vec3.atBottomCenterOf(spotNear(level, camp)), camp);
-                if (v == null) continue;
+                if (v == null) return;
                 v.setNoAi(true);
                 r.worker = v.getUUID();
                 r.away = false;
                 d.setDirty();
-                continue;
+                return;
             }
             Entity ent = level.getEntity(r.worker);
             if (ent == null || !ent.isAlive()) {
                 if (campLoaded && ++r.missing >= MISSING_CHECKS) forget(level, d, camp, r);   // murió
-                continue;
+                return;
             }
             r.missing = 0;
             if (ent instanceof Villager v) walkOrWait(level, d, camp, r, v);
@@ -335,7 +364,11 @@ public final class CampWorkers {
         SMITH_CARRY.remove(r.worker);
         if (r.bed != null) release(level, r.bed);
         WALKING.remove(r.worker);
-        d.byCamp.remove(camp.asLong());
+        List<Rec> l = d.byCamp.get(camp.asLong());
+        if (l != null) {
+            l.remove(r);
+            if (l.isEmpty()) d.byCamp.remove(camp.asLong());
+        }
         d.setDirty();
     }
 
@@ -360,56 +393,88 @@ public final class CampWorkers {
 
     // ------------------------------------------------------------------ pantalla (pestaña Cofre → Trabajador)
 
-    /** Opciones según el estado: esperando = Herrero / Granjero / Despedir; con oficio = Despedir. */
+    /**
+     * Los del Campamento y los botones que tocan: al que espera, Herrero / Granjero (el oficio que no esté ocupado); a cada
+     * uno, Despedir. El id lleva la acción de cada botón en orden ("pos:S,F,d0,d1": S/F = oficio, dN = despedir al N).
+     */
     public static void open(ServerPlayer player, CampBlockEntity camp) {
         ServerLevel level = player.serverLevel();
         BlockPos pos = camp.getBlockPos();
+        Data d = Data.get(level);
+        List<Rec> recs = d.of(pos);
         List<Component> lines = new ArrayList<>();
         List<Component> options = new ArrayList<>();
-        String state;
-        Rec r = Data.get(level).at(pos);
-        Entity ent = r == null || r.away ? null : level.getEntity(r.worker);
-        if (r == null) {
-            lines.add(Component.translatable("gui.warbandcraft.camp_worker.none"));
-            state = "n";
-        } else if (ent instanceof AbstractWorkerEntity w) {
-            WorkerSupply.Status st = WorkerSupply.status(level, w);
-            lines.add(Component.translatable("gui.warbandcraft.camp_worker.job", w.getType().getDescription()));
-            lines.add(st.text().copy().withStyle(s -> s.withColor(st.color() & 0xFFFFFF)));
-            options.add(Component.translatable("gui.warbandcraft.camp_worker.dismiss"));
-            state = "a";
-        } else {
-            boolean here = ent instanceof Villager v && v.distanceToSqr(Vec3.atBottomCenterOf(pos)) <= (double) (ARRIVE + 2) * (ARRIVE + 2);
-            lines.add(Component.translatable(here ? "gui.warbandcraft.camp_worker.waiting" : "gui.warbandcraft.camp_worker.coming"));
+        List<String> actions = new ArrayList<>();
+        if (recs.isEmpty()) lines.add(Component.translatable("gui.warbandcraft.camp_worker.none"));
+        boolean waiting = false;
+        for (int i = 0; i < recs.size(); i++) {
+            Rec r = recs.get(i);
+            Entity ent = r.away ? null : level.getEntity(r.worker);
+            if (ent instanceof AbstractWorkerEntity w) {
+                WorkerSupply.Status st = WorkerSupply.status(level, w);
+                lines.add(Component.translatable("gui.warbandcraft.camp_worker.job", w.getType().getDescription())
+                        .append(" · ").append(st.text().copy().withStyle(x -> x.withColor(st.color() & 0xFFFFFF))));
+                options.add(Component.translatable("gui.warbandcraft.camp_worker.dismiss_job", w.getType().getDescription()));
+            } else {
+                boolean here = here(ent, pos);
+                waiting |= here;
+                lines.add(Component.translatable(here ? "gui.warbandcraft.camp_worker.waiting" : "gui.warbandcraft.camp_worker.coming"));
+                options.add(Component.translatable("gui.warbandcraft.camp_worker.dismiss_new"));
+            }
+            actions.add("d" + i);
+        }
+        if (recs.size() < MAX_PER_CAMP) lines.add(Component.translatable("gui.warbandcraft.camp_worker.room"));
+        if (waiting) {
             lines.add(Component.translatable(freeBed(level, pos) != null ? "gui.warbandcraft.camp_worker.bed_ok" : "gui.warbandcraft.camp_worker.bed_no"));
-            lines.add(Component.translatable(anvil(level, pos) != null ? "gui.warbandcraft.camp_worker.anvil_ok" : "gui.warbandcraft.camp_worker.anvil_no"));
-            options.add(Component.translatable("gui.warbandcraft.camp_worker.smith"));
-            options.add(Component.translatable("gui.warbandcraft.camp_worker.farmer"));
-            options.add(Component.translatable("gui.warbandcraft.camp_worker.dismiss"));
-            state = "w";
+            List<Component> jobs = new ArrayList<>();
+            List<String> jobActions = new ArrayList<>();
+            if (d.withJob(pos, SMITH) == null) {
+                lines.add(Component.translatable(anvil(level, pos) != null ? "gui.warbandcraft.camp_worker.anvil_ok" : "gui.warbandcraft.camp_worker.anvil_no"));
+                jobs.add(Component.translatable("gui.warbandcraft.camp_worker.smith"));
+                jobActions.add("S");
+            }
+            if (d.withJob(pos, FARMER) == null) {
+                jobs.add(Component.translatable("gui.warbandcraft.camp_worker.farmer"));
+                jobActions.add("F");
+            }
+            options.addAll(0, jobs);
+            actions.addAll(0, jobActions);
         }
         options.add(Component.translatable("gui.warbandcraft.camp_worker.close"));
-        BattleChoices.send(player, KIND, pos.asLong() + ":" + state, Component.translatable("gui.warbandcraft.camp_worker.title",
+        BattleChoices.send(player, KIND, pos.asLong() + ":" + String.join(",", actions), Component.translatable("gui.warbandcraft.camp_worker.title",
                 CampRegistry.get(level).displayName(pos)), lines, options, true);
     }
 
+    private static boolean here(@Nullable Entity ent, BlockPos camp) {
+        return ent instanceof Villager v && v.distanceToSqr(Vec3.atBottomCenterOf(camp)) <= (double) (ARRIVE + 2) * (ARRIVE + 2);
+    }
+
     public static void answer(ServerPlayer player, String id, int option) {
-        String[] parts = id.split(":");
-        if (parts.length != 2 || option < 0) return;
+        int colon = id.indexOf(':');
+        if (colon < 0 || option < 0) return;
+        String[] actions = id.substring(colon + 1).split(",");
+        if (option >= actions.length || actions[option].isEmpty()) return;   // Cerrar
         BlockPos pos;
         try {
-            pos = BlockPos.of(Long.parseLong(parts[0]));
+            pos = BlockPos.of(Long.parseLong(id.substring(0, colon)));
         } catch (NumberFormatException e) {
             return;
         }
         CampBlockEntity camp = CampTabs.access(player, pos, true);
         if (camp == null) return;
-        Component msg = switch (parts[1]) {
-            case "w" -> option == 0 ? assign(player, camp, VillageManagement.Job.SMITH)
-                    : option == 1 ? assign(player, camp, VillageManagement.Job.FARMER) : option == 2 ? dismiss(player, camp) : null;
-            case "a" -> option == 0 ? dismiss(player, camp) : null;
-            default -> null;
-        };
+        String a = actions[option];
+        Component msg = null;
+        if (a.equals("S")) msg = assign(player, camp, VillageManagement.Job.SMITH);
+        else if (a.equals("F")) msg = assign(player, camp, VillageManagement.Job.FARMER);
+        else if (a.startsWith("d")) {
+            List<Rec> recs = Data.get(player.serverLevel()).of(pos);
+            try {
+                int i = Integer.parseInt(a.substring(1));
+                if (i < recs.size()) msg = dismiss(player, camp, recs.get(i));
+            } catch (NumberFormatException ignored) {
+                // botón viejo
+            }
+        }
         if (msg != null) player.sendSystemMessage(msg);
     }
 
@@ -437,11 +502,20 @@ public final class CampWorkers {
         ServerLevel level = player.serverLevel();
         BlockPos pos = camp.getBlockPos();
         Data d = Data.get(level);
-        Rec r = d.at(pos);
-        if (r == null || r.away || !(level.getEntity(r.worker) instanceof Villager v)
-                || v.distanceToSqr(Vec3.atBottomCenterOf(pos)) > (double) (ARRIVE + 2) * (ARRIVE + 2)) {
-            return Component.translatable("msg.warbandcraft.camp_worker.not_here").withStyle(ChatFormatting.RED);
+        String jobKey = job == VillageManagement.Job.SMITH ? SMITH : FARMER;
+        if (d.withJob(pos, jobKey) != null) return Component.translatable("msg.warbandcraft.camp_worker.job_taken").withStyle(ChatFormatting.RED);
+        Rec r = null;
+        Villager v = null;
+        for (Rec x : d.of(pos)) {
+            if (x.away || !x.job.isEmpty()) continue;
+            Entity e = level.getEntity(x.worker);
+            if (here(e, pos)) {
+                r = x;
+                v = (Villager) e;
+                break;
+            }
         }
+        if (r == null) return Component.translatable("msg.warbandcraft.camp_worker.not_here").withStyle(ChatFormatting.RED);
         if (freeBed(level, pos) == null) return Component.translatable("msg.warbandcraft.camp_worker.no_bed", CampBlockEntity.WORK_RADIUS).withStyle(ChatFormatting.RED);
         BlockPos stand = null;
         BoundingBox farm = null;
@@ -468,6 +542,7 @@ public final class CampWorkers {
         }
         w.getPersistentData().putLong(TAG, pos.asLong());
         r.worker = w.getUUID();
+        r.job = jobKey;
         r.bed = bed.get();
         if (!WorkerSupply.homeAt(level, r.owner, w, bed.get())) {
             release(level, bed.get());
@@ -486,11 +561,10 @@ public final class CampWorkers {
     }
 
     /** Se va: libera la cama y su huerta. */
-    public static Component dismiss(ServerPlayer player, CampBlockEntity camp) {
+    public static Component dismiss(ServerPlayer player, CampBlockEntity camp, Rec r) {
         ServerLevel level = player.serverLevel();
         Data d = Data.get(level);
-        Rec r = d.at(camp.getBlockPos());
-        if (r == null) return null;
+        if (!d.of(camp.getBlockPos()).contains(r)) return null;
         Entity ent = r.away ? null : level.getEntity(r.worker);
         if (ent instanceof AbstractWorkerEntity w) {
             var area = WorkZones.areaFor(level, w);

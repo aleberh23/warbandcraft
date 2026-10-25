@@ -35,7 +35,7 @@ public class CampWorkerGameTests {
     private static final String TEMPLATE = "empty";
     private static final BlockPos CAMP_POS = new BlockPos(1, 1, 1);
 
-    /** Llega al Campamento y espera quieto; sin yunque no es Herrero; con cama y yunque sí (atado al Campamento); despedir. */
+    /** Llega al Campamento y espera quieto; sin yunque no es Herrero; con cama y yunque sí (atado al Campamento); un segundo, no Herrero; despedir. */
     @GameTest(template = TEMPLATE)
     public static void campWorkerBecomesSmith(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -51,7 +51,7 @@ public class CampWorkerGameTests {
         CampWorkers.hire(player, campAbs, Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(2, 2, 2))));
         CampWorkers.Rec r = CampWorkers.Data.get(level).at(campAbs);
         check(r != null && !r.away, "el contratado no quedó anotado caminando");
-        check(!CampWorkers.canTake(level, owner, campAbs), "un Campamento no tiene dos trabajadores");
+        check(CampWorkers.canTake(level, owner, campAbs), "tiene lugar para un segundo (Herrero + Granjero)");
         check(level.getEntity(r.worker) instanceof Villager, "no apareció el aldeano");
         CampWorkers.tick(level);
         Villager v = (Villager) level.getEntity(r.worker);
@@ -88,8 +88,16 @@ public class CampWorkerGameTests {
         check(camp.count(net.minecraft.world.item.Items.IRON_INGOT) == 2, "tendrían que quedar 2 lingotes");
         check(camp.count(net.minecraft.world.item.Items.BREAD) < 4, "no comió");
 
-        CampWorkers.dismiss(player, camp);
-        check(CampWorkers.Data.get(level).at(campAbs) == null && !e.isAlive(), "despedir no lo sacó");
+        // El segundo: no puede ser otro Herrero; con él ya no hay lugar para un tercero
+        CampWorkers.hire(player, campAbs, Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(2, 2, 3))));
+        check(!CampWorkers.canTake(level, owner, campAbs), "un Campamento no tiene tres trabajadores");
+        CampWorkers.tick(level);
+        CampWorkers.assign(player, camp, VillageManagement.Job.SMITH);
+        check(CampWorkers.Data.get(level).of(campAbs).stream().filter(x -> CampWorkers.SMITH.equals(x.job)).count() == 1,
+                "no puede haber dos Herreros");
+
+        for (CampWorkers.Rec x : java.util.List.copyOf(CampWorkers.Data.get(level).of(campAbs))) CampWorkers.dismiss(player, camp, x);
+        check(CampWorkers.Data.get(level).at(campAbs) == null && !e.isAlive(), "despedir no los sacó");
         h.succeed();
     }
 
