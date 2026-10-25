@@ -382,15 +382,16 @@ public final class WorkZones {
         List<Blueprints.Lot> taken = new ArrayList<>();
         int r = com.ale.warbandcraft.camp.CampBlockEntity.WORK_RADIUS;
         for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(camp).inflate(r + 16, 64, r + 16),
-                a -> a.isAlive() && a.getArea() != null)) {
+                WorkZones::usesGround)) {
             AABB b = a.getArea();
             for (int x = (int) Math.floor(b.minX) - s; x < b.maxX; x += s) {
                 for (int z = (int) Math.floor(b.minZ) - s; z < b.maxZ; z += s) taken.add(new Blueprints.Lot(new BlockPos(x, 0, z), s));
             }
         }
         taken.add(new Blueprints.Lot(camp.offset(-2, 0, -2), 5));   // el Campamento mismo
-        for (int tries = 0; tries < 8; tries++) {
+        for (int tries = 0; tries < 24; tries++) {
             BlockPos site = Blueprints.findSite(level, camp, 3, r, s, taken);
+            if (site == null) site = Blueprints.findSiteRelaxed(level, camp, 3, r, s, taken);   // un poco desparejo: el granjero ara igual
             if (site == null) return null;
             if (com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, site)
                     && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, site.offset(s - 1, 0, s - 1))) {
@@ -399,6 +400,15 @@ public final class WorkZones {
             taken.add(new Blueprints.Lot(site, s));
         }
         return null;
+    }
+
+    /**
+     * Las zonas que ocupan el piso (huerta, corral, tala, mina...). La de almacén y la de una cama no: la del Campamento encierra
+     * a todos sus vinculados y tapaba casi toda la jurisdicción (pedido de Ale: "dice que no hay 9×9 plano y sí lo hay").
+     */
+    private static boolean usesGround(AbstractWorkAreaEntity a) {
+        return a.isAlive() && a.getArea() != null && !(a instanceof com.talhanation.workers.entities.workarea.StorageArea)
+                && !(a instanceof com.talhanation.workers.entities.workarea.HomeArea);
     }
 
     /** Lo que cuesta la huerta de un Campamento común: azada y semillas, sin cofre (lo que junta va directo al almacén). */
@@ -412,13 +422,22 @@ public final class WorkZones {
         List<ZoneCosts.Need> needs = campFarmNeeds();
         Component miss = ZoneCosts.missing(camp, needs);
         if (miss != null) return miss;
-        int midX = (farm.minX() + farm.maxX()) / 2, midZ = (farm.minZ() + farm.maxZ()) / 2;
-        Integer g = Blueprints.groundY(level, midX, midZ, camp.getBlockPos().getY());
-        int ground = g == null ? camp.getBlockPos().getY() - 1 : g;
-        WorkerZone.BoundingBox box = new WorkerZone.BoundingBox(farm.minX(), ground, farm.minZ(), farm.maxX(), ground + FLAT_HEIGHT - 1, farm.maxZ());
-        if (WorkerZone.existing(level, box.aabb()) != null) return error("overlap");
+        // De lo más bajo a lo más alto del terreno (puede tener unos escalones)
+        int ground = Integer.MAX_VALUE, top = Integer.MIN_VALUE;
+        for (int x = farm.minX(); x <= farm.maxX(); x++) for (int z = farm.minZ(); z <= farm.maxZ(); z++) {
+            Integer g = Blueprints.groundY(level, x, z, farm.minY());
+            if (g == null) continue;
+            ground = Math.min(ground, g);
+            top = Math.max(top, g);
+        }
+        if (ground == Integer.MAX_VALUE) ground = top = camp.getBlockPos().getY() - 1;
+        WorkerZone.BoundingBox box = new WorkerZone.BoundingBox(farm.minX(), ground, farm.minZ(), farm.maxX(), top + FLAT_HEIGHT - 1, farm.maxZ());
+        AABB aabb = box.aabb();
+        if (!level.getEntitiesOfClass(AbstractWorkAreaEntity.class, aabb.inflate(1), a -> usesGround(a) && a.getArea().intersects(aabb)).isEmpty()) {
+            return error("overlap");
+        }
         CropArea area = make(level, ModEntityTypes.CROPAREA.get(), a -> {
-            ItemStack seed = VillageManagement.seedOf(level, new BoundingBox(farm.minX(), ground, farm.minZ(), farm.maxX(), ground, farm.maxZ()));
+            ItemStack seed = VillageManagement.seedOf(level, new BoundingBox(farm.minX(), box.y0(), farm.minZ(), farm.maxX(), box.y0(), farm.maxZ()));
             if (!seed.isEmpty()) a.setSeedStack(seed);
         });
         if (area == null) return error("failed");
@@ -647,7 +666,7 @@ public final class WorkZones {
         if (t != null) taken.addAll(t.lots(null));
         int s = Blueprints.SITE;
         for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(v.center()).inflate(REACH + 16, 64, REACH + 16),
-                a -> a.isAlive() && a.getArea() != null)) {   // las zonas que ya hay, como terrenos ocupados
+                WorkZones::usesGround)) {   // las zonas que ya hay, como terrenos ocupados
             AABB b = a.getArea();
             for (int x = (int) Math.floor(b.minX) - s; x < b.maxX; x += s) {
                 for (int z = (int) Math.floor(b.minZ) - s; z < b.maxZ; z += s) taken.add(new Blueprints.Lot(new BlockPos(x, 0, z), s));
