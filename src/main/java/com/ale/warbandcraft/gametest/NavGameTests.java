@@ -148,6 +148,38 @@ public class NavGameTests {
         });
     }
 
+    /** Pedido de Ale: tu soldado mandado arriba de un muro/torre (sin ser del cuartel) sube por la escalera y se queda. */
+    @GameTest(template = TEMPLATE, timeoutTicks = 400)
+    public static void orderedSoldierClimbsAndStays(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        int feet = setup(h);
+        wall(h, feet, 3, -1);
+        List<Step> plan = NavPath.find(level, abs(h, 1, feet, 4), center(h, 7, feet, 4), 0.6, NavCaps.siege(false), bounds(h), false);
+        check(plan != null, "no hay plan");
+        int k = NavPath.first(plan, Step.Kind.CLIMB);
+        BlockPos foot = plan.get(k - 1).blockPos();
+        BlockPos wallAt = BlockPos.of(plan.get(k).wall());
+        check(Breach.placeLadder(level, new Breach.Probe(true, foot, wallAt, foot.getY(), 0)) != null, "no se pudo poner la escalera");
+
+        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("recruits", "recruit"));
+        if (type == null || !(type.create(level) instanceof AbstractRecruitEntity s)) throw new GameTestAssertException("no se creó el recluta");
+        BlockPos start = abs(h, 1, feet, 4);
+        s.moveTo(start.getX() + 0.5, start.getY(), start.getZ() + 0.5, 0, 0);
+        s.finalizeSpawn(level, level.getCurrentDifficultyAt(start), MobSpawnType.EVENT, null, null);
+        level.addFreshEntity(s);
+        Vec3 top = new Vec3(wallAt.getX() + 0.5, feet + 3, wallAt.getZ() + 0.5);
+        s.setHoldPos(top);
+        s.setFollowState(3);
+        h.onEachTick(() -> {
+            if (level.getGameTime() % 10 == 0) com.ale.warbandcraft.ai.Unstuck.update(level, s, 10);
+        });
+        h.succeedWhen(() -> {
+            if (Math.abs(s.getY() - top.y) > 0.6 || s.position().distanceToSqr(top.x, s.getY(), top.z) > 2.25)
+                throw new GameTestAssertException("todavía no está arriba: " + s.position() + " (arriba = " + top + ")");
+            s.discard();
+        });
+    }
+
     @GameTest(template = TEMPLATE)
     public static void tunnelLetsThemIn(GameTestHelper h) {
         ServerLevel level = h.getLevel();

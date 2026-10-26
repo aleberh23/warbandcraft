@@ -98,13 +98,18 @@ src/main/java/com/ale/warbandcraft/
   sapper/                    H6: SapperGoal (TNT, armar cañón), FieldCannonEntity, SapperRules
   ai/Unstuck                 destrabador: soldado con destino que no avanza → salta, saltito de 2,5 bloques, 10 bloques
                              o al lado del dueño (event/SoldierEvents cada 10 ticks; no corre en GameTestServer)
+                             Pedido de Ale (a probar): destino de guardia/mover a >`CLIMB_HEIGHT` arriba o abajo y a ≤`CLIMB_RANGE` → va por la
+                             malla de H17 (`Mover.go`, by "unstuck": sube escaleras de mano y se queda); solo si el camino llega al destino; sin camino,
+                             reintenta a los `CLIMB_RETRY`; a caballo se baja a ≤`DISMOUNT_RANGE`; otra orden corta el camino. Prueba:
+                             `NavGameTests.orderedSoldierClimbsAndStays`
   ai/Escort                  escolta (pedido de Ale, a probar): los que te siguen (estado 1) fuera de batalla/ejército/cuartel/asedio
                              (`busy`) te defienden primero (bicho hostil a ≤16 tuyo o lo que ataca a lo tuyo; estado 0 prestado con
                              marca `warbandcraft:escort`, vuelven a 1; creepers/neutrales/jefes no; lejos de vos >24 lo dejan), a >20
                              aparecen a tu lado, nadan hacia vos, y con vos en un bote cada uno tiene el suyo (`escort_boat`, caballo
                              adentro) en dos columnas detrás; en tierra se bajan. Recruits: seguir y pelear tienen la misma prioridad (2)
                              y con el dueño a >~8 gana seguir. Cada tick desde `SoldierEvents`, no en GameTestServer.
-  ai/Formation               formación Libre: destinos iguales se reparten en grilla (AerialOrderMessage)
+  ai/Formation               formación Libre: destinos iguales se reparten en grilla (AerialOrderMessage); arriba de una torre, los
+                             que se caen del borde van a un lugar libre a la altura del click (`TOP_RADIUS`)
   config/                    Tuning (todos los números en config/warbandcraft-common.toml) + TuningClasses (generado por tools/gen_tuning.py)
   ai/Soldiers                H10: isWorker/isSoldier (los trabajadores de Villager Workers no son soldados)
   army/                      H20: ArmyData (ejércitos guardados), Armies (armar, invocar, formación, órdenes, licenciar),

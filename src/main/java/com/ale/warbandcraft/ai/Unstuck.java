@@ -52,6 +52,19 @@ public final class Unstuck {
 
     private static final Map<UUID, Info> INFO = new HashMap<>();
 
+    /** Destino más arriba o más abajo que esto (bloques): va por la malla de navegación, que sabe usar escaleras de mano. */
+    public static double CLIMB_HEIGHT = 2.0;
+    /** Hasta esta distancia (horizontal) del destino se busca el camino por la malla. */
+    public static double CLIMB_RANGE = 32.0;
+    /** A caballo y a esta distancia (horizontal) de un destino alto: se baja para subir. */
+    public static double DISMOUNT_RANGE = 6.0;
+    /** Sin camino por la malla: espera esto antes de volver a buscar (ticks). */
+    public static int CLIMB_RETRY = 200;
+    private static final String BY = "unstuck";
+    /** Último intento de subir por la malla: a dónde y hasta cuándo no se vuelve a probar. */
+    private record Climb(Vec3 dest, long until) {}
+    private static final Map<UUID, Climb> CLIMBS = new HashMap<>();
+
     private Unstuck() {}
 
     /** Revisión periódica de todos los soldados con dueño de este mundo. */
@@ -62,6 +75,7 @@ public final class Unstuck {
         }
         if (level == level.getServer().overworld() && level.getServer().getTickCount() % 1200 == 0) {
             INFO.keySet().removeIf(id -> findAnywhere(level, id) == null);   // soldados que ya no existen
+            CLIMBS.keySet().removeIf(id -> findAnywhere(level, id) == null);
         }
     }
 
@@ -90,7 +104,11 @@ public final class Unstuck {
 
     /** Una revisión de un soldado ({@code elapsed} = ticks desde la anterior). Devuelve lo que hizo. */
     public static Action update(ServerLevel level, AbstractRecruitEntity r, int elapsed) {
-        if (com.ale.warbandcraft.nav.Mover.moving(r)) return forget(r);   // lo lleva la malla de navegación (asedios)
+        com.ale.warbandcraft.nav.Mover.Run run = com.ale.warbandcraft.nav.Mover.run(r);
+        if (run != null && run.active()) {   // lo lleva la malla de navegación (asedios, o subiendo a una torre)
+            if (BY.equals(run.by) && !holdingAt(r, run.goal)) com.ale.warbandcraft.nav.Mover.stop(r);   // le dieron otra orden
+            else return forget(r);
+        }
         Entity body = r.getVehicle() instanceof AbstractHorse horse ? horse : r;
         if (r.isPassenger() && body == r || body.isPassenger()) return forget(r);   // en bote u otra cosa: no se toca
         Vec3 dest = destination(level, r);
@@ -98,6 +116,11 @@ public final class Unstuck {
         boolean following = r.getFollowState() == FOLLOW || r.getFollowState() == PROTECT;
         double arrived = following ? ARRIVED_FOLLOW : ARRIVED_HOLD;
         Vec3 pos = body.position();
+        // Pedido de Ale: mandado a una torre (o a un muro), sube por las escaleras de mano y se queda ahí.
+        // Recruits no sabe trepar y lo deja al pie (que de costado ya cuenta como "llegó").
+        if (!following && Math.abs(dest.y - pos.y) > CLIMB_HEIGHT && horizontal(pos, dest) <= CLIMB_RANGE && climb(level, r, body, pos, dest)) {
+            return forget(r);
+        }
         if (horizontal(pos, dest) <= arrived) return forget(r);
 
         Info info = INFO.computeIfAbsent(r.getUUID(), k -> new Info());
@@ -148,6 +171,35 @@ public final class Unstuck {
             return Action.JUMP;
         }
         return Action.NONE;
+    }
+
+    /** Sigue con la orden de quedarse en ese lugar (guardia / mover). */
+    private static boolean holdingAt(AbstractRecruitEntity r, Vec3 goal) {
+        int s = r.getFollowState();
+        Vec3 hold = r.getHoldPos();
+        return (s == HOLD || s == BACK_TO_POS || s == HOLD_OWNER_POS) && hold != null && hold.distanceToSqr(goal) <= 4.0;
+    }
+
+    /** Busca el camino por la malla hasta el destino (escaleras de mano incluidas) y lo empieza. */
+    private static boolean climb(ServerLevel level, AbstractRecruitEntity r, Entity body, Vec3 pos, Vec3 dest) {
+        long now = level.getGameTime();
+        Climb last = CLIMBS.get(r.getUUID());
+        if (last != null && now < last.until() && last.dest().distanceToSqr(dest) <= 4.0) return false;
+        if (body != r) {   // a caballo: se baja solo si ya está al pie
+            if (horizontal(pos, dest) > DISMOUNT_RANGE) return false;
+            r.stopRiding();
+        }
+        CLIMBS.put(r.getUUID(), new Climb(dest, now + CLIMB_RETRY));
+        BlockPos at = BlockPos.containing(dest);
+        if (!com.ale.warbandcraft.nav.Mover.go(r, dest, 0.6, com.ale.warbandcraft.nav.NavCaps.SOLDIER,
+                com.ale.warbandcraft.nav.NavPath.Bounds.around(at, (int) CLIMB_RANGE + 8), BY)) return false;
+        com.ale.warbandcraft.nav.Mover.Run run = com.ale.warbandcraft.nav.Mover.run(r);
+        Vec3 end = run == null ? null : run.path.get(run.path.size() - 1).center();
+        if (end == null || Math.abs(end.y - dest.y) > 1.0 || horizontal(end, dest) > 1.5) {   // el camino no llega arriba
+            com.ale.warbandcraft.nav.Mover.stop(r);
+            return false;
+        }
+        return true;
     }
 
     /** El próximo punto del camino que Recruits calculó (si es distinto de donde ya está). */

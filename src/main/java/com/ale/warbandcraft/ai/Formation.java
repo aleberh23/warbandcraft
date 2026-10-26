@@ -1,6 +1,7 @@
 package com.ale.warbandcraft.ai;
 
 import com.ale.warbandcraft.util.Ground;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
@@ -34,8 +35,27 @@ public final class Formation {
             Integer y = Ground.surfaceY(level, (int) Math.floor(x), (int) Math.floor(z), (int) Math.floor(center.y), 3, 6);
             out.add(new Vec3(x, y != null ? y : center.y, z));
         }
+        // Arriba de una torre o un muro la grilla se sale del borde y cae al piso: esos van a un lugar libre a la misma
+        // altura que el click (pedido de Ale: mandados a una torre, suben todos)
+        List<BlockPos> free = new ArrayList<>();
+        BlockPos c = BlockPos.containing(center);
+        for (int dx = -TOP_RADIUS; dx <= TOP_RADIUS; dx++) {
+            for (int dz = -TOP_RADIUS; dz <= TOP_RADIUS; dz++) {
+                BlockPos q = c.offset(dx, 0, dz);
+                if (!q.equals(c) && Ground.canStand(level, q)) free.add(q);
+            }
+        }
+        free.sort(java.util.Comparator.comparingDouble(q -> q.distSqr(c)));
+        int next = 0;
+        for (int i = 0; i < out.size(); i++) {
+            if (Math.abs(out.get(i).y - center.y) <= 1) continue;
+            out.set(i, next < free.size() ? Vec3.atBottomCenterOf(free.get(next++)) : center);
+        }
         return out;
     }
+
+    /** Hasta dónde se buscan lugares a la altura del click cuando la grilla se cae del borde. */
+    public static int TOP_RADIUS = 4;
 
     /** Todos los destinos iguales (formación Libre): conviene repartirlos. */
     public static boolean allSame(List<Vec3> targets) {

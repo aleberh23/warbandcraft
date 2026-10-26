@@ -16,6 +16,7 @@ Shift + click: inventario.
 Click derecho en el piso: ir ahí.
 Click derecho a un enemigo: atacarlo.
 Click derecho y arrastrar: formar en línea (rueda = 1, 2 o 3 filas).
+Click derecho arriba de una torre o un muro: suben por la escalera de mano y se quedan ahí (a caballo, se bajan al pie).
 
 Botones de modo: Mover, Atacar, Auto, Volar y Cañón (zapadores). Formación: Libre o Línea.
 ---
