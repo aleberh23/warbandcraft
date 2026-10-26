@@ -80,8 +80,15 @@ public final class WorkerSupply {
 
     // ------------------------------------------------------------------ el equipo de cada oficio
 
-    /** Algo que el trabajador tiene que tener siempre: qué sirve, cuántos y qué se muestra si falta. */
-    public record Kit(Predicate<ItemStack> match, int count, Item shown) {}
+    /**
+     * Algo que el trabajador tiene que tener siempre: qué sirve, cuántos y qué se muestra si falta. {@code free} = no sale
+     * del almacén: le aparece solo (pedido de Ale: "lo único que tolero que me pidan es un hacha"; el pico del minero igual).
+     */
+    public record Kit(Predicate<ItemStack> match, int count, Item shown, boolean free) {
+        Kit(Predicate<ItemStack> match, int count, Item shown) {
+            this(match, count, shown, false);
+        }
+    }
 
     public static List<Kit> kit(AbstractWorkerEntity w) {
         VillageManagement.Job job = WorkZones.jobOf(w);
@@ -89,16 +96,17 @@ public final class WorkerSupply {
         return switch (job) {
             case MINER -> {
                 Item fill = w.getCurrentWorkArea() instanceof MiningArea m && !m.getFillItem().isEmpty() ? m.getFillItem().getItem() : Items.COBBLESTONE;
-                yield List.of(new Kit(s -> s.is(ItemTags.PICKAXES), 1, Items.STONE_PICKAXE), new Kit(s -> s.is(ItemTags.SHOVELS), 1, Items.STONE_SHOVEL),
-                        new Kit(s -> s.is(Items.TORCH), 16, Items.TORCH), new Kit(s -> s.is(fill), 16, fill));
+                yield List.of(new Kit(s -> s.is(ItemTags.PICKAXES), 1, Items.STONE_PICKAXE), new Kit(s -> s.is(ItemTags.SHOVELS), 1, Items.STONE_SHOVEL, true),
+                        new Kit(s -> s.is(Items.TORCH), 16, Items.TORCH, true), new Kit(s -> s.is(fill), 16, fill, true));
             }
             case FARMER -> {
                 Item seed = w.getCurrentWorkArea() instanceof CropArea c && !c.getSeedStack().isEmpty() ? c.getSeedStack().getItem() : Items.WHEAT_SEEDS;
-                yield List.of(new Kit(s -> s.is(ItemTags.HOES), 1, Items.STONE_HOE), new Kit(s -> s.is(seed), 32, seed));
+                yield List.of(new Kit(s -> s.is(ItemTags.HOES), 1, Items.STONE_HOE, true), new Kit(s -> s.is(seed), 32, seed, true));
             }
             case LUMBERJACK -> {
                 Item sapling = w.getCurrentWorkArea() instanceof LumberArea l && !l.getSaplingStack().isEmpty() ? l.getSaplingStack().getItem() : Items.OAK_SAPLING;
-                yield List.of(new Kit(s -> s.is(ItemTags.AXES), 1, Items.STONE_AXE), new Kit(s -> s.is(sapling), 8, sapling));
+                // pedido de Ale: los retoños "que los saquen de los árboles que talan" (le aparecen solos)
+                yield List.of(new Kit(s -> s.is(ItemTags.AXES), 1, Items.STONE_AXE), new Kit(s -> s.is(ItemTags.SAPLINGS), 8, sapling, true));
             }
             case FISHERMAN -> List.of(new Kit(s -> s.is(Items.FISHING_ROD), 1, Items.FISHING_ROD));
             case ANIMAL_FARMER -> List.of(new Kit(s -> s.is(ItemTags.AXES), 1, Items.STONE_AXE));
@@ -158,7 +166,7 @@ public final class WorkerSupply {
                     long gap = now - r.lastTick;
                     if (gap <= WorkerOutput.GAP_TICKS) continue;
                     r.lastTick = now;
-                    List<ItemStack> got = pay(level, v, camp, out.owed(r, gap));
+                    List<ItemStack> got = pay(level, v, camp, out.owed(r, gap, level.getDayTime() / WorkerOutput.DAY));
                     if (gap >= TELL_GAP_TICKS) paid.addAll(got);
                 }
             }
@@ -183,12 +191,17 @@ public final class WorkerSupply {
         out.found(rec);
         rec.estimate.clear();
         rec.estimate.putAll(estimate(level, w));
+        VillageManagement.Job job = WorkZones.jobOf(w);
+        rec.job = job == null ? "" : job.name();
+        long day = level.getDayTime() / WorkerOutput.DAY;
         long gap = out.seen(rec, now);
         if (gap > 0) {
-            List<ItemStack> got = pay(level, v, camp, out.owed(rec, gap));
+            List<ItemStack> got = pay(level, v, camp, out.owed(rec, gap, day));
             if (gap >= TELL_GAP_TICKS) paid.addAll(got);
         }
         supply(camp, w);
+        rec.working = working(level, w);
+        pay(level, v, camp, out.floorDue(rec, day));   // lo esperado de su oficio es el piso, también cargado
         feed(camp, w);
         Long last = LAST_COLLECT.get(w.getUUID());
         if (last == null || now - last >= COLLECT_EVERY_TICKS) {
@@ -273,9 +286,11 @@ public final class WorkerSupply {
 
     /** Lo que le falta (su equipo y lo que pidió Workers), del almacén a su mochila. Lo que no hay queda anotado. */
     public static void supply(CampBlockEntity camp, AbstractWorkerEntity w) {
-        if (WorkZones.jobOf(w) == VillageManagement.Job.FARMER) farmerSupply(w);
+        List<Kit> kit = kit(w);
+        freeSupply(w, kit);
         MutableComponent missing = null;
-        for (Kit k : kit(w)) {
+        for (Kit k : kit) {
+            if (k.free) continue;
             int lack = k.count - w.countMatchingItems(k.match);
             if (lack <= 0) continue;
             int got = give(camp, w, k.match, lack);
@@ -294,23 +309,36 @@ public final class WorkerSupply {
     }
 
     /**
-     * Pedido de Ale ("me pide semillas por día; que se encargue él"): el granjero no pide nada al almacén. La azada y las
-     * semillas que le falten (su equipo y lo que pidió Workers) le aparecen gratis en la mochila.
+     * Lo del equipo que no sale del almacén ({@link Kit#free}): las semillas y la azada del granjero (pedido de Ale: "que se
+     * encargue él"), la pala, antorchas y relleno del minero, los retoños del leñador. Le aparecen en la mochila (también lo
+     * que pidió Workers de eso) y ya no lo va a buscar.
      */
-    private static void farmerSupply(AbstractWorkerEntity w) {
-        Item seed = w.getCurrentWorkArea() instanceof CropArea c && !c.getSeedStack().isEmpty() ? c.getSeedStack().getItem() : Items.WHEAT_SEEDS;
-        if (w.countMatchingItems(s -> s.is(ItemTags.HOES)) == 0) w.addItem(new ItemStack(Items.STONE_HOE));
-        int want = 32;
-        for (NeededItem n : w.neededItems) if (n.matcher.test(new ItemStack(seed))) want = Math.max(want, n.count);
-        int lack = want - w.countMatchingItems(s -> s.is(seed));
-        while (lack > 0) {
-            int k = Math.min(lack, 64);
-            ItemStack back = w.addItem(new ItemStack(seed, k));
-            if (!back.isEmpty()) break;   // mochila llena
-            lack -= k;
+    private static void freeSupply(AbstractWorkerEntity w, List<Kit> kit) {
+        List<ItemStack> samples = new ArrayList<>();
+        for (Kit k : kit) {
+            if (!k.free) continue;
+            ItemStack sample = new ItemStack(k.shown);
+            samples.add(sample);
+            int want = k.count;
+            for (NeededItem n : w.neededItems) if (n.matcher.test(sample)) want = Math.max(want, n.count);
+            int lack = want - w.countMatchingItems(k.match);
+            while (lack > 0) {
+                int c = Math.min(lack, sample.getMaxStackSize());
+                ItemStack back = w.addItem(new ItemStack(k.shown, c));
+                if (!back.isEmpty()) break;   // mochila llena
+                lack -= c;
+            }
         }
-        ItemStack hoe = new ItemStack(Items.STONE_HOE), seeds = new ItemStack(seed);
-        w.neededItems.removeIf(n -> n.matcher.test(hoe) || n.matcher.test(seeds) || n.matcher.test(new ItemStack(Items.WATER_BUCKET)));
+        if (WorkZones.jobOf(w) == VillageManagement.Job.FARMER) samples.add(new ItemStack(Items.WATER_BUCKET));   // el agua la ponemos nosotros
+        if (samples.isEmpty()) return;
+        w.neededItems.removeIf(n -> samples.stream().anyMatch(n.matcher::test));
+    }
+
+    /** ¿Tiene dónde trabajar y su herramienta? (sin eso, no cuenta lo esperado de su oficio). */
+    public static boolean working(ServerLevel level, AbstractWorkerEntity w) {
+        if (WorkZones.areaFor(level, w) == null) return false;
+        for (Kit k : kit(w)) if (!k.free && w.countMatchingItems(k.match) == 0) return false;
+        return true;
     }
 
     private static MutableComponent add(@Nullable MutableComponent list, int count, @Nullable Item item) {
@@ -407,7 +435,7 @@ public final class WorkerSupply {
         if (s.isEmpty() || !(w.level() instanceof ServerLevel level)) return;
         WorkerOutput out = WorkerOutput.get(level);
         WorkerOutput.Rec r = out.of(w.getUUID());
-        if (r != null) out.made(r, s);
+        if (r != null) out.made(r, s, level.getDayTime() / WorkerOutput.DAY);
     }
 
     /** El trigo de la mochila se hace pan (de a 3). */

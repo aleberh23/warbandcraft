@@ -75,6 +75,7 @@ public final class WarbandCommand {
                 .then(Commands.literal("mazmorras").executes(WarbandCommand::dungeons)   // H25
                         .then(Commands.literal("borrar").requires(s -> s.hasPermission(2)).executes(WarbandCommand::dungeonForget)))
                 .then(Commands.literal("partes").executes(WarbandCommand::reports))
+                .then(WorkerReportCommand.node())   // operadores: lo que aportó cada trabajador
                 .then(Commands.literal("mercado").executes(WarbandCommand::market))
                 .then(Commands.literal("tutorial").executes(WarbandCommand::tutorialWhere)   // salón del tutorial
                         .then(Commands.literal("construir").requires(s -> s.hasPermission(2)).executes(WarbandCommand::tutorialBuild)))

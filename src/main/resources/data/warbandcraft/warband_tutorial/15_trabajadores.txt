@@ -10,15 +10,16 @@ Auto-asignar (prendido de entrada): cada minuto, si hay una zona sin trabajador 
 ## Zonas de trabajo
 Pestaña Trabajo. Cada trabajador necesita su zona dentro del territorio:
 - Zona: arrastrás un rectángulo en el piso (el herrero: un click).
-- Auto: la busca sola.
+- Auto: la busca sola (al leñador no: su zona la marcás vos).
+- Marcar otra zona reemplaza la que tenía.
 - Borrar.
 ---
-Cada zona cuesta algo del almacén (la del granjero no: él se arregla solo, sin pedir azada ni semillas): hacha y retoños (leñador), pico (minero), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén. El agua de la huerta se pone sola (no hace falta balde).
+Cada zona cuesta algo del almacén (la del granjero no: él se arregla solo, sin pedir azada ni semillas): hacha (leñador: los retoños los saca de los árboles), pico (minero: pala, antorchas y relleno los pone él), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén. El agua de la huerta se pone sola (no hace falta balde).
 
 El corral sin animales trae 2 del bioma.
 ---
 ## Solos
-Los trabajadores reciben del almacén lo que necesitan (herramientas, comida, semillas) y cada tanto lo que juntaron pasa al almacén. Duermen en una cama libre.
+Los trabajadores reciben del almacén su herramienta y comida y cada tanto lo que juntaron pasa al almacén. Duermen en una cama libre.
 
 Sobre cada zona se ve qué le pasa: "Falta en el almacén", "Almacén lleno", "Con hambre", "Trabajando"...
 ---
@@ -54,7 +55,7 @@ Su zona es una escalera: marcá un rectángulo largo y angosto (mínimo 8 de lar
 Además saca piedra, carbón, hierro, oro y a veces diamante.
 ---
 ## Cuánto producen
-Sobre cada zona, y en la lista de la pestaña Trabajo, dice cuánto produce por día. Nunca menos de lo normal de su oficio; si trabaja más, cuenta lo medido.
+Sobre cada zona, y en la lista de la pestaña Trabajo, dice cuánto produce por día. Con su zona y su herramienta nunca deja menos de lo normal de su oficio (aunque estés al lado); si trabaja más, cuenta lo medido.
 
 En Resumen está el total de la aldea.
 

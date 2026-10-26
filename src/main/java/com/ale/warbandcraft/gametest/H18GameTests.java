@@ -72,7 +72,9 @@ public class H18GameTests {
             check(miner.countMatchingItems(s -> s.is(ItemTags.SHOVELS)) == 1, "no le dio la pala");
             check(miner.countMatchingItems(s -> s.is(Items.TORCH)) == 16, "antorchas: " + miner.countMatchingItems(s -> s.is(Items.TORCH)));
             check(miner.countMatchingItems(s -> s.is(Items.COBBLESTONE)) == 16, "relleno: " + miner.countMatchingItems(s -> s.is(Items.COBBLESTONE)));
-            check(camp.count(Items.TORCH) == 4 && camp.count(Items.COBBLESTONE) == 16, "no salió del almacén lo justo");
+            // pedido de Ale: del almacén solo el pico; pala, antorchas y relleno le aparecen solos
+            check(camp.count(Items.TORCH) == 20 && camp.count(Items.COBBLESTONE) == 32 && camp.count(Items.STONE_SHOVEL) == 1,
+                    "sacó del almacén lo que es gratis");
 
             // Otro minero, sin nada en el almacén: con zona, el cartelito dice qué falta
             MinerEntity other = worker(h, ModEntityTypes.MINER.get(), new BlockPos(3, 2, 2));
@@ -86,6 +88,43 @@ public class H18GameTests {
             WorkerSupply.Status st = WorkerSupply.status(level, other);
             check(key(st).equals("status.warbandcraft.worker.missing"), "el cartelito no dice qué falta: " + key(st) + " " + st.text().getString());
             check(st.color() == WorkerSupply.RED, "lo que falta no está en rojo");
+        } finally {
+            cleanup(level, v, around);
+        }
+        h.succeed();
+    }
+
+    /** Pedido de Ale: al leñador solo se le pide el hacha (los retoños le aparecen); lo esperado sale también cargado. */
+    @GameTest(template = TEMPLATE)
+    public static void lumberjackOnlyNeedsAxe(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        VillageData.Village v = village(h);
+        WorkerSupply.clear();
+        AbstractWorkerEntity lumberjack = worker(h, ModEntityTypes.LUMBERJACK.get(), new BlockPos(2, 2, 2));
+        AABB around = new AABB(v.center()).inflate(32);
+        try {
+            CampBlockEntity camp = VillageStorehouse.ensure(level, v);
+            check(camp != null, "no se puso el Campamento de la aldea");
+            camp.insert(new ItemStack(Items.STONE_AXE));
+            com.talhanation.workers.entities.workarea.LumberArea area = ModEntityTypes.LUMBERAREA.get().create(level);
+            check(area != null, "sin zona de tala");
+            area.moveTo(h.absolutePos(new BlockPos(6, 1, 6)).getCenter());
+            area.setPlayerUUID(v.owner());
+            area.setSaplingStack(new ItemStack(Items.SPRUCE_SAPLING));
+            level.addFreshEntity(area);
+            ((com.talhanation.workers.entities.LumberjackEntity) lumberjack).currentLumberArea = area;
+            WorkerSupply.serve(level, v, camp, lumberjack);
+            check(lumberjack.countMatchingItems(s -> s.is(ItemTags.AXES)) == 1, "no le dio el hacha");
+            check(lumberjack.countMatchingItems(s -> s.is(ItemTags.SAPLINGS)) >= 8, "no le aparecieron los retoños");
+            check(lumberjack.neededItems.stream().noneMatch(n -> n.matcher.test(new ItemStack(Items.SPRUCE_SAPLING))), "sigue pidiendo retoños");
+            check(!key(WorkerSupply.status(level, lumberjack)).equals("status.warbandcraft.worker.missing"), "dice que le falta algo");
+            WorkerOutput.Rec rec = WorkerOutput.get(level).of(lumberjack.getUUID());
+            check(rec != null && rec.working, "no cuenta como trabajando");
+            rec.floor.put("minecraft:spruce_log", 5.5);
+            WorkerSupply.serve(level, v, camp, lumberjack);
+            check(camp.count(Items.SPRUCE_LOG) == 5, "no salió lo esperado: " + camp.count(Items.SPRUCE_LOG));
+            long day = level.getDayTime() / WorkerOutput.DAY;
+            check(rec.history.getOrDefault(day, java.util.Map.of()).getOrDefault("minecraft:spruce_log", 0) == 5, "no quedó anotado");
         } finally {
             cleanup(level, v, around);
         }

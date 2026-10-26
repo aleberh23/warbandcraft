@@ -113,6 +113,16 @@ public class SmithWorkGoal extends Goal {
     public boolean forge(ServerLevel level) {
         CampBlockEntity camp = camp(level, smith);
         if (camp == null) return false;
+        int before = camp.count(Armament.item());
+        try {
+            return forgeWith(level, camp);
+        } finally {   // para /warband aportes
+            int got = camp.count(Armament.item()) - before;
+            if (got > 0) com.ale.warbandcraft.village.WorkerOutput.log(level, smith.getUUID(), new ItemStack(Armament.item(), got));
+        }
+    }
+
+    private boolean forgeWith(ServerLevel level, CampBlockEntity camp) {
         // Pedido de Ale ("cuando se terminan las piezas se queda parado"): desguazar no gasta los lingotes del día
         if (Scrap.work(camp, Scrap.PIECES_PER_JOB) > 0) return true;
         scrapWaiting = false;

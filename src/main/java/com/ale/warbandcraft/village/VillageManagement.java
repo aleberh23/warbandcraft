@@ -55,6 +55,8 @@ public final class VillageManagement {
     public static int REACH = VillageCamps.MANAGE_RADIUS + 32;
     /** Dónde se buscan aldeanos y trabajadores de la aldea. */
     public static int RADIUS = VillageCamps.MANAGE_RADIUS;
+    /** Hasta cuánto arriba/abajo del centro se busca a los trabajadores (el minero baja por su escalera). */
+    public static int WORKER_HEIGHT = 96;
     /** La huerta para el Granjero: a esta distancia del centro, y hasta este tamaño. */
     public static int FARM_SEARCH = 48, FARM_MAX = 24;
 
@@ -225,7 +227,7 @@ public final class VillageManagement {
 
     /** Tus trabajadores de Villager Workers cerca del centro. */
     public static List<AbstractWorkerEntity> workers(ServerLevel level, BlockPos center, UUID owner) {
-        List<AbstractWorkerEntity> out = level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(center).inflate(RADIUS, 32, RADIUS),
+        List<AbstractWorkerEntity> out = level.getEntitiesOfClass(AbstractWorkerEntity.class, new AABB(center).inflate(RADIUS, WORKER_HEIGHT, RADIUS),
                 w -> w.isAlive() && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), owner)
                         && !w.getPersistentData().contains(com.ale.warbandcraft.camp.CampWorkers.TAG));   // los de un Campamento común, no
         for (WorkerOutput.Rec r : WorkerOutput.get(level).of(center)) {   // los de los puestos de afuera (si están cargados)
@@ -272,7 +274,9 @@ public final class VillageManagement {
 
         if (camp != null) WorkerZone.create(level, camp, player.getUUID(), player.getGameProfile().getName());
         // Su zona de trabajo sugerida (huerta, árboles, agua, la casa del almacén, el yunque); si no hay, la marcás vos
-        Component zone = WorkZones.suggest(player, v, worker.getUUID());
+        // pedido de Ale ("los leñadores me crean otra zona dentro de la aldea"): al leñador la zona se la marcás vos
+        Component zone = job == Job.LUMBERJACK ? Component.translatable("msg.warbandcraft.zone.mark_it").withStyle(ChatFormatting.YELLOW)
+                : WorkZones.suggest(player, v, worker.getUUID());
         boolean placed = WorkZones.hasPlace(worker);
         return Component.translatable(placed ? "msg.warbandcraft.manage.assigned_zone" : "msg.warbandcraft.manage.assigned",
                 worker.getType().getDescription()).withStyle(ChatFormatting.GREEN)

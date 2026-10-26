@@ -552,7 +552,11 @@ public final class WorkZones {
             }
         }
         WorkerZone.BoundingBox box = new WorkerZone.BoundingBox(ax, y0, az, bx, y0 + height - 1, bz);
-        if (WorkerZone.existing(level, box.aabb()) != null) return error("overlap");
+        // Pedido de Ale: una zona nueva reemplaza a la que ya tenía (no queda otra suelta que Auto-asignar le da a otro aldeano)
+        AbstractWorkAreaEntity old = areaFor(level, w);
+        if (old != null && (jobOfArea(old) != job || old != w.getCurrentWorkArea())) old = null;
+        AbstractWorkAreaEntity clash = WorkerZone.existing(level, box.aabb());
+        if (clash != null && clash != old) return error("overlap");
         if (job == VillageManagement.Job.FISHERMAN && !hasWater(level, box)) return error("no_water");
 
         AbstractWorkAreaEntity area = switch (job) {
@@ -590,6 +594,11 @@ public final class WorkZones {
             return error("failed");
         }
         if (outpost) area.getPersistentData().putLong(TAG_OUTPOST, v.center().asLong());
+        if (old != null) {
+            if (old.getPersistentData().contains(TAG_OUTPOST)) endOutpost(level, v, old);
+            removeChest(level, v, old);
+            old.discard();
+        }
         area.setDone(false);
         level.addFreshEntity(area);
         bind(w, area);

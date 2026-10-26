@@ -317,7 +317,15 @@ public final class CampWorkers {
         rec.pos = w.blockPosition();
         rec.estimate.clear();
         rec.estimate.putAll(WorkerSupply.estimate(level, w));
+        com.ale.warbandcraft.village.VillageManagement.Job job = com.ale.warbandcraft.village.WorkZones.jobOf(w);
+        rec.job = job == null ? "" : job.name();
+        long day = level.getDayTime() / com.ale.warbandcraft.village.WorkerOutput.DAY;
         long gap = out.seen(rec, now);
+        rec.working = WorkerSupply.working(level, w);
+        for (net.minecraft.world.item.ItemStack s : out.floorDue(rec, day)) {   // lo esperado de su oficio es el piso, también cargado
+            net.minecraft.world.item.ItemStack back = camp.insert(s);
+            if (!back.isEmpty()) CampRegistry.get(level).deliver(level, r.owner, List.of(back), camp.getBlockPos());
+        }
         if (gap <= 0) return;
         long ticks = Math.min(gap, (long) com.ale.warbandcraft.village.WorkerOutput.MAX_OFFLINE_DAYS * com.ale.warbandcraft.village.WorkerOutput.DAY);
         double days = ticks / (double) com.ale.warbandcraft.village.WorkerOutput.DAY;
@@ -335,9 +343,12 @@ public final class CampWorkers {
                 if (!left.isEmpty()) made.add(left);
             }
             int got = camp.count(com.ale.warbandcraft.kit.Armament.item()) - before;
-            if (got > 0) made.add(new net.minecraft.world.item.ItemStack(com.ale.warbandcraft.kit.Armament.item(), got));
+            if (got > 0) {
+                made.add(new net.minecraft.world.item.ItemStack(com.ale.warbandcraft.kit.Armament.item(), got));
+                out.log(rec, new net.minecraft.world.item.ItemStack(com.ale.warbandcraft.kit.Armament.item(), got), day);
+            }
         } else {
-            for (net.minecraft.world.item.ItemStack s : out.owed(rec, (long) (ticks * fed))) {
+            for (net.minecraft.world.item.ItemStack s : out.owed(rec, (long) (ticks * fed), day)) {
                 net.minecraft.world.item.ItemStack back = camp.insert(s.copy());
                 if (!back.isEmpty()) CampRegistry.get(level).deliver(level, r.owner, List.of(back), camp.getBlockPos());
                 made.add(s);

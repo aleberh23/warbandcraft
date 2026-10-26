@@ -70,7 +70,7 @@ src/main/java/com/ale/warbandcraft/
   faction/Relations          H3: opinión de cada facción por jugador (-100..100, guerra en -40), se guarda en el overworld
   camp/CampRegistry          H3: Campamentos por jugador + botín/impuestos "en camino" si no están cargados
   command/WarbandCommand     /warband aldea | aldeas | facciones | relaciones | saquear | conquistar | uniformar | barracon | rutas | panel | batalla
-                             | almacen | retirar | fundar | mercado
+                             | almacen | retirar | fundar | mercado | aportes (ops)
   event/CommonEvents         listeners del bus de Forge (H1)
   event/VillageEvents        listeners de H2: buscar campanas, aviso al entrar, no contratar guarnición
   event/RaidEvents           listeners de H3: golpe a guarnición = ataque, botín de caídos, ticks de ataques/economía
@@ -397,7 +397,9 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   gallinas, bosque/pantano cerdos, resto vacas) y aparecen `PEN_START_ANIMALS` (2). Auto del corral (y de la huerta si no hay
   una hecha) = terreno libre de 9×9 cerca del almacén (`WorkZones.freeSite`).
 - Costo de una zona (`village/ZoneCosts`, sale del almacén de la aldea; si falta algo no se crea y avisa "Falta en el
-  almacén: ..."): granjero nada (pedido de Ale: azada y semillas le aparecen gratis, `WorkerSupply.farmerSupply`; sin cofre de zona); leñador hacha + 4 retoños + cofre; minero pico + cofre; pescador
+  almacén: ..."): granjero nada (pedido de Ale: azada y semillas le aparecen gratis, `Kit.free` en `WorkerSupply.kit`; sin cofre de zona);
+  leñador hacha + cofre (pedido de Ale: "lo único que tolero es un hacha"; los retoños le aparecen, `Kit.free`; al asignarlo no se le
+  busca zona sola, la marcás vos); minero pico + cofre; pescador
   caña + cofre; ganadero 8 trigo + cofre; cocinero nada; herrero 1 yunque si hay que poner uno nuevo. La herramienta va
   al trabajador; semillas/retoños/trigo, al cofre de la zona.
 - Cofre de zona: al crear una zona (menos cocina) se pone un cofre pegado, del lado del almacén y adentro del territorio, con
@@ -972,6 +974,10 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   piso y costados firmes. Saca el balde de `neededItems`. **La causa de fondo**: Workers ara/riega el bloque de debajo de la entidad
   (`getOnPos`) y `WorkerZone.place` la deja metida en el piso (araba la tierra de abajo del pasto, imposible, para siempre):
   `WorkZones.fixCropLevel` la sube 1 al engancharla (`bind`) y cada vez que se atiende al granjero (arregla las viejas).
+- Pedido de Ale: del almacén solo salen las herramientas de verdad (pico, hacha, caña) y la comida; lo demás del equipo
+  (`Kit.free`: pala, antorchas y relleno del minero, azada y semillas del granjero, retoños del leñador) le aparece y se saca de
+  `neededItems`. Marcar una zona nueva a un trabajador borra la que tenía (`WorkZones.create`, con su cofre). Se busca a los
+  trabajadores hasta `VillageManagement.WORKER_HEIGHT` (96) arriba/abajo del centro (el minero bajaba por la escalera y se perdía).
 - Minero: `MiningArea.setKeepOn(true)` (no queda "terminada"); cada 60 s trabajando saca de la veta (`vein`: piedra 60,
   carbón 20, hierro crudo 14, oro crudo 5, diamante 1; bajo y=0 mejor) al almacén; mina vacía → baja 8 bloques (4 veces).
 - Cartelito: `WorkerSupply.status` (Falta en el almacén / Almacén lleno / Con hambre / Buscando / Durmiendo / sin cama /
@@ -988,6 +994,12 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `Data.production` (Resumen, total de la aldea). El trigo del granjero se hace pan al juntarlo (`bake`, 3 → 1); sus semillas de
   más se tiran (no van al almacén ni cuentan: `WorkerOutput.junk`). Pedido de Ale ("al volver no veo lo que generan"): `rate` usa lo
   esperado del oficio como piso (lo medido manda solo si es más).
+  **Piso también cargado** (pedido de Ale: "no veo que el minero/leñador produzcan"): con zona y herramienta
+  (`WorkerSupply.working` → `Rec.working`), el tiempo atendido suma lo esperado a `Rec.floor`; lo que junta de verdad lo descuenta
+  (hasta un día de adelanto) y lo que pasa de 1 sale al almacén (`floorDue`). **Historial**: `Rec.history` (día del juego → ítem →
+  cantidad, `HISTORY_DAYS` 10) anota todo lo que deja (juntado, veta, cofre del puesto, sin cargar, piso, armamento del Herrero).
+  `/warband aportes [días]` (operadores, `command/WorkerReportCommand`): por aldea/Campamento, cada trabajador con estado,
+  total, cosas por día y lo esperado.
 - **Mina en escalera** (pedido de Ale): la zona del minero es `MiningMode.STAIRS_DOWN` de Workers (`WorkZones.placeStairs`:
   rectángulo largo ≥ `MIN_MINE_LENGTH` y angosto ≤ `MAX_MINE_WIDTH`, baja desde la punta más cerca del almacén; Workers mide los
   escalones desde la posición de la zona, parada sobre el piso). Marcas `warbandcraft:mine_stage/mine_dir/mine_end`. Cuando

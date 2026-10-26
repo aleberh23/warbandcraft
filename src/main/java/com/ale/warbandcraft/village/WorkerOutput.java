@@ -40,6 +40,8 @@ public class WorkerOutput extends SavedData {
     public static int MAX_OFFLINE_DAYS = 7;
     /** Un hueco más largo que esto entre dos atenciones = estuvo sin cargar. */
     public static int GAP_TICKS = 300;
+    /** Días que se guardan de lo que dejó cada uno en el almacén (para {@code /warband aportes}). */
+    public static int HISTORY_DAYS = 10;
 
     /** Un trabajador: de qué aldea es, dónde anda, si es un puesto de afuera, lo medido y lo esperado (ítems por día). */
     public static final class Rec {
@@ -47,8 +49,14 @@ public class WorkerOutput extends SavedData {
         public BlockPos village;
         public BlockPos pos;
         public boolean outpost;
-        public final Map<String, Double> made = new HashMap<>(), estimate = new HashMap<>(), carry = new HashMap<>();
+        public final Map<String, Double> made = new HashMap<>(), estimate = new HashMap<>(), carry = new HashMap<>(), floor = new HashMap<>();
+        /** Lo que dejó en el almacén por día del juego (día → ítem → cantidad), los últimos {@link #HISTORY_DAYS}. */
+        public final java.util.TreeMap<Long, Map<String, Integer>> history = new java.util.TreeMap<>();
+        /** Oficio (para el comando). */
+        public String job = "";
         public long loadedTicks, lastTick;
+        /** Tiene zona y herramienta: cuenta para el piso de lo esperado mientras está cargado (en memoria). */
+        public boolean working;
         int missing;
 
         Rec(UUID worker, BlockPos village, BlockPos pos) {
@@ -77,6 +85,15 @@ public class WorkerOutput extends SavedData {
             t.put("made", map(made));
             t.put("estimate", map(estimate));
             t.put("carry", map(carry));
+            t.put("floor", map(floor));
+            t.putString("job", job);
+            CompoundTag h = new CompoundTag();
+            history.forEach((day, m) -> {
+                CompoundTag d = new CompoundTag();
+                m.forEach(d::putInt);
+                h.put(Long.toString(day), d);
+            });
+            t.put("history", h);
             t.putLong("loaded", loadedTicks);
             t.putLong("last", lastTick);
             return t;
@@ -88,6 +105,19 @@ public class WorkerOutput extends SavedData {
             read(t.getCompound("made"), r.made);
             read(t.getCompound("estimate"), r.estimate);
             read(t.getCompound("carry"), r.carry);
+            read(t.getCompound("floor"), r.floor);
+            r.job = t.getString("job");
+            CompoundTag h = t.getCompound("history");
+            for (String k : h.getAllKeys()) {
+                Map<String, Integer> m = new HashMap<>();
+                CompoundTag d = h.getCompound(k);
+                for (String item : d.getAllKeys()) m.put(item, d.getInt(item));
+                try {
+                    r.history.put(Long.parseLong(k), m);
+                } catch (NumberFormatException ignored) {
+                    // clave rota: se saltea
+                }
+            }
             r.loadedTicks = t.getLong("loaded");
             r.lastTick = t.getLong("last");
             return r;
@@ -165,6 +195,9 @@ public class WorkerOutput extends SavedData {
         setDirty();
         if (gap > GAP_TICKS) return gap;
         r.loadedTicks += gap;
+        if (r.working) r.estimate.forEach((k, n) -> {
+            if (!junk(k)) r.floor.merge(k, n * gap / DAY, Double::sum);
+        });
         if (r.loadedTicks > MEASURE_WINDOW_TICKS) {
             r.loadedTicks /= 2;
             r.made.replaceAll((k, n) -> n / 2);
@@ -172,15 +205,62 @@ public class WorkerOutput extends SavedData {
         return 0;
     }
 
-    /** Dejó {@code s} en el almacén. */
-    public void made(Rec r, ItemStack s) {
+    /** Dejó {@code s} en el almacén (el día {@code day} del juego). Descuenta del piso de lo esperado. */
+    public void made(Rec r, ItemStack s, long day) {
         if (s.isEmpty()) return;
-        r.made.merge(key(s.getItem()), (double) s.getCount(), Double::sum);
+        String k = key(s.getItem());
+        r.made.merge(k, (double) s.getCount(), Double::sum);
+        double est = r.estimate.getOrDefault(k, 0D);
+        if (r.floor.containsKey(k) || est > 0) r.floor.put(k, Math.max(-est, r.floor.getOrDefault(k, 0D) - s.getCount()));   // como mucho un día de adelanto
+        log(r, s, day);
+    }
+
+    /** Anota en el historial lo que dejó en el almacén (sin contarlo como medido). */
+    public void log(Rec r, ItemStack s, long day) {
+        if (s.isEmpty()) return;
+        r.history.computeIfAbsent(day, d -> new HashMap<>()).merge(key(s.getItem()), s.getCount(), Integer::sum);
+        while (!r.history.isEmpty() && r.history.firstKey() <= day - HISTORY_DAYS) r.history.pollFirstEntry();
         setDirty();
     }
 
+    /** Lo anotado de un trabajador (null si no tiene registro). */
+    public static void log(ServerLevel level, java.util.UUID worker, ItemStack s) {
+        WorkerOutput out = get(level);
+        Rec r = out.of(worker);
+        if (r != null) out.log(r, s, level.getDayTime() / DAY);
+    }
+
+    /**
+     * Pedido de Ale ("no veo que produzca"): mientras está cargado y trabajando, lo esperado de su oficio es el piso también
+     * en el acto. Lo que lleva de atraso contra lo esperado (descontado lo que juntó de verdad) sale ahora.
+     */
+    public List<ItemStack> floorDue(Rec r, long day) {
+        List<ItemStack> out = new ArrayList<>();
+        for (Map.Entry<String, Double> e : r.floor.entrySet()) {
+            int n = (int) Math.floor(e.getValue());
+            if (n <= 0) continue;
+            Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(e.getKey()));
+            if (item == null || item == Items.AIR) continue;
+            e.setValue(e.getValue() - n);
+            while (n > 0) {
+                int c = Math.min(n, item.getMaxStackSize());
+                ItemStack st = new ItemStack(item, c);
+                out.add(st);
+                log(r, st, day);
+                n -= c;
+            }
+        }
+        if (!out.isEmpty()) setDirty();
+        return out;
+    }
+
+    /** Todos. */
+    public java.util.Collection<Rec> all() {
+        return recs.values();
+    }
+
     /** Lo que produjo en {@code ticks} sin cargar (como mucho {@link #MAX_OFFLINE_DAYS}); lo que no llega a uno queda para la próxima. */
-    public List<ItemStack> owed(Rec r, long ticks) {
+    public List<ItemStack> owed(Rec r, long ticks, long day) {
         double days = Math.min(ticks, (long) MAX_OFFLINE_DAYS * DAY) / (double) DAY;
         List<ItemStack> out = new ArrayList<>();
         for (Map.Entry<String, Double> e : r.rate().entrySet()) {
@@ -191,7 +271,9 @@ public class WorkerOutput extends SavedData {
             r.carry.put(e.getKey(), v - n);
             while (n > 0) {
                 int c = Math.min(n, item.getMaxStackSize());
-                out.add(new ItemStack(item, c));
+                ItemStack st = new ItemStack(item, c);
+                out.add(st);
+                log(r, st, day);
                 n -= c;
             }
         }
