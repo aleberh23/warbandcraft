@@ -928,5 +928,9 @@
   "gui.warbandcraft.camp_worker.organizer_plan": "Chests: %s",
   "msg.warbandcraft.camp_worker.organizer_ok": "Done: Organizer. By day it spreads the Camp's items among the linked chests.",
   "cmd.warbandcraft.dungeons.forget_none": "You're not in a dungeon (nor within 48 blocks of one).",
-  "cmd.warbandcraft.dungeons.forgot": "Dungeon removed: %s (%s mobs removed). The blocks stay as they are."
+  "cmd.warbandcraft.dungeons.forgot": "Dungeon removed: %s (%s mobs removed). The blocks stay as they are.",
+  "upgrade.warbandcraft.kitchen": "Kitchen",
+  "upgrade.warbandcraft.kitchen.effect": "The cook cooks the storehouse food (bread, meat, fish, potatoes, pies, cookies) using little wood; +1 popularity",
+  "gui.warbandcraft.growth.factor.kitchen": "Kitchen",
+  "gui.warbandcraft.kitchen.fuel": "firewood (planks, logs or coal)"
 }

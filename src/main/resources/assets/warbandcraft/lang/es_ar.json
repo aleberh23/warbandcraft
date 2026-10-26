@@ -928,5 +928,9 @@
   "gui.warbandcraft.camp_worker.organizer_plan": "Cofres: %s",
   "msg.warbandcraft.camp_worker.organizer_ok": "Listo: es Organizador. De día reparte lo del Campamento entre los cofres vinculados.",
   "cmd.warbandcraft.dungeons.forget_none": "No estás en ninguna mazmorra (ni a 48 bloques de una).",
-  "cmd.warbandcraft.dungeons.forgot": "Mazmorra borrada: %s (se sacaron %s bichos). Los bloques quedan como están."
+  "cmd.warbandcraft.dungeons.forgot": "Mazmorra borrada: %s (se sacaron %s bichos). Los bloques quedan como están.",
+  "upgrade.warbandcraft.kitchen": "Cocina",
+  "upgrade.warbandcraft.kitchen.effect": "El cocinero cocina lo del almacén (pan, carne, pescado, papas, tortas, galletas) con poca leña; +1 de popularidad",
+  "gui.warbandcraft.growth.factor.kitchen": "Cocina",
+  "gui.warbandcraft.kitchen.fuel": "leña (tablones, troncos o carbón)"
 }

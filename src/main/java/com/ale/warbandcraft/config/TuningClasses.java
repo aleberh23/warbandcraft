@@ -92,6 +92,7 @@ final class TuningClasses {
             "village.GarrisonLife",
             "village.GarrisonReserve",
             "village.Housing",
+            "village.Kitchen",
             "village.Maintenance",
             "village.Offenses",
             "village.Popularity",

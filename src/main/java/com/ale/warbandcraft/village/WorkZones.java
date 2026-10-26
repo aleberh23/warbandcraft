@@ -357,6 +357,11 @@ public final class WorkZones {
                 return create(player, v, w, job, water.getX() - h, water.getZ() - h, water.getX() + h, water.getZ() + h, false);
             }
             case COOK -> {
+                BlockPos kitchen = kitchenSite(level, v);   // pedido de Ale: con Cocina, el cocinero trabaja adentro
+                if (kitchen != null) {
+                    int n = Upgrade.KITCHEN.siteSize();
+                    return create(player, v, w, job, kitchen.getX(), kitchen.getZ(), kitchen.getX() + n - 1, kitchen.getZ() + n - 1, false);
+                }
                 BlockPos store = VillageData.get(level).storehouse(c);
                 BoundingBox house = store == null ? null : VillageStorehouse.biggestHouse(level, c);
                 if (house == null) return error("no_suggestion");
@@ -517,6 +522,13 @@ public final class WorkZones {
         return Component.translatable("msg.warbandcraft.zone.created", area.getType().getDescription()).withStyle(ChatFormatting.GREEN);
     }
 
+    /** Esquina del terreno de la Cocina hecha (y = su piso), o null. */
+    @Nullable
+    static BlockPos kitchenSite(ServerLevel level, VillageData.Village v) {
+        com.ale.warbandcraft.upgrade.TownData.Town t = com.ale.warbandcraft.upgrade.TownData.get(level).at(v.center());
+        return Kitchen.has(t) ? t.sites.get(Upgrade.KITCHEN.siteKey()) : null;
+    }
+
     // ------------------------------------------------------------------ crear la zona de Workers
 
     private static Component create(ServerPlayer player, VillageData.Village v, AbstractWorkerEntity w, VillageManagement.Job job,
@@ -551,7 +563,13 @@ public final class WorkZones {
             }
             case COOK -> {
                 BlockPos store = VillageData.get(level).storehouse(v.center());
-                y0 = (store != null ? store.getY() : ground + 1) - 1;
+                BlockPos kitchen = kitchenSite(level, v);
+                int n = Upgrade.KITCHEN.siteSize();
+                if (kitchen != null && ax <= kitchen.getX() + n - 1 && bx >= kitchen.getX() && az <= kitchen.getZ() + n - 1 && bz >= kitchen.getZ()) {
+                    y0 = kitchen.getY();   // el piso de la Cocina (adentro el techo engañaría a groundY)
+                } else {
+                    y0 = (store != null ? store.getY() : ground + 1) - 1;
+                }
                 height = KITCHEN_HEIGHT;
             }
             default -> {

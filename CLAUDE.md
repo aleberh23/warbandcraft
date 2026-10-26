@@ -805,6 +805,13 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 - **Colores de facción** (`upgrade/Heraldry`): `of(v)` = dueño → su facción de Recruits (`FactionStyle`); sin dueño → JSON de la
   facción. `tint` al empezar una obra (vidrios y estandartes al color), `refresh` repinta terrenos + `Town.decor` (estandartes y
   faroles del de Mantenimiento) si cambió `Town.heraldry`; `tick` cada 10 s (`InvasionEvents`): conquistas en ambos sentidos.
+- **Cocina** (pedido de Ale, números sin Ale): edificio `Upgrade.KITCHEN` (9×9, `Buildings.kitchen`: hogar, 2 ahumadores, horno,
+  barriles), solo aldeas. `village/Kitchen.cook` (desde `WorkerSupply.serve` de un `CookEntity` de Workers, una vez por tanda por
+  aldea): cada `BATCH_TICKS` `PER_BATCH` cosas del almacén: tortas de calabaza, galletas, pan (deja `KEEP_WHEAT`), todo lo que va
+  al horno y sale comida (deja `KEEP_POTATOES` papas). Leña: tablón `PLANK_COOKS` 3, tronco `LOG_COOKS` 12, carbón 24 (a mano
+  1,5/8); lo que sobra queda en `Town.kitchenFuel`. Se pone al día con `Town.kitchenTick` (máx. `MAX_DAYS`). No anota en
+  `WorkerOutput` (si no, la producción "en papel" haría comida de la nada). Sin leña: cartelito. `Popularity.KITCHEN` +1 si cocinó
+  en el último día. Auto/marcar del cocinero = el terreno de la Cocina (`WorkZones.kitchenSite`, y = su piso).
 - Pruebas: `DecorGameTests`.
 
 ## Fundar una aldea (pedido de Ale, a probar; números decididos sin Ale, a revisar)

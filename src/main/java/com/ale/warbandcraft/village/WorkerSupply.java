@@ -212,6 +212,9 @@ public final class WorkerSupply {
         else if (w.homeAreaUUID == null) home(level, v, w);
         if (w instanceof MinerEntity miner) mine(level, v, camp, miner, now);
         if (w instanceof com.talhanation.workers.entities.FarmerEntity farmer) water(level, farmer);
+        if (w instanceof com.talhanation.workers.entities.CookEntity && Kitchen.cook(level, v, camp).noFuel()) {
+            note(w, Kind.MISSING, Component.translatable("gui.warbandcraft.kitchen.fuel"));
+        }
     }
 
     /** Cada cuántos bloques va un agua en la huerta (la tierra arada se moja a 4 de un agua: 9 cubre todo). */

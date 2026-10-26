@@ -8,7 +8,7 @@ Se paga al encargar: solo madera, piedra y esmeraldas (vidrio, lana, hierro y ad
 Un constructor lo levanta de a poco. Una obra por aldea. "Cancelar obra" devuelve lo que no se puso.
 
 ## Edificios
-Taller del constructor, Taberna, Mercado, Entrenamiento, Cuartel, Herrería, Capilla, Granero, Caseta de mantenimiento y Casas. Cada uno con su estilo según el bioma.
+Taller del constructor, Taberna, Mercado, Entrenamiento, Cuartel, Herrería, Capilla, Granero, Caseta de mantenimiento, Cocina y Casas. Cada uno con su estilo según el bioma.
 ---
 Muchos tienen niveles (Taberna 1 a 3, Mercado, Plaza de mercado y Lonja...). El nivel siguiente va sobre el mismo terreno.
 

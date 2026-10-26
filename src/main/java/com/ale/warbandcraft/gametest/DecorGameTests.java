@@ -6,6 +6,7 @@ import com.ale.warbandcraft.upgrade.Heraldry;
 import com.ale.warbandcraft.upgrade.TownData;
 import com.ale.warbandcraft.upgrade.Upgrade;
 import com.ale.warbandcraft.upgrade.Upgrades;
+import com.ale.warbandcraft.village.Kitchen;
 import com.ale.warbandcraft.village.Maintenance;
 import com.ale.warbandcraft.village.VillageData;
 import com.ale.warbandcraft.village.VillageStorehouse;
@@ -77,6 +78,7 @@ public class DecorGameTests {
         try {
             TownData.Town town = TownData.get(level).getOrCreate(v.center());
             town.built.add(Upgrade.BUILDER_1);
+            town.built.add(Upgrade.BUILDER_2);   // pasar a piedra pide el taller 2, como la muralla de piedra
             FakePlayer player = player(h);
             fill(player);
             BlockPos a = h.absolutePos(new BlockPos(0, 1, 7)), b = h.absolutePos(new BlockPos(8, 1, 7));
@@ -173,6 +175,76 @@ public class DecorGameTests {
         h.succeed();
     }
 
+    /** La Cocina se planta y queda con sus ahumadores, el horno y barriles. */
+    @GameTest(template = "empty_big")
+    public static void kitchenBuilds(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        openSky(h);
+        VillageData.Village v = village(h);
+        try {
+            TownData.Town town = TownData.get(level).getOrCreate(v.center());
+            town.built.add(Upgrade.BUILDER_1);
+            FakePlayer player = player(h);
+            fill(player);
+            BlockPos corner = h.absolutePos(new BlockPos(6, 0, 6));
+            Component msg = Upgrades.order(player, v.center(), Upgrade.KITCHEN, corner, 0);
+            check(town.job != null && town.job.upgrade == Upgrade.KITCHEN, "no empezó la cocina: " + msg.getString());
+            finishJob(level, town);
+            check(Kitchen.has(town), "la cocina no quedó hecha");
+            BlockPos site = town.sites.get("kitchen");
+            int smokers = 0, barrels = 0;
+            for (BlockPos p : BlockPos.betweenClosed(site, site.offset(8, 4, 8))) {
+                if (level.getBlockState(p).is(Blocks.SMOKER)) smokers++;
+                if (level.getBlockState(p).is(Blocks.BARREL)) barrels++;
+            }
+            check(smokers == 2 && barrels >= 3, "ahumadores " + smokers + ", barriles " + barrels);
+        } finally {
+            cleanup(h, v);
+        }
+        h.succeed();
+    }
+
+    /** La Cocina: pan, papas (deja 16), carne y una torta, con leña del almacén. */
+    @GameTest(template = TEMPLATE)
+    public static void kitchenCooksStorehouse(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        VillageData.Village v = village(h);
+        VillageData data = VillageData.get(level);
+        BlockPos barrelPos = h.absolutePos(new BlockPos(1, 2, 1));
+        try {
+            TownData.Town town = TownData.get(level).getOrCreate(v.center());
+            level.setBlockAndUpdate(barrelPos, Blocks.BARREL.defaultBlockState());
+            data.setStorehouse(v.center(), barrelPos);
+            CampBlockEntity camp = VillageStorehouse.ensure(level, v);
+            check(camp != null, "no hay Campamento de la aldea");
+            for (ItemStack s : new ItemStack[]{new ItemStack(Items.WHEAT, 20), new ItemStack(Items.POTATO, 30), new ItemStack(Items.BEEF, 5),
+                    new ItemStack(Items.PUMPKIN), new ItemStack(Items.EGG), new ItemStack(Items.SUGAR_CANE),
+                    new ItemStack(Items.OAK_PLANKS, 3), new ItemStack(Items.OAK_LOG)}) camp.insert(s);
+            check(Kitchen.cook(level, v, camp).made().isEmpty(), "cocinó sin Cocina");
+            town.built.add(Upgrade.KITCHEN);
+            Kitchen.cook(level, v, camp);   // arranca el reloj
+            town.kitchenTick = level.getGameTime() - Kitchen.BATCH_TICKS * 20L;
+            Kitchen.Result r = Kitchen.cook(level, v, camp);
+            check(!r.noFuel(), "se quedó sin leña");
+            check(camp.count(Items.PUMPKIN_PIE) == 1, "no hizo la torta");
+            check(camp.count(Items.BREAD) == 4 && camp.count(Items.WHEAT) == 8, "pan " + camp.count(Items.BREAD) + ", trigo " + camp.count(Items.WHEAT));
+            check(camp.count(Items.POTATO) == 16 && camp.count(Items.BAKED_POTATO) == 14,
+                    "papas " + camp.count(Items.POTATO) + ", al horno " + camp.count(Items.BAKED_POTATO));
+            check(camp.count(Items.COOKED_BEEF) == 5 && camp.count(Items.BEEF) == 0, "la carne no se cocinó");
+            check(camp.count(Items.OAK_PLANKS) == 0 && camp.count(Items.OAK_LOG) == 0 && town.kitchenFuel == 2,
+                    "leña: tablones " + camp.count(Items.OAK_PLANKS) + ", troncos " + camp.count(Items.OAK_LOG) + ", quedan " + town.kitchenFuel);
+            camp.insert(new ItemStack(Items.COD, 5));
+            town.kitchenTick = level.getGameTime() - Kitchen.BATCH_TICKS * 20L;
+            r = Kitchen.cook(level, v, camp);
+            check(r.noFuel() && camp.count(Items.COOKED_COD) == 2 && camp.count(Items.COD) == 3, "sin leña cocinó de más: " + camp.count(Items.COOKED_COD));
+        } finally {
+            TownData.get(level).remove(v.center());
+            VillageStorehouse.forget(level, v);
+            cleanup(h, v);
+        }
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ ayudas
 
     private static void finishJob(ServerLevel level, TownData.Town town) {
@@ -188,7 +260,7 @@ public class DecorGameTests {
     }
 
     private static void openSky(GameTestHelper h) {
-        for (int x = -1; x <= 10; x++) for (int z = -1; z <= 10; z++) for (int y = 2; y <= 20; y++) {
+        for (int x = -1; x <= 17; x++) for (int z = -1; z <= 17; z++) for (int y = 2; y <= 20; y++) {
             if (h.getBlockState(new BlockPos(x, y, z)).is(Blocks.BARRIER)) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
         }
     }

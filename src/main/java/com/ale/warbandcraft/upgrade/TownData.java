@@ -134,6 +134,9 @@ public class TownData extends SavedData {
         public int ringRadius;
         /** Versión del anillo con la que se armó (2 = cerrado, con portones): las aldeas de facción de antes se completan solas. */
         public int ringVersion;
+        /** Pedido de Ale: la Cocina. Hasta cuándo cocinó (0 = todavía no) y cuántas cocciones le quedan del último combustible. */
+        public long kitchenTick;
+        public int kitchenFuel;
         @Nullable
         public Job job;
         /** Casas: si se construyen solas cuando faltan camas, y cuántas se hicieron. */
@@ -290,6 +293,8 @@ public class TownData extends SavedData {
             t.style = c.getString("Style");
             t.ringRadius = c.getInt("Ring");
             t.ringVersion = c.getInt("RingVersion");
+            t.kitchenTick = c.getLong("KitchenTick");
+            t.kitchenFuel = c.getInt("KitchenFuel");
             t.ringWalls = c.contains("RingWalls") ? c.getBoolean("RingWalls") : t.has(Upgrade.PALISADE) || t.has(Upgrade.WALL);
             CompoundTag def = c.getCompound("Defense");
             long[] dp = def.getLongArray("Positions");
@@ -355,6 +360,8 @@ public class TownData extends SavedData {
             c.putString("Style", t.style);
             c.putInt("Ring", t.ringRadius);
             c.putInt("RingVersion", t.ringVersion);
+            if (t.kitchenTick != 0) c.putLong("KitchenTick", t.kitchenTick);
+            if (t.kitchenFuel != 0) c.putInt("KitchenFuel", t.kitchenFuel);
             c.putBoolean("RingWalls", t.ringWalls);
             CompoundTag def = new CompoundTag();
             long[] dp = new long[t.defense.size()];

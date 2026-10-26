@@ -29,6 +29,8 @@ public enum Upgrade {
     CHAPEL("chapel", 16, 1, null, true, false),
     /** Pedido de Ale: caseta de mantenimiento (el trabajador de Mantenimiento embellece la aldea). Solo aldeas. */
     MAINTENANCE("maintenance", 10, 1, null, true, false),
+    /** Pedido de Ale: cocina (el cocinero cocina lo del almacén con poca madera, {@link com.ale.warbandcraft.village.Kitchen}). Solo aldeas. */
+    KITCHEN("kitchen", 12, 1, null, true, false),
     /** H19: taberna (llegan reclutas) en 3 niveles, mismo terreno. Solo aldeas. */
     TAVERN_1("tavern_1", 12, 1, null, true, false),
     TAVERN_2("tavern_2", 24, 2, TAVERN_1, true, false),
@@ -123,7 +125,7 @@ public enum Upgrade {
     /** True si es un edificio con su propio terreno (el taller usa siempre el mismo). */
     public boolean isBuilding() {
         return switch (this) {
-            case BUILDER_1, BUILDER_2, BUILDER_3, BARRACKS, SMITHY, MARKET, MARKET_2, MARKET_3, GRANARY, CHAPEL, MAINTENANCE,
+            case BUILDER_1, BUILDER_2, BUILDER_3, BARRACKS, SMITHY, MARKET, MARKET_2, MARKET_3, GRANARY, CHAPEL, MAINTENANCE, KITCHEN,
                  TAVERN_1, TAVERN_2, TAVERN_3, TRAINING_1, TRAINING_2, TRAINING_3 -> true;
             default -> false;
         };

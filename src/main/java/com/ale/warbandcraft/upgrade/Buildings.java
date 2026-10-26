@@ -53,6 +53,7 @@ final class Buildings {
             case MARKET_3 -> new int[]{6, 4};
             case BARRACKS -> new int[]{5, 5};
             case MAINTENANCE -> new int[]{3, 3};
+            case KITCHEN -> new int[]{4, 5};
             default -> null;
         };
     }
@@ -71,6 +72,7 @@ final class Buildings {
             case CHAPEL -> chapel(c);
             case GRANARY -> granary(c);
             case MAINTENANCE -> maintenance(c);
+            case KITCHEN -> kitchen(c);
             case BUILDER_1, BUILDER_2, BUILDER_3 -> builder(c, u.givesBuilder());
             default -> {
             }
@@ -476,6 +478,32 @@ final class Buildings {
         c.post(6, 1);
         c.path(3, 0);
         c.path(3, 1);
+    }
+
+    /**
+     * Cocina (pedido de Ale): sala de 7×7 con el hogar y su chimenea atrás, dos ahumadores y un horno, barriles y la mesa
+     * de amasar en el medio. El cocinero se para entre la mesa y el hogar.
+     */
+    private static void kitchen(Canvas c) {
+        c.walls(1, 1, 7, 7, 0, 4);
+        c.roof(1, 1, 7, 7, 4, false);
+        c.door(4, 1, 1, Direction.SOUTH);
+        c.path(4, 0);
+        c.hearth(4, 7, 8, 7);
+        c.set(2, 1, 6, Blocks.SMOKER.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
+        c.set(6, 1, 6, Blocks.SMOKER.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH));
+        c.set(6, 1, 5, Blocks.FURNACE.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.WEST));
+        c.set(2, 1, 5, Blocks.WATER_CAULDRON.defaultBlockState().setValue(BlockStateProperties.LEVEL_CAULDRON, 3));
+        c.barrel(2, 1, 2);
+        c.barrel(2, 1, 3);
+        c.barrel(2, 2, 2);
+        c.set(6, 1, 2, Blocks.CRAFTING_TABLE.defaultBlockState());
+        c.set(6, 1, 3, Blocks.HAY_BLOCK.defaultBlockState());
+        c.table(4, 3);
+        c.hanging(4, 3, 4);
+        c.set(0, 1, 3, Blocks.OAK_LOG.defaultBlockState());   // la leña al costado
+        c.log(0, 1, 4, Direction.Axis.Z);
+        c.log(0, 2, 4, Direction.Axis.Z);
     }
 
     /** Taller del constructor: cobertizo (1), taller con pila de troncos (2), casa de dos pisos con su cuarto (3). */
