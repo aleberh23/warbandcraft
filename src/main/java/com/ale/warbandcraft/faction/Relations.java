@@ -27,8 +27,14 @@ public class Relations extends SavedData {
     public static int CONQUERED_TARGET = -25, CONQUERED_OTHERS = -3;
     /** Cuánto se recupera por día de juego, hacia 0. */
     public static int DAILY_RECOVERY = 2;
+    /** Quemar una aldea: la facción y todas las demás. */
+    public static int BURNED_TARGET = -35, BURNED_OTHERS = -6;
+
+    private static final String TRUCES = "Truces";
 
     private final Map<UUID, Map<ResourceLocation, Integer>> opinions = new HashMap<>();
+    /** Tregua (Peace): "jugador|facción" → día del juego hasta el que esa facción no lo ataca. */
+    private final Map<String, Long> truces = new HashMap<>();
 
     public static Relations get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(Relations::load, Relations::new, FILE);
@@ -51,6 +57,27 @@ public class Relations extends SavedData {
         opinions.computeIfAbsent(player, k -> new HashMap<>()).put(faction, value);
         setDirty();
         return value;
+    }
+
+    /** True si {@code faction} tiene tregua con {@code player} hasta {@code day} o después. */
+    public boolean truce(UUID player, ResourceLocation faction, long day) {
+        return truces.getOrDefault(player + "|" + faction, -1L) >= day;
+    }
+
+    public long truceUntil(UUID player, ResourceLocation faction) {
+        return truces.getOrDefault(player + "|" + faction, -1L);
+    }
+
+    /** Tregua hasta {@code untilDay}; -1 la rompe. */
+    public void setTruce(UUID player, ResourceLocation faction, long untilDay) {
+        if (untilDay < 0) truces.remove(player + "|" + faction);
+        else truces.put(player + "|" + faction, untilDay);
+        setDirty();
+    }
+
+    /** Pone la opinión en {@code value}. */
+    public void set(UUID player, ResourceLocation faction, int value) {
+        add(player, faction, value - opinion(player, faction));
     }
 
     /** {@code target} cambia {@code targetDelta}; todas las demás facciones cargadas, {@code othersDelta}. */
@@ -78,7 +105,10 @@ public class Relations extends SavedData {
 
     public static Relations load(CompoundTag tag) {
         Relations r = new Relations();
+        CompoundTag tr = tag.getCompound(TRUCES);
+        for (String k : tr.getAllKeys()) r.truces.put(k, tr.getLong(k));
         for (String player : tag.getAllKeys()) {
+            if (player.equals(TRUCES)) continue;
             CompoundTag p = tag.getCompound(player);
             Map<ResourceLocation, Integer> m = new HashMap<>();
             for (String f : p.getAllKeys()) {
@@ -97,6 +127,9 @@ public class Relations extends SavedData {
             m.forEach((f, v) -> p.putInt(f.toString(), v));
             tag.put(player.toString(), p);
         });
+        CompoundTag tr = new CompoundTag();
+        truces.forEach(tr::putLong);
+        tag.put(TRUCES, tr);
         return tag;
     }
 }

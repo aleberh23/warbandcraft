@@ -14,6 +14,6 @@ public final class OpenRaidChoiceClientHandler {
     private OpenRaidChoiceClientHandler() {}
 
     public static void open(OpenRaidChoiceMessage msg) {
-        Minecraft.getInstance().setScreen(new RaidChoiceScreen(msg.who));
+        Minecraft.getInstance().setScreen(new RaidChoiceScreen(msg.who, msg.canBurn));
     }
 }

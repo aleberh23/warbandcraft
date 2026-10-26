@@ -11,11 +11,16 @@ Los que tenés cerca reciben la orden Batalla y pelean con la IA táctica. En un
 La aldea tiene soldados de reserva: mientras le queden, no cae.
 ---
 ## Ganar
-Cuando no queda nadie defendiendo, aparecen dos botones:
+Cuando no queda nadie defendiendo, elegís:
 
 Saquear: el botín (y el almacén de la aldea) va a tu Campamento. La aldea queda saqueada 3 días.
 
 Conquistar: la aldea es tuya (libro 14).
+
+Quemar (solo aldeas): mueren los aldeanos y queda en ruinas, abandonada para siempre. Te llevás su almacén y el equipo de los caídos. Todas las facciones te odian más.
+---
+## Para qué quemar
+Las facciones te atacan más cuanto más cerca tienen una aldea de las tuyas. Quemar la aldea enemiga de al lado te saca ese peligro de encima (libro 13).
 ---
 ## Prisioneros
 Los que se rindieron y los que quedaron en pie van presos a tu Campamento.

@@ -16,6 +16,7 @@ public class UpgradeEvents {
     public void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) return;
         Upgrades.tick(level);
+        com.ale.warbandcraft.village.Ruins.tick(level);   // aldeas quemadas
         if (level.getGameTime() % 10 == 3) com.ale.warbandcraft.upgrade.Works.tickGates(level);   // H22c: portones
     }
 

@@ -42,7 +42,8 @@ import java.util.Objects;
  * /warband aldeas → cuántas aldeas hay registradas y las 5 más cercanas.
  * /warband facciones → las facciones cargadas.
  * /warband relaciones → qué opina cada facción de vos.
- * /warband saquear | conquistar → qué hacer con una aldea que acabás de ganar (también son los botones del chat).
+ * /warband saquear | conquistar | quemar → qué hacer con una aldea que acabás de ganar (también es la pantalla de victoria).
+ * /warband paz → hacer la paz con una facción: pagar o un favor.
  * /warband uniformar → vuelve a pintar a tus soldados cercanos con los colores y el estandarte de tu facción (H6).
  * /warband barracon → el barracón de tu Campamento más cercano: cuántos hay, de qué clase y la comida (H8).
  * /warband rutas → la pantalla de Rutas y viaje, igual que la tecla J (H13).
@@ -61,6 +62,7 @@ public final class WarbandCommand {
                 .then(Commands.literal("relaciones").executes(WarbandCommand::relations))
                 .then(Commands.literal("saquear").executes(ctx -> outcome(ctx, true)))
                 .then(Commands.literal("conquistar").executes(ctx -> outcome(ctx, false)))
+                .then(Commands.literal("quemar").executes(WarbandCommand::burn))
                 .then(Commands.literal("uniformar").executes(WarbandCommand::uniform))
                 .then(Commands.literal("barracon").executes(WarbandCommand::barracks))
                 .then(Commands.literal("rutas").executes(WarbandCommand::routes))
@@ -75,6 +77,10 @@ public final class WarbandCommand {
                 .then(Commands.literal("mazmorras").executes(WarbandCommand::dungeons)   // H25
                         .then(Commands.literal("borrar").requires(s -> s.hasPermission(2)).executes(WarbandCommand::dungeonForget)))
                 .then(Commands.literal("partes").executes(WarbandCommand::reports))
+                .then(Commands.literal("paz").executes(ctx -> {   // hacer la paz: pagar o un favor
+                    com.ale.warbandcraft.faction.Peace.open(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
                 .then(WorkerReportCommand.node())   // operadores: lo que aportó cada trabajador
                 .then(Commands.literal("mercado").executes(WarbandCommand::market))
                 .then(Commands.literal("tutorial").executes(WarbandCommand::tutorialWhere)   // salón del tutorial
@@ -296,6 +302,14 @@ public final class WarbandCommand {
         RaidManager.Outcome out = sack
                 ? RaidManager.sack(player.serverLevel(), player.getUUID(), player.blockPosition())
                 : RaidManager.conquer(player.serverLevel(), player.getUUID(), player.blockPosition());
+        if (out.ok()) ctx.getSource().sendSuccess(out::message, false);
+        else ctx.getSource().sendFailure(out.message());
+        return out.ok() ? 1 : 0;
+    }
+
+    private static int burn(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        RaidManager.Outcome out = RaidManager.burn(player.serverLevel(), player.getUUID(), player.blockPosition());
         if (out.ok()) ctx.getSource().sendSuccess(out::message, false);
         else ctx.getSource().sendFailure(out.message());
         return out.ok() ? 1 : 0;

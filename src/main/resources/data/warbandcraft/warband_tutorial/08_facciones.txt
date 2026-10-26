@@ -19,6 +19,15 @@ Baja si atacás sus aldeas, a sus patrullas o ayudás a sus enemigos. Sube si pa
 ## Ver cómo estás
 /warband facciones: la lista.
 /warband relaciones: tu opinión con cada una.
+---
+## Hacer la paz
+/warband paz o el Tabernero ("Negociar la paz"). Elegís una facción en guerra y:
+
+Pagar: esmeraldas (más cuanto más te odian y por cada aldea suya que tenés), del inventario y después de tu Campamento más cercano.
+
+Un favor: limpiar una guarida o túmulo para ellos.
+---
+Con la paz, la opinión sube, se vuelven sus ejércitos en camino y sus huestes, y hay 10 días de tregua para toda tu facción. Si los atacás, la tregua se rompe.
 
 ## Guerras entre ellas
 Las facciones se declaran la guerra entre sí y mandan ejércitos (se ven en el mapa M como rombos). Si estás cerca podés ver la batalla o meterte (tecla B, libro 10).

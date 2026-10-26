@@ -313,6 +313,16 @@ public class InvasionData extends SavedData {
         setDirty();
     }
 
+    /** {@link Threat}: hasta qué día un grupo de jugadores no recibe ningún ataque (se guarda con los descansos de las huestes). */
+    public long restUntil(String group) {
+        return hostCooldown.getOrDefault("rest|" + group, -1L);
+    }
+
+    public void setRest(String group, long untilDay) {
+        hostCooldown.put("rest|" + group, untilDay);
+        setDirty();
+    }
+
     private static ListTag uuids(java.util.Set<UUID> set) {
         ListTag l = new ListTag();
         for (UUID u : set) l.add(net.minecraft.nbt.NbtUtils.createUUID(u));

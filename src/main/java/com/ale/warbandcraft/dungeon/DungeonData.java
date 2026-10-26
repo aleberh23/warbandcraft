@@ -164,7 +164,12 @@ public class DungeonData extends SavedData {
     public record Rumor(BlockPos pos, String name) {}
 
     /** Un trabajo de una facción: limpiar la mazmorra {@code dungeon} antes de {@code deadline}. */
-    public record Contract(int dungeon, ResourceLocation faction, int reward, long deadline) {}
+    /** {@code peace}: el favor de {@code faction/Peace} (limpiarla trae la paz con la facción en vez de pagar). */
+    public record Contract(int dungeon, ResourceLocation faction, int reward, long deadline, boolean peace) {
+        public Contract(int dungeon, ResourceLocation faction, int reward, long deadline) {
+            this(dungeon, faction, reward, deadline, false);
+        }
+    }
 
     private final List<Dungeon> dungeons = new ArrayList<>();
     private final List<BlockPos> attempts = new ArrayList<>();
@@ -286,7 +291,7 @@ public class DungeonData extends SavedData {
         for (Tag t : tag.getList("Contracts", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t;
             ResourceLocation f = ResourceLocation.tryParse(c.getString("Faction"));
-            if (f != null) data.contracts.put(c.getUUID("Player"), new Contract(c.getInt("Dungeon"), f, c.getInt("Reward"), c.getLong("Deadline")));
+            if (f != null) data.contracts.put(c.getUUID("Player"), new Contract(c.getInt("Dungeon"), f, c.getInt("Reward"), c.getLong("Deadline"), c.getBoolean("Peace")));
         }
         data.nextId = Math.max(1, tag.getInt("NextId"));
         return data;
@@ -317,6 +322,7 @@ public class DungeonData extends SavedData {
             t.putString("Faction", c.faction().toString());
             t.putInt("Reward", c.reward());
             t.putLong("Deadline", c.deadline());
+            if (c.peace()) t.putBoolean("Peace", true);
             cs.add(t);
         });
         tag.put("Contracts", cs);

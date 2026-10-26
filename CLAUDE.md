@@ -177,6 +177,31 @@ Saquear: botín al Campamento vía `CampRegistry.deliver`, aldea `lootedUntil` =
 impuestos diarios (`VillageEconomy.checkNewDay`). Opiniones y umbrales: constantes en `Relations`.
 Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir el mundo.
 
+## Amenazas por cercanía, quemar aldeas y hacer la paz (pedido de Ale, a probar; números sin Ale)
+
+- **Quién te ataca** (`invasion/Threat`, reemplaza a `Invasions.launchAll` y `Hosts.launchAll`): cada día, **una sola tirada por
+  grupo** (facción de Recruits, o el jugador solo: `groupKey`), solo con alguien conectado (`Hosts.factionOnline`) y fuera del
+  descanso (`InvasionData.restUntil/setRest`, en el mapa de `hostCooldown` con clave "rest|grupo"). Opciones por facción de la IA:
+  INVASION (`INVASION_CHANCE` 0,25, en guerra y con leva), HOST (`Hosts.chance` por odio, como antes), RECONQUER (en paz, aldea
+  que era suya), cada una × `proximity` (distancia de su aldea/castillo más cercano a uno tuyo: ≤`NEAR_DISTANCE` 500 = 1, ≥
+  `FAR_DISTANCE` 1500 = `REMOTE_FACTOR` 0,1). Chance del día = la mayor (no se suman); si sale, una según su peso. Va contra el
+  dueño de la aldea más cercana a sus tierras. Después: `REST_DAYS` 3 (`REST_AFTER_HOST_DAYS` 5). Con tregua, esa facción no entra.
+- **Quemar** (botón en la pantalla de victoria, solo aldeas; `/warband quemar`; `RaidManager.burn`): botín chico + equipo de los
+  caídos + su almacén, `Relations.BURNED_TARGET/OTHERS` (−35/−6). `village/Ruins` (SavedData del overworld): mueren aldeanos y
+  gólems (no los del jugador), se borran los de la facción de esa aldea (marcas `TAG_VILLAGE`, mercado, tabernero, constructor),
+  `VillageData.remove` + `TownData.remove` + `FactionClaims.release`. Bloques de a `COLUMNS_PER_TICK` (desde `UpgradeEvents`,
+  en memoria): campanas, camas, puertas, estandartes, vidrios, lana, antorchas, cultivos fuera; madera caída/oscura, troncos a
+  basalto, hojas quemadas, piedra con musgo/rajada/caída, caminos de tierra gruesa, cofres vacíos, puestos de trabajo rotos;
+  telarañas bajo techo, enredaderas, arbustos secos, calaveras, escombros; `SMOKE_FIRES` fogatas de señal que se apagan a los
+  `SMOKE_DAYS`. Radio = anillo de H12 + 6 o 48. `VillageManager.scan` no hace aldea a ≤`NO_VILLAGE_RADIUS` de una ruina. Cartel
+  "Ruinas de ..." al entrar. Prueba: `ThreatGameTests` (`burn(..., radio)` + `finishAll`, `forget` al final).
+- **Paz** (`faction/Peace`, `/warband paz` o el Tabernero: opción "Negociar la paz"; pantallas de H23 kinds `peace`/`peace_offer`):
+  Pagar `price` (base 30 + 1 por punto de odio debajo de −40 + 15 por aldea suya que tenés; inventario y después tu Campamento más
+  cercano cargado) o el **favor**: un trabajo del Tabernero (`DungeonData.Contract.peace`, `Rumors.contractTarget`) que al
+  limpiarse llama a `make` en vez de pagar. `make`: para todos los `Allies.members`, opinión a `PEACE_OPINION` (−10) si estaba
+  más abajo, tregua `TRUCE_DAYS` (10) en `Relations` (clave "jugador|facción", NBT "Truces"), invasiones MARCHING y huestes
+  CAMPED de esa facción se vuelven (leva/pozo). `RaidManager.start` llama a `breakTruce`.
+
 ## Tu facción (H6, a probar — plan en `plan-h6-tu-faccion.md`)
 
 - Nombre, colores y estandarte se editan en la pantalla de facción de **Recruits**; `faction/FactionStyle` los lee
@@ -302,8 +327,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 
 - Día nuevo (`VillageEconomy.checkNewDay` → `Invasions.onNewDay`): cada aldea/castillo de facción (sin dueño, no de
   prueba, no saqueado) junta su almacén en `VillageData.stocks` (mismo `daily`/`cap` que las tuyas, sin barril); cada
-  facción suma leva (2 × asentamientos, tope 40, `InvasionData`); las facciones en guerra con un dueño de aldeas tiran
-  35% de mandar un ejército (no en `GameTestServer`).
+  facción suma leva (2 × asentamientos, tope 40, `InvasionData`); las facciones en guerra con un dueño de aldeas pueden
+  mandar un ejército (una tirada por día y por cercanía: ver `Threat` arriba; no en `GameTestServer`).
 - Robo: `RaidManager.sack/conquer` se llevan ese almacén (`Invasions.stealStock`, antes de que `VillageData.add` lo vacíe)
   al Campamento más cercano, con una línea más en el mensaje.
 - Invasión (`InvasionData.Invasion`, una por aldea): MARCHING con cuenta de 5 min (`warn` + al entrar + Panel en rojo).
@@ -870,7 +895,7 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   la Hueste.
 - **Hueste** (`invasion/Hosts`, `InvasionData.Host`, guardada): pozo por facción (`hostPool`, 6/día por asentamiento, tope 150);
   cada día por facción en guerra con un dueño de aldeas con él o alguien de su facción conectado (`factionOnline`, pedido de Ale;
-  sin nadie conectado el plazo de una hueste acampada queda quieto; las invasiones no cambian), sin hueste ni descanso (`hostCooldown`): chance 10% + 30% × odio;
+  sin nadie conectado el plazo de una hueste acampada queda quieto; las invasiones no cambian), sin hueste ni descanso (`hostCooldown`): chance 10% + 30% × odio, × cercanía y compitiendo con las invasiones (`Threat`);
   tamaño = tu fuerza (barracones + cuarteles + sueltos) × 1,3 ±15%, entre 30 y 100, hasta lo juntado. `Host.camp` = el
   **punto de reunión** (`findField`, por el **terreno**, no el bioma, pedido de Ale: cada 10° alrededor de la aldea a
   150-360 bloques, 8 orientaciones cada uno; el rectángulo de la batalla —60 de ancho, del punto −20 a las carpas +20— medido

@@ -55,7 +55,7 @@ import java.util.UUID;
  * 1. Empieza cuando un jugador (o un soldado suyo) lastima a un soldado de guarnición.
  * 2. Toda la guarnición va contra el atacante y sus tropas. La facción lo quiere menos.
  * 3. El equipo de cada soldado de guarnición que cae se guarda para el atacante.
- * 4. Sin guarnición viva → victoria: el jugador elige saquear o conquistar (botones en el chat).
+ * 4. Sin guarnición viva → victoria: el jugador elige saquear, conquistar o quemar (pantalla; quemar, solo aldeas).
  *
  * H9: mientras dura, {@link BattleGeneral} maneja a los defensores (y a tus soldados con la orden Batalla). Los
  * rendidos ({@link Surrender}) van como prisioneros al ganador; si abandonás, los tuyos rendidos se pasan a la
@@ -147,6 +147,7 @@ public final class RaidManager {
         BattleGeneral.clear();
         com.ale.warbandcraft.invasion.Assault.clear();   // y el de las invasiones
         com.ale.warbandcraft.invasion.Hosts.clear();   // H23
+        com.ale.warbandcraft.village.Ruins.clear();   // quemas en curso
         com.ale.warbandcraft.battle.BattleLoot.clear();
         com.ale.warbandcraft.battle.tactics.TeamAI.clear();
         com.ale.warbandcraft.invasion.SiegeDefense.clear();
@@ -225,7 +226,10 @@ public final class RaidManager {
         RAIDS.put(key(level.dimension(), village.center()), raid);
         changed();
         boolean test = VillageData.get(level).isTest(village.center());
-        if (!test) Relations.get(level.getServer()).add(playerId, village.faction(), Relations.RAID_STARTED);
+        if (!test) {
+            com.ale.warbandcraft.faction.Peace.breakTruce(level, playerId, village.faction());
+            Relations.get(level.getServer()).add(playerId, village.faction(), Relations.RAID_STARTED);
+        }
 
         ServerPlayer player = onlinePlayer(level, raid);
         Faction faction = FactionManager.INSTANCE.get(village.faction());
@@ -416,7 +420,9 @@ public final class RaidManager {
         raid.choiceShown = true;
         Faction faction = FactionManager.INSTANCE.get(raid.factionId());
         Component who = faction == null ? Component.literal("?") : Component.literal(faction.ofName()).withStyle(faction.color());
-        ModNetworking.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenRaidChoiceMessage(who));
+        VillageData.Village v = VillageData.get(level).at(raid.center);
+        boolean canBurn = v != null && !v.castle();
+        ModNetworking.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new OpenRaidChoiceMessage(who, canBurn));
     }
 
     /**
@@ -548,6 +554,36 @@ public final class RaidManager {
         MutableComponent msg = Component.translatable("msg.warbandcraft.conquered", raid.fallenGear.size(), where).withStyle(ChatFormatting.AQUA);
         appendStolen(level, player, stolen, raid.center, msg);
         return new Outcome(true, msg, raid.fallenGear);
+    }
+
+    /**
+     * Quemar (pedido de Ale): la aldea deja de existir ({@link com.ale.warbandcraft.village.Ruins}): mueren los aldeanos,
+     * queda en ruinas y abandonada. Te llevás el equipo de los caídos, su almacén y algo de lo que había; todas las
+     * facciones te odian más que por saquear. Castillos no.
+     */
+    public static Outcome burn(ServerLevel level, UUID player, BlockPos near) {
+        Raid raid = wonRaidOf(level, player, near);
+        if (raid == null) return Outcome.fail(Component.translatable("msg.warbandcraft.no_won_raid"));
+        VillageData data = VillageData.get(level);
+        VillageData.Village village = data.at(raid.center);
+        if (village == null || village.castle()) return Outcome.fail(Component.translatable("msg.warbandcraft.burn.castle"));
+        RAIDS.remove(key(raid.dimension, raid.center));
+        changed();
+
+        RandomSource r = level.getRandom();
+        List<ItemStack> loot = new ArrayList<>();
+        int emeralds = 1 + raid.killed + r.nextInt(3);
+        loot.add(new ItemStack(Items.EMERALD, emeralds));
+        loot.addAll(raid.fallenGear);
+        List<ItemStack> stolen = Invasions.stealStock(level, village);
+        Relations.get(level.getServer()).affectAll(player, raid.factionId(), Relations.BURNED_TARGET, Relations.BURNED_OTHERS);
+        int dead = com.ale.warbandcraft.village.Ruins.burn(level, village);
+
+        Component where = deliverLoot(level, player, loot, raid.center);
+        MutableComponent msg = Component.translatable("msg.warbandcraft.burned", dead, emeralds, raid.fallenGear.size(), where)
+                .withStyle(ChatFormatting.DARK_RED);
+        appendStolen(level, player, stolen, raid.center, msg);
+        return new Outcome(true, msg, loot);
     }
 
     /** H15a: lo que tenía guardado la aldea va a tu Campamento; se suma una línea al mensaje. */

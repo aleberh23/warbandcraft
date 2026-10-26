@@ -9,7 +9,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Servidor → cliente: ganaste el ataque, abrí la pantalla para elegir saquear o conquistar.
+ * Servidor → cliente: ganaste el ataque, abrí la pantalla para elegir saquear, conquistar o quemar.
  *
  * {@code handle} no debe tocar {@code RaidChoiceScreen}/{@code Minecraft} directamente: esta clase la
  * carga un servidor dedicado (al registrar el canal) y esas son clases de solo-cliente. Por eso el
@@ -17,17 +17,21 @@ import java.util.function.Supplier;
  */
 public class OpenRaidChoiceMessage {
     public final Component who;
+    /** Se puede quemar (aldea, no castillo). */
+    public final boolean canBurn;
 
-    public OpenRaidChoiceMessage(Component who) {
+    public OpenRaidChoiceMessage(Component who, boolean canBurn) {
         this.who = who;
+        this.canBurn = canBurn;
     }
 
     public static void encode(OpenRaidChoiceMessage msg, FriendlyByteBuf buf) {
         buf.writeComponent(msg.who);
+        buf.writeBoolean(msg.canBurn);
     }
 
     public static OpenRaidChoiceMessage decode(FriendlyByteBuf buf) {
-        return new OpenRaidChoiceMessage(buf.readComponent());
+        return new OpenRaidChoiceMessage(buf.readComponent(), buf.readBoolean());
     }
 
     public static void handle(OpenRaidChoiceMessage msg, Supplier<NetworkEvent.Context> ctx) {

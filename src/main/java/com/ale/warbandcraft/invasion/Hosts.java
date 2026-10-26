@@ -132,7 +132,7 @@ public final class Hosts {
     // ------------------------------------------------------------------ cada día
 
     /** Día nuevo: las facciones juntan hombres, se recuerdan las huestes acampadas y quizás sale una nueva. */
-    public static void onNewDay(ServerLevel level, boolean launch) {
+    public static void onNewDay(ServerLevel level) {
         growPool(level);
         long day = level.getDayTime() / 24000L;
         for (InvasionData.Host h : InvasionData.get(level).hosts()) {
@@ -141,7 +141,6 @@ public final class Hosts {
                 warn(level, h);
             }
         }
-        if (launch) launchAll(level);
     }
 
     public static void growPool(ServerLevel level) {
@@ -149,23 +148,6 @@ public final class Hosts {
         for (Faction f : FactionManager.INSTANCE.ordered()) {
             int n = Invasions.settlements(level, f.id()).size();
             if (n > 0) data.setHostPool(f.id(), Math.min(POOL_CAP, data.hostPool(f.id()) + POOL_PER_SETTLEMENT * n));
-        }
-    }
-
-    private static void launchAll(ServerLevel level) {
-        Relations rel = Relations.get(level.getServer());
-        InvasionData data = InvasionData.get(level);
-        RandomSource random = level.getRandom();
-        long day = level.getDayTime() / 24000L;
-        List<UUID> owners = new ArrayList<>();
-        for (VillageData.Village v : VillageData.get(level).all()) if (v.isConquered() && !owners.contains(v.owner())) owners.add(v.owner());
-        for (Faction f : FactionManager.INSTANCE.ordered()) {
-            for (UUID owner : owners) {
-                if (!factionOnline(level, owner)) continue;   // pedido de Ale: solo con alguien de su facción conectado
-                if (!rel.atWar(owner, f.id()) || hostOf(level, f.id(), owner) != null || data.hostCooldown(f.id(), owner) >= day) continue;
-                if (data.hostPool(f.id()) < MIN_SIZE || random.nextDouble() >= chance(rel.opinion(owner, f.id()))) continue;
-                create(level, f.id(), owner, -1);
-            }
         }
     }
 

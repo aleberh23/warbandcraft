@@ -2,6 +2,11 @@ titulo: Invasiones y la Hueste
 cartel: Invasiones|y la Hueste
 ## Te van a atacar
 Las facciones en guerra con vos mandan ejércitos contra tus aldeas. Te avisan 5 minutos antes, el Panel (K) lo marca en rojo y sale en el mapa.
+---
+## Cuándo
+Una sola cosa por día como mucho (invasión, hueste o reconquista) para toda tu facción, y solo con alguien conectado. Después, unos días tranquilos.
+
+Pesa la cercanía: una facción con una aldea o castillo a menos de 500 bloques de los tuyos ataca seguido; a más de 1500, casi nunca. Lejos de todos, estás en paz.
 
 Si estás cerca, la batalla es de verdad: tu cuartel, tus guardias y tus soldados cercanos defienden. Si no, se resuelve sola: cuenta cuántos son, su equipo (armadura y arma), si son arqueros, el nivel de tus guardias y las defensas de la aldea.
 ---
@@ -13,7 +18,7 @@ Una facción en paz con vos puede querer recuperar una aldea que era suya (recon
 Cada invasión deja un parte: fecha y hora, quién atacó, cuántos contra cuántos y qué pasó. Si no estabas conectado, te lo muestran al entrar (a todos los de tu facción). /warband partes muestra los últimos.
 
 ## Defenderse
-Murallas, torres, cuartel y entrenamiento ayudan mucho (libros 16 y 18).
+Murallas, torres, cuartel y entrenamiento ayudan mucho (libros 16 y 18). O hacé la paz (libro 8).
 ---
 ## La Hueste
 A veces una facción junta un ejército grande y acampa cerca de tu aldea. Te avisa y en el mapa sale un círculo amarillo: "Invocá tu ejército acá".

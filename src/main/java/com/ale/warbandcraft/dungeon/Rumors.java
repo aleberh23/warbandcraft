@@ -76,6 +76,7 @@ public final class Rumors {
                 Component.translatable("gui.warbandcraft.tavern.treasure", TREASURE_COST), Component.translatable("gui.warbandcraft.tavern.work")));
         Component hire = com.ale.warbandcraft.village.TavernWorkers.menuOption(player.serverLevel(), innkeeper);   // trabajadores
         options.add(hire != null ? hire : Component.translatable("gui.warbandcraft.tavern.no_workers"));
+        options.add(Component.translatable("gui.warbandcraft.tavern.peace"));
         options.add(Component.translatable("gui.warbandcraft.tavern.bye"));
         BattleChoices.send(player, KIND_MENU, Integer.toString(innkeeper.getId()), Component.translatable("gui.warbandcraft.tavern.title"), lines,
                 options, true);
@@ -89,6 +90,7 @@ public final class Rumors {
             else if (option == 1) player.sendSystemMessage(buyTreasure(player, inn));
             else if (option == 2) offerContract(player);
             else if (option == 3) com.ale.warbandcraft.village.TavernWorkers.offer(player, inn);
+            else if (option == 4) com.ale.warbandcraft.faction.Peace.open(player);
         } else if (KIND_CONTRACT.equals(kind) && option == 0) {
             player.sendSystemMessage(accept(player, id));
         }
@@ -251,17 +253,7 @@ public final class Rumors {
             player.sendSystemMessage(Component.translatable("msg.warbandcraft.tavern.no_work").withStyle(ChatFormatting.GRAY));
             return;
         }
-        DungeonData.Dungeon target = null;
-        double bestSq = (double) RUMOR_RANGE * RUMOR_RANGE;
-        for (DungeonData.Dungeon d : data.all()) {
-            if (d.cleared() || !d.populated) continue;
-            double sq = VillageData.horizontalDistSq(d.entrance, player.blockPosition());
-            if (sq < bestSq) {
-                bestSq = sq;
-                target = d;
-            }
-        }
-        if (target == null) target = Dungeons.place(level, player.blockPosition(), NEW_MIN_DIST, NEW_MAX_DIST, DungeonData.Kind.LAIR, level.getRandom());
+        DungeonData.Dungeon target = contractTarget(level, player, true);
         if (target == null) {
             player.sendSystemMessage(Component.translatable("msg.warbandcraft.tavern.no_work").withStyle(ChatFormatting.GRAY));
             return;
@@ -273,6 +265,26 @@ public final class Rumors {
         lines.add(Component.translatable("gui.warbandcraft.contract.reward", reward, CONTRACT_OPINION, CONTRACT_DAYS));
         BattleChoices.send(player, KIND_CONTRACT, target.id + "|" + faction.id() + "|" + reward, Component.translatable("gui.warbandcraft.contract.title"),
                 lines, List.of(Component.translatable("gui.warbandcraft.contract.accept"), Component.translatable("gui.warbandcraft.contract.decline")), true);
+    }
+
+    /**
+     * La mazmorra para un trabajo: la nuestra más cercana sin limpiar a ≤{@link #RUMOR_RANGE}; si no hay y {@code create},
+     * una guarida nueva a {@link #NEW_MIN_DIST}-{@link #NEW_MAX_DIST}. Null = nada.
+     */
+    @Nullable
+    public static DungeonData.Dungeon contractTarget(ServerLevel level, ServerPlayer player, boolean create) {
+        DungeonData.Dungeon target = null;
+        double bestSq = (double) RUMOR_RANGE * RUMOR_RANGE;
+        for (DungeonData.Dungeon d : DungeonData.get(level).all()) {
+            if (d.cleared() || !d.populated) continue;
+            double sq = VillageData.horizontalDistSq(d.entrance, player.blockPosition());
+            if (sq < bestSq) {
+                bestSq = sq;
+                target = d;
+            }
+        }
+        if (target == null && create) target = Dungeons.place(level, player.blockPosition(), NEW_MIN_DIST, NEW_MAX_DIST, DungeonData.Kind.LAIR, level.getRandom());
+        return target;
     }
 
     public static int reward(DungeonData.Dungeon d) {
@@ -321,6 +333,11 @@ public final class Rumors {
     static Component contractLine(ServerLevel level, DungeonData.Contract c) {
         DungeonData.Dungeon d = DungeonData.get(level).byId(c.dungeon());
         long days = Math.max(0, (c.deadline() - level.getGameTime()) / 24000L);
+        if (c.peace()) {
+            Faction f = FactionManager.INSTANCE.get(c.faction());
+            return Component.translatable("gui.warbandcraft.contract.current_peace", d == null ? "?" : d.name, d == null ? "" : Dungeons.where(d.entrance),
+                    f == null ? c.faction().getPath() : f.name(), days).withStyle(ChatFormatting.GOLD);
+        }
         return Component.translatable("gui.warbandcraft.contract.current", d == null ? "?" : d.name, d == null ? "" : Dungeons.where(d.entrance),
                 c.reward(), days).withStyle(ChatFormatting.GOLD);
     }
@@ -331,6 +348,11 @@ public final class Rumors {
         for (Map.Entry<UUID, DungeonData.Contract> e : new ArrayList<>(data.contracts().entrySet())) {
             DungeonData.Contract c = e.getValue();
             if (c.dungeon() != d.id) continue;
+            if (c.peace()) {   // el favor: trae la paz en vez de plata
+                data.setContract(e.getKey(), null);
+                com.ale.warbandcraft.faction.Peace.make(level, e.getKey(), c.faction());
+                continue;
+            }
             Dungeons.pay(level, e.getKey(), c.reward(), d.entrance);
             Dungeons.opinion(level, e.getKey(), c.faction(), CONTRACT_OPINION);
             data.setContract(e.getKey(), null);

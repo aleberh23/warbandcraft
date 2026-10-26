@@ -51,8 +51,6 @@ public final class Invasions {
     public static double GENERAL_ARMY_CHANCE = 0.5;
     /** Autoresolución de un ejército con general: su fuerza ×, y cuánto le queda del bonus de los muros (trae zapadores). */
     public static double GENERAL_POWER = 1.3, SAPPER_WALL_FACTOR = 0.5;
-    /** Chance por día de que una facción en guerra mande un ejército. */
-    public static double DAILY_CHANCE = 0.35;
     /** Cuenta regresiva hasta que llega. */
     public static int COUNTDOWN_TICKS = 20 * 60 * 5;
     /** Pelea real: vos a esta distancia al llegar; defensores cuentan a tanto. */
@@ -87,11 +85,11 @@ public final class Invasions {
             villages.setStock(v.center(), villages.stock(v.center()).plus(VillageStock.daily(level, v)).min(VillageStock.cap(level, v)));
         }
         growLevy(level);
+        Hosts.onNewDay(level);   // H23: huestes
         if (launch) {
-            launchAll(level);
+            Threat.onNewDay(level);   // invasiones, huestes y reconquistas: por cercanía, una por día como mucho
             AiWars.onNewDay(level);   // H15b: guerras entre facciones
         }
-        Hosts.onNewDay(level, launch);   // H23: huestes
     }
 
     /** Cada facción suma {@link #LEVY_PER_SETTLEMENT} por aldea/castillo suyo, hasta {@link #LEVY_CAP}. */
@@ -111,26 +109,6 @@ public final class Invasions {
             if (!v.isConquered() && v.faction().equals(faction) && !data.isTest(v.center())) out.add(v);
         }
         return out;
-    }
-
-    private static void launchAll(ServerLevel level) {
-        Relations rel = Relations.get(level.getServer());
-        RandomSource random = level.getRandom();
-        InvasionData data = InvasionData.get(level);
-        List<UUID> owners = new ArrayList<>();
-        for (VillageData.Village v : VillageData.get(level).all()) if (v.isConquered() && !owners.contains(v.owner())) owners.add(v.owner());
-        for (Faction f : FactionManager.INSTANCE.ordered()) {
-            for (UUID owner : owners) {
-                if (!rel.atWar(owner, f.id())) {   // en paz: quizás quiera recuperar lo suyo
-                    if (data.levy(f.id()) >= MIN_ARMY && random.nextDouble() < RECONQUER_CHANCE) reconquer(level, owner, f.id(), -1, COUNTDOWN_TICKS);
-                    continue;
-                }
-                if (!rel.atWar(owner, f.id()) || data.levy(f.id()) < MIN_ARMY) continue;
-                if (random.nextDouble() >= DAILY_CHANCE) continue;
-                boolean army = data.levy(f.id()) >= GENERAL_ARMY_LEVY && random.nextDouble() < GENERAL_ARMY_CHANCE;
-                launch(level, owner, f.id(), -1, COUNTDOWN_TICKS, null, army ? InvasionData.Kind.ARMY : InvasionData.Kind.RAID);
-            }
-        }
     }
 
     /** Las aldeas/castillos de {@code owner} que antes eran de {@code faction}. */

@@ -82,6 +82,7 @@ public final class VillageManager {
         for (BlockPos bell : bells) {
             if (!level.isPositionEntityTicking(bell)) continue;      // la aldea todavía no está cargada del todo
             if (data.nearest(bell, MERGE_RADIUS) != null) continue;   // ya conocida
+            if (Ruins.get(level).near(bell, Ruins.NO_VILLAGE_RADIUS) != null) continue;   // una aldea quemada: queda abandonada
             if (com.ale.warbandcraft.dungeon.Compat.foreignStructureAt(level, bell)) continue;   // H25: campana de una mazmorra, no aldea
             Faction faction = factionFor.apply(level.getBiome(bell));
             if (faction == null) continue;                            // bioma que no reclama ninguna facción
