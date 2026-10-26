@@ -19,7 +19,7 @@ import java.util.function.Predicate;
  * necesita para arrancar (semillas, retoños, trigo) y el cofre de la zona. Sin eso, la zona no se crea.
  */
 public final class ZoneCosts {
-    public static int SEEDS = 8, SAPLINGS = 4, WHEAT = 8;
+    public static int SAPLINGS = 4, WHEAT = 8;
 
     private ZoneCosts() {}
 
@@ -34,8 +34,7 @@ public final class ZoneCosts {
 
     public static List<Need> needs(VillageManagement.Job job) {
         return switch (job) {
-            case FARMER -> List.of(new Need("hoe", s -> s.is(ItemTags.HOES), 1, true),
-                    new Need("seeds", s -> s.is(ItemTags.VILLAGER_PLANTABLE_SEEDS), SEEDS, false), CHEST);
+            case FARMER -> List.of();   // pedido de Ale: el granjero se arregla solo (azada y semillas gratis, ver WorkerSupply)
             case LUMBERJACK -> List.of(new Need("axe", s -> s.is(ItemTags.AXES), 1, true),
                     new Need("saplings", s -> s.is(ItemTags.SAPLINGS), SAPLINGS, false), CHEST);
             case MINER -> List.of(new Need("pickaxe", s -> s.is(ItemTags.PICKAXES), 1, true), CHEST);

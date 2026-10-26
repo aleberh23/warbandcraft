@@ -391,7 +391,7 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   gallinas, bosque/pantano cerdos, resto vacas) y aparecen `PEN_START_ANIMALS` (2). Auto del corral (y de la huerta si no hay
   una hecha) = terreno libre de 9×9 cerca del almacén (`WorkZones.freeSite`).
 - Costo de una zona (`village/ZoneCosts`, sale del almacén de la aldea; si falta algo no se crea y avisa "Falta en el
-  almacén: ..."): granjero azada + 8 semillas + cofre; leñador hacha + 4 retoños + cofre; minero pico + cofre; pescador
+  almacén: ..."): granjero nada (pedido de Ale: azada y semillas le aparecen gratis, `WorkerSupply.farmerSupply`; sin cofre de zona); leñador hacha + 4 retoños + cofre; minero pico + cofre; pescador
   caña + cofre; ganadero 8 trigo + cofre; cocinero nada; herrero 1 yunque si hay que poner uno nuevo. La herramienta va
   al trabajador; semillas/retoños/trigo, al cofre de la zona.
 - Cofre de zona: al crear una zona (menos cocina) se pone un cofre pegado, del lado del almacén y adentro del territorio, con
@@ -629,7 +629,7 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 - Pestaña Cofre → "Trabajador" (`CampWorkerMessage` → `CampWorkers.open`, kind `camp_worker`, id "pos:estado"): Herrero (yunque a ≤24,
   `WorkZones.standNextTo`, `SmithEntity.setCamp/setWorkplace`) o Granjero (`WorkZones.campFarmSite`: huerta hecha o el 9×9 de tierra más parejo (≤`CAMP_FARM_SLOPE` 3)
   a ≤`CAMP_FARM_RANGE` (40) del Campamento, aunque quede fuera de su jurisdicción (pedido de Ale), probando cada esquina bloque por bloque;
-  `campFarm` cobra azada + 8 semillas, sin cofre). Ambos piden cama libre a ≤24 (`PoiManager.take` + `WorkerSupply.homeAt`).
+  `campFarm` no cobra nada, sin cofre). Ambos piden cama libre a ≤24 (`PoiManager.take` + `WorkerSupply.homeAt`).
   Después `serve`: `WorkerSupply.supply/feed/collect` con ese Campamento, vuelve si se aleja >`LEASH`. Despedir libera cama y zona.
   `VillageManagement.workers` no los cuenta (no los atiende una aldea). Prueba: `CampWorkerGameTests`.
 - Producción sin cargar (pedido de Ale: "tiene que ser igual que en las aldeas"): `CampWorkers.paper` en cada `serve` usa

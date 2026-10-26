@@ -13,7 +13,7 @@ Pestaña Trabajo. Cada trabajador necesita su zona dentro del territorio:
 - Auto: la busca sola.
 - Borrar.
 ---
-Cada zona cuesta algo del almacén: azada y semillas (granjero), hacha y retoños (leñador), pico (minero), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén. El agua de la huerta se pone sola (no hace falta balde).
+Cada zona cuesta algo del almacén (la del granjero no: él se arregla solo, sin pedir azada ni semillas): hacha y retoños (leñador), pico (minero), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén. El agua de la huerta se pone sola (no hace falta balde).
 
 El corral sin animales trae 2 del bioma.
 ---
@@ -32,7 +32,7 @@ Se contrata hablándole al Tabernero de cualquier taberna (10 esmeraldas). Llega
 ---
 Al llegar espera quieto. Pestaña Cofre del Campamento, botón Trabajador:
 - Herrero: necesita un yunque a 24 bloques o menos.
-- Granjero: la huerta la elige él (una hecha, o el terreno de 9×9 más parejo a 40 bloques o menos del Campamento, aunque sea afuera). Pide una azada y 8 semillas del almacén.
+- Granjero: la huerta la elige él (una hecha, o el terreno de 9×9 más parejo a 40 bloques o menos del Campamento, aunque sea afuera). No pide nada: la azada y las semillas las pone él.
 - Organizador: ordena los cofres vinculados (ver abajo).
 ---
 Todos necesitan una cama libre a 24 bloques o menos, y comen del almacén. Lo que juntan va al almacén, y siguen produciendo aunque estés lejos (como en las aldeas). Si fundás una aldea en ese Campamento, pasan a ser pobladores de ella.

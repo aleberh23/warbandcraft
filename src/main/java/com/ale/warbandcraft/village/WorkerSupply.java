@@ -271,6 +271,7 @@ public final class WorkerSupply {
 
     /** Lo que le falta (su equipo y lo que pidió Workers), del almacén a su mochila. Lo que no hay queda anotado. */
     public static void supply(CampBlockEntity camp, AbstractWorkerEntity w) {
+        if (WorkZones.jobOf(w) == VillageManagement.Job.FARMER) farmerSupply(w);
         MutableComponent missing = null;
         for (Kit k : kit(w)) {
             int lack = k.count - w.countMatchingItems(k.match);
@@ -288,6 +289,26 @@ public final class WorkerSupply {
         }
         if (missing != null) note(w, Kind.MISSING, missing);
         else if (noteOf(w, Kind.MISSING) != null) NOTES.remove(w.getUUID());
+    }
+
+    /**
+     * Pedido de Ale ("me pide semillas por día; que se encargue él"): el granjero no pide nada al almacén. La azada y las
+     * semillas que le falten (su equipo y lo que pidió Workers) le aparecen gratis en la mochila.
+     */
+    private static void farmerSupply(AbstractWorkerEntity w) {
+        Item seed = w.getCurrentWorkArea() instanceof CropArea c && !c.getSeedStack().isEmpty() ? c.getSeedStack().getItem() : Items.WHEAT_SEEDS;
+        if (w.countMatchingItems(s -> s.is(ItemTags.HOES)) == 0) w.addItem(new ItemStack(Items.STONE_HOE));
+        int want = 32;
+        for (NeededItem n : w.neededItems) if (n.matcher.test(new ItemStack(seed))) want = Math.max(want, n.count);
+        int lack = want - w.countMatchingItems(s -> s.is(seed));
+        while (lack > 0) {
+            int k = Math.min(lack, 64);
+            ItemStack back = w.addItem(new ItemStack(seed, k));
+            if (!back.isEmpty()) break;   // mochila llena
+            lack -= k;
+        }
+        ItemStack hoe = new ItemStack(Items.STONE_HOE), seeds = new ItemStack(seed);
+        w.neededItems.removeIf(n -> n.matcher.test(hoe) || n.matcher.test(seeds) || n.matcher.test(new ItemStack(Items.WATER_BUCKET)));
     }
 
     private static MutableComponent add(@Nullable MutableComponent list, int count, @Nullable Item item) {

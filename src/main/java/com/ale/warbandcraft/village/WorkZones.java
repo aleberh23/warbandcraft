@@ -467,7 +467,7 @@ public final class WorkZones {
         return ZoneCosts.needs(VillageManagement.Job.FARMER).stream().filter(n -> !ZoneCosts.isChest(n)).toList();
     }
 
-    /** Crea la huerta {@code farm} del granjero {@code w} de un Campamento común y cobra azada + semillas (a su mochila). */
+    /** Crea la huerta {@code farm} del granjero {@code w} de un Campamento común (gratis: la azada y las semillas las pone {@link WorkerSupply}). */
     public static Component campFarm(ServerPlayer player, com.ale.warbandcraft.camp.CampBlockEntity camp, AbstractWorkerEntity w, BoundingBox farm) {
         ServerLevel level = player.serverLevel();
         List<ZoneCosts.Need> needs = campFarmNeeds();
