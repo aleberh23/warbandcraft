@@ -3,6 +3,7 @@ package com.ale.warbandcraft.faction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Compañeros de facción (pedido de Ale: "todos los campamentos, aldeas y soldados de una facción tienen que ser manejables por
@@ -32,11 +34,16 @@ public final class Allies {
     private static final Map<UUID, String> FACTION = new HashMap<>();
     private static final Map<UUID, Set<UUID>> MEMBERS = new HashMap<>();
     private static long cachedAt = Long.MIN_VALUE;
+    /** Nombres ya buscados (servidor online), y los que se están buscando o no se encontraron. */
+    private static final Map<String, UUID> LOOKED_UP = new ConcurrentHashMap<>();
+    private static final Set<String> LOOKING = ConcurrentHashMap.newKeySet();
 
     public static void setServer(@Nullable MinecraftServer s) {
         server = s;
         FACTION.clear();
         MEMBERS.clear();
+        LOOKED_UP.clear();
+        LOOKING.clear();
     }
 
     private static void expire() {
@@ -108,17 +115,24 @@ public final class Allies {
         return out;
     }
 
+    /**
+     * Nombre → UUID sin frenar el servidor. {@code GameProfileCache.get(nombre)} le pregunta a Mojang por internet (con
+     * reintentos) cada nombre que no conoce, en el hilo del servidor: con los soldados de los equipos eran segundos de lag.
+     * Offline el UUID sale del nombre; online, lo que no se sabe se busca aparte ({@code getAsync}) y hasta entonces no cuenta.
+     */
     @Nullable
     private static UUID uuidOf(String name) {
         ServerPlayer p = server.getPlayerList().getPlayerByName(name);
         if (p != null) return p.getUUID();
-        if (server.getProfileCache() != null) {
-            UUID id = server.getProfileCache().get(name).map(com.mojang.authlib.GameProfile::getId).orElse(null);
-            if (id != null) return id;
-        }
         // Equipos de Recruits también tienen soldados (por UUID en texto): esos no son jugadores
         if (name.length() == 36 && name.indexOf('-') > 0) return null;
-        return server.usesAuthentication() ? null : UUIDUtil.createOfflinePlayerUUID(name);
+        if (!server.usesAuthentication()) return UUIDUtil.createOfflinePlayerUUID(name);
+        UUID known = LOOKED_UP.get(name);
+        if (known != null) return known;
+        GameProfileCache cache = server.getProfileCache();
+        if (cache != null && LOOKING.add(name))
+            cache.getAsync(name, profile -> profile.ifPresent(g -> LOOKED_UP.put(name, g.getId())));
+        return null;
     }
 
     // ---------------------------------------------------------------- también en el cliente
