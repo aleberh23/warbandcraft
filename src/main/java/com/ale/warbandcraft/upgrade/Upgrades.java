@@ -382,6 +382,7 @@ public final class Upgrades {
 
     /** Arranca la obra con estos bloques (también lo usan las pruebas). */
     public static void start(ServerLevel level, TownData.Town town, Upgrade u, Blueprints.Plan plan) {
+        Heraldry.tint(level, town, plan);   // vidrios y estandartes del color de la facción
         int n = plan.size();
         long[] positions = new long[n];
         int[] states = new int[n];
@@ -498,7 +499,8 @@ public final class Upgrades {
             t.cutColumns.clear();   // anillo nuevo: lo cortado a mano vuelve a ser muralla
             t.ringVersion = com.ale.warbandcraft.village.FactionTowns.RING_VERSION;
         }
-        if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL || job.upgrade == Upgrade.REPAIR) ringGates(t, job);
+        if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL || job.upgrade == Upgrade.REPAIR
+                || job.upgrade == Upgrade.STONE_WALLS) ringGates(t, job);
         Works.finish(t, job);   // H22: muralla dibujada, portones, torres, demoler
         if (job.upgrade.defenseLevel() > 0 || job.upgrade == Upgrade.DEMOLISH) WallRepair.forget(t.center);
         if (job.upgrade.givesBuilder() > 0) {   // un taller más alto reemplaza al anterior
@@ -507,6 +509,7 @@ public final class Upgrades {
         removeBuilder(level, job);
         t.job = null;
         TownData.get(level).changed();
+        Heraldry.refresh(level, t, true);   // los dibujos de los estandartes nuevos
         VillageData.Village v = VillageData.get(level).at(t.center);
         if (v != null && v.owner() != null) {
             ServerPlayer p = level.getServer().getPlayerList().getPlayer(v.owner());

@@ -18,7 +18,7 @@ public final class Soldiers {
     /** Un trabajador de Villager Workers (se reconoce por el mod de su tipo, sin tocar clases de Workers). */
     public static boolean isWorker(Entity entity) {
         ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
-        if (entity instanceof com.ale.warbandcraft.worker.SmithEntity) return true;   // H16: nuestro Herrero
+        if (entity instanceof com.talhanation.workers.entities.AbstractWorkerEntity) return true;   // H16: los nuestros (Herrero, Mantenimiento...)
         return id != null && WORKERS_MOD.equals(id.getNamespace());
     }
 

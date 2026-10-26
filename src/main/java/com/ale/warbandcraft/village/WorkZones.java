@@ -86,6 +86,7 @@ public final class WorkZones {
         if (e instanceof com.ale.warbandcraft.worker.InnkeeperEntity) return VillageManagement.Job.INNKEEPER;
         if (e instanceof com.ale.warbandcraft.worker.MerchantEntity) return VillageManagement.Job.MERCHANT;
         if (e instanceof com.ale.warbandcraft.worker.OrganizerEntity) return VillageManagement.Job.ORGANIZER;
+        if (e instanceof com.ale.warbandcraft.worker.MaintainerEntity) return VillageManagement.Job.MAINTENANCE;
         if (e instanceof FarmerEntity) return VillageManagement.Job.FARMER;
         if (e instanceof LumberjackEntity) return VillageManagement.Job.LUMBERJACK;
         if (e instanceof MinerEntity) return VillageManagement.Job.MINER;
@@ -102,7 +103,8 @@ public final class WorkZones {
         if (a != null && a.isAlive()) return a;
         VillageManagement.Job job = jobOf(w);
         if (job == null || job == VillageManagement.Job.SMITH || job == VillageManagement.Job.INNKEEPER
-                || job == VillageManagement.Job.MERCHANT || job == VillageManagement.Job.ORGANIZER) return null;
+                || job == VillageManagement.Job.MERCHANT || job == VillageManagement.Job.ORGANIZER
+                || job == VillageManagement.Job.MAINTENANCE) return null;
         List<AbstractWorkAreaEntity> near = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, w.getBoundingBox().inflate(REACH, 48, REACH),
                 x -> x.isAlive() && jobOfArea(x) == job && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), x.getPlayerUUID()));
         near.sort(Comparator.comparingDouble(x -> x.distanceToSqr(w)));
@@ -114,6 +116,7 @@ public final class WorkZones {
         if (w instanceof com.ale.warbandcraft.worker.InnkeeperEntity k) return k.getWorkplace() != null;
         if (w instanceof com.ale.warbandcraft.worker.MerchantEntity m) return m.getWorkplace() != null;
         if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity o) return o.getCamp() != null;
+        if (w instanceof com.ale.warbandcraft.worker.MaintainerEntity m) return m.getTown() != null;
         return w instanceof SmithEntity s ? s.getWorkplace() != null : w.getCurrentWorkArea() != null;
     }
 
@@ -131,6 +134,7 @@ public final class WorkZones {
             case INNKEEPER -> 0xFFB8860B;
             case MERCHANT -> 0xFF2ECC71;
             case ORGANIZER -> 0xFF8E7CC3;
+            case MAINTENANCE -> 0xFFC9A66B;
         };
     }
 
@@ -250,6 +254,7 @@ public final class WorkZones {
         VillageManagement.Job job = w == null ? null : jobOf(w);
         if (job == null) return error("no_worker");
         if (job == VillageManagement.Job.ORGANIZER) return organizerCamp(level, v, w);   // no tiene zona: el almacén
+        if (job == VillageManagement.Job.MAINTENANCE) return maintenanceTown(v, w);   // trabaja en toda la aldea
         int ax = Math.min(x0, x1), bx = Math.max(x0, x1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
         BlockPos mid = new BlockPos((ax + bx) / 2, v.center().getY(), (az + bz) / 2);
         boolean outpost = false;
@@ -300,6 +305,9 @@ public final class WorkZones {
         switch (job) {
             case ORGANIZER -> {
                 return organizerCamp(level, v, w);
+            }
+            case MAINTENANCE -> {
+                return maintenanceTown(v, w);
             }
             case MERCHANT -> {
                 BlockPos place = com.ale.warbandcraft.market.Market.workplace(level, v);
@@ -859,6 +867,12 @@ public final class WorkZones {
         if (camp == null) return Component.translatable("msg.warbandcraft.manage.no_camp").withStyle(ChatFormatting.RED);
         ((com.ale.warbandcraft.worker.OrganizerEntity) w).setCamp(camp.getBlockPos());
         return Component.translatable("msg.warbandcraft.organizer.set").withStyle(ChatFormatting.GREEN);
+    }
+
+    /** El de Mantenimiento trabaja en toda la aldea (no tiene zona). */
+    private static Component maintenanceTown(VillageData.Village v, AbstractWorkerEntity w) {
+        ((com.ale.warbandcraft.worker.MaintainerEntity) w).setTown(v.center());
+        return Component.translatable("msg.warbandcraft.maintenance.set").withStyle(ChatFormatting.GREEN);
     }
 
     /** Los cofres de las zonas de trabajo cerca de un Campamento (el Organizador no los toca). */

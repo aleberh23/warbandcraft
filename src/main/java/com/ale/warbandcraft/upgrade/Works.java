@@ -66,6 +66,7 @@ public final class Works {
         String[] p = text.split(":", 3);
         if (p.length < 2) return null;
         if (p[0].equals("demolish")) return Upgrade.DEMOLISH;
+        if (p[0].equals("stoneup")) return p[1].equals("towers") ? Upgrade.STONE_TOWERS : p[1].equals("walls") ? Upgrade.STONE_WALLS : null;
         int lvl = p[1].equals("2") ? 2 : p[1].equals("1") ? 1 : p[1].equals("0") ? 0 : -1;
         return switch (p[0]) {
             case "wall" -> lvl == 1 ? Upgrade.WALL_1 : lvl == 2 ? Upgrade.WALL_2 : null;
@@ -93,6 +94,8 @@ public final class Works {
                             Integer.parseInt(n[3]), Integer.parseInt(n[4]));
                 }
                 case DEMOLISH -> demolish(level, town, text.substring("demolish:".length()));
+                case STONE_WALLS -> stoneWalls(level, v, town);
+                case STONE_TOWERS -> stoneTowers(level, town);
                 default -> null;
             };
         } catch (RuntimeException e) {
@@ -154,17 +157,24 @@ public final class Works {
         BlockState body = stone ? Blocks.STONE_BRICKS.defaultBlockState() : log;
         int n = cols.size();
         boolean[] path = new boolean[n];
+        int paths = 0;
         for (int i = 0; i < n; i++) {
             Integer g = Blueprints.groundY(level, cols.get(i)[0], cols.get(i)[1], hint);
-            path[i] = g != null && level.getBlockState(new BlockPos(cols.get(i)[0], g, cols.get(i)[1])).is(Blocks.DIRT_PATH);
+            path[i] = g != null && Blueprints.pathAt(level, cols.get(i)[0], g, cols.get(i)[1]);
+            if (path[i]) paths++;
         }
-        Blueprints.Plan plan = new Blueprints.Plan();
-        int gaps = 0, paths = 0;
+        boolean[] gate = new boolean[n];   // caminos: portón de 3 por lo menos (pedido de Ale)
         for (int i = 0; i < n; i++) {
-            if (path[i] || i > 0 && path[i - 1] || i + 1 < n && path[i + 1]) {   // caminos: hueco de 3 para un portón
-                paths++;
-                continue;
-            }
+            if (!path[i]) continue;
+            gate[i] = true;
+            if (i > 0) gate[i - 1] = true;
+            if (i + 1 < n) gate[i + 1] = true;
+        }
+        boolean along = paths * 2 > n;   // una muralla que va por el camino: sin portones raros
+        Blueprints.Plan plan = new Blueprints.Plan();
+        int gaps = 0, gates = 0;
+        for (int i = 0; i < n; i++) {
+            if (gate[i]) continue;
             int x = cols.get(i)[0], z = cols.get(i)[1];
             Integer g = Blueprints.wallBase(level, x, z, stone ? height + 1 : height, hint);
             if (g == null) {   // agua o casa
@@ -174,10 +184,20 @@ public final class Works {
             for (int dy = 1; dy <= height; dy++) plan.put(new BlockPos(x, g + dy, z), body);
             if (stone && i % 2 == 0) plan.put(new BlockPos(x, g + height + 1, z), Blocks.STONE_BRICK_WALL.defaultBlockState());
         }
+        if (!along) {
+            for (int i = 0; i < n; i++) {
+                if (!gate[i] || i > 0 && gate[i - 1]) continue;   // el comienzo de un tramo de camino
+                List<int[]> run = new ArrayList<>();
+                for (int k = i; k < n && gate[k]; k++) run.add(cols.get(k));
+                Blueprints.gateRun(level, plan, run, stone, hint);
+                gates++;
+            }
+        }
         if (plan.size() == 0) return Spec.no(u, "No hay dónde poner muralla ahí");
         int per = stone ? WALL_2_COLUMNS_PER_EMERALD : WALL_1_COLUMNS_PER_EMERALD;
         int emeralds = Math.max(WALL_MIN_EMERALDS, (n + per - 1) / per);
-        String note = n + " bloques de largo" + (paths > 0 ? " · " + paths + " en caminos quedan abiertos (poné un portón)" : "")
+        String note = n + " bloques de largo" + (gates > 0 ? " · " + gates + " portón(es) en los caminos" : "")
+                + (along && paths > 0 ? " · va por el camino: queda abierta ahí" : "")
                 + (gaps > 0 ? " · " + gaps + " huecos (agua o casas)" : "");
         return new Spec(u, plan, null, emeralds, "", note);
     }
@@ -269,6 +289,58 @@ public final class Works {
         return new Spec(u, plan, null, u.cost, "", "Se abre solo para los tuyos (soldados, aldeanos, trabajadores)");
     }
 
+    /** Dos portones de camino más cerca que esto son el mismo cruce. */
+    public static int ROAD_GATE_SPACING = 5;
+
+    /**
+     * Pedido de Ale: un camino de H14 que cruza una muralla (dibujada o el anillo de H12) lleva un portón ahí, del material
+     * de la muralla. {@code centers} = columnas del centro del camino. Devuelve los bloques de los portones (van al final
+     * de la obra del camino: la muralla no se abre antes) y los deja anotados en la aldea (abren solos, se reparan).
+     */
+    public static Blueprints.Plan roadGates(ServerLevel level, List<int[]> centers) {
+        Blueprints.Plan out = new Blueprints.Plan();
+        if (centers.isEmpty()) return out;
+        List<int[]> done = new ArrayList<>();
+        for (TownData.Town t : TownData.get(level).all()) {
+            if (t.defense.isEmpty() && !t.ringWalls) continue;
+            VillageData.Village v = VillageData.get(level).at(t.center);
+            if (v == null) continue;
+            Set<Long> walls = wallColumns(t);
+            int hint = t.center.getY();
+            double far = (Math.max(t.ringRadius, radius(t)) + 24.0);
+            for (int[] c : centers) {
+                double dx = c[0] - t.center.getX(), dz = c[1] - t.center.getZ();
+                if (dx * dx + dz * dz > far * far) continue;
+                boolean drawn = walls.contains(BlockPos.asLong(c[0], 0, c[1])) && !inTower(t, c[0], c[1]);
+                boolean ring = !drawn && t.ringWalls && !t.cutColumns.contains(BlockPos.asLong(c[0], 0, c[1]))
+                        && Math.abs(Math.sqrt(dx * dx + dz * dz) - t.ringRadius) <= Blueprints.RING_DETOUR_OUT + 2
+                        && ringWallAt(level, c[0], c[1], hint);
+                if (!drawn && !ring) continue;
+                boolean close = false;
+                for (int[] d : done) if (Math.abs(d[0] - c[0]) + Math.abs(d[1] - c[1]) < ROAD_GATE_SPACING) close = true;
+                if (close) continue;
+                Integer g = Blueprints.groundY(level, c[0], c[1], hint);
+                boolean stone = g != null && level.getBlockState(new BlockPos(c[0], g + 1, c[1])).is(Blocks.STONE_BRICKS);
+                Spec s = gate(level, v, t, stone ? Upgrade.GATE_2 : Upgrade.GATE_1, c);
+                if (s.plan() == null) continue;
+                done.add(c);
+                for (Map.Entry<BlockPos, BlockState> e : s.plan().blocks.entrySet()) {
+                    out.put(e.getKey(), e.getValue());
+                    BlockPos p = e.getKey();
+                    if (walls.contains(BlockPos.asLong(p.getX(), 0, p.getZ()))) t.defense.put(p.asLong(), e.getValue());
+                }
+                for (BlockPos gp : Blueprints.gatesOf(s.plan())) if (!t.gates.contains(gp)) t.gates.add(gp);
+                TownData.get(level).changed();
+            }
+        }
+        return out;
+    }
+
+    private static boolean inTower(TownData.Town t, int x, int z) {
+        for (BlockPos tw : t.towers) if (Math.abs(x - tw.getX()) <= 2 && Math.abs(z - tw.getZ()) <= 2) return true;
+        return false;
+    }
+
     // ------------------------------------------------------------------ torre
 
     static Spec tower(ServerLevel level, VillageData.Village v, Upgrade u, int[] click) {
@@ -279,6 +351,89 @@ public final class Works {
         if (floor == null) return Spec.no(u, "La torre no entra ahí (casa, agua o más de 3 de desnivel)");
         return new Spec(u, plan, null, u.cost, "tower:" + new BlockPos(click[0], floor, click[1]).asLong(),
                 "Arriba van los arqueros del cuartel");
+    }
+
+    // ------------------------------------------------------------------ de madera a piedra
+
+    /** El bloque de piedra que reemplaza a uno de madera de la empalizada/torre (null = queda como está). */
+    @Nullable
+    private static BlockState stoneOf(BlockState s, boolean top) {
+        if (s.is(Blocks.SPRUCE_LOG)) return (top ? Blocks.STONE_BRICK_WALL : Blocks.STONE_BRICKS).defaultBlockState();
+        if (s.is(Blocks.SPRUCE_PLANKS)) return Blocks.STONE_BRICKS.defaultBlockState();
+        if (s.is(Blocks.SPRUCE_FENCE_GATE)) {
+            return Blocks.DARK_OAK_FENCE_GATE.defaultBlockState().setValue(FenceGateBlock.FACING, s.getValue(FenceGateBlock.FACING))
+                    .setValue(FenceGateBlock.OPEN, false);
+        }
+        return null;
+    }
+
+    /**
+     * Pedido de Ale: toda la empalizada (la dibujada y el anillo de H12) pasa a muralla de piedra de una vez: cada tronco
+     * a ladrillo, una hilera más arriba con almenas, y los portones de madera a los de piedra. Las torres no (eso es
+     * {@link #stoneTowers}).
+     */
+    static Spec stoneWalls(ServerLevel level, VillageData.Village v, TownData.Town t) {
+        Upgrade u = Upgrade.STONE_WALLS;
+        Blueprints.Plan plan = new Blueprints.Plan();
+        Map<Long, List<BlockPos>> byColumn = new java.util.LinkedHashMap<>();
+        for (long l : t.defense.keySet()) {
+            BlockPos p = BlockPos.of(l);
+            if (inTower(t, p.getX(), p.getZ())) continue;
+            byColumn.computeIfAbsent(BlockPos.asLong(p.getX(), 0, p.getZ()), k -> new ArrayList<>()).add(p);
+        }
+        int columns = 0;
+        for (List<BlockPos> col : byColumn.values()) {
+            boolean wood = false;
+            int top = Integer.MIN_VALUE;
+            for (BlockPos p : col) {
+                BlockState s = t.defense.get(p.asLong());
+                if (s.is(Blocks.SPRUCE_LOG) || s.is(Blocks.SPRUCE_FENCE_GATE)) wood = true;
+                top = Math.max(top, p.getY());
+            }
+            if (!wood) continue;
+            columns++;
+            for (BlockPos p : col) {
+                BlockState n = stoneOf(t.defense.get(p.asLong()), false);
+                if (n != null) plan.put(p, n);
+            }
+            BlockPos above = new BlockPos(col.get(0).getX(), top + 1, col.get(0).getZ());
+            if (Blueprints.clearable(level.getBlockState(above)) && level.getBlockEntity(above) == null) {
+                plan.put(above, Blocks.STONE_BRICKS.defaultBlockState());
+                if ((above.getX() + above.getZ()) % 2 == 0 && Blueprints.clearable(level.getBlockState(above.above()))) {
+                    plan.put(above.above(), Blocks.STONE_BRICK_WALL.defaultBlockState());
+                }
+            }
+        }
+        boolean ring = t.ringWalls && t.has(Upgrade.PALISADE) && !t.has(Upgrade.WALL) && t.ringRadius > 0;
+        if (ring) {
+            Blueprints.Plan r = Blueprints.ring(level, v.center(), t.ringRadius, true);
+            Set<Long> ringCols = new HashSet<>();
+            for (BlockPos p : r.blocks.keySet()) ringCols.add(BlockPos.asLong(p.getX(), 0, p.getZ()));
+            columns += ringCols.size();
+            r.blocks.forEach(plan::put);
+        }
+        if (plan.size() == 0) return Spec.no(u, "No hay empalizada de madera para pasar a piedra");
+        int emeralds = Math.max(WALL_MIN_EMERALDS, (columns + WALL_2_COLUMNS_PER_EMERALD - 1) / WALL_2_COLUMNS_PER_EMERALD);
+        return new Spec(u, plan, null, emeralds, "", columns + " columnas pasan a piedra" + (ring ? " (con el anillo)" : ""));
+    }
+
+    /** Pedido de Ale: todas las torres de madera pasan a piedra de una vez (troncos y techo a ladrillo, almenas de piedra). */
+    static Spec stoneTowers(ServerLevel level, TownData.Town t) {
+        Upgrade u = Upgrade.STONE_TOWERS;
+        Blueprints.Plan plan = new Blueprints.Plan();
+        int towers = 0;
+        for (BlockPos c : t.towers) {
+            if (!level.getBlockState(c.offset(2, 1, 2)).is(Blocks.SPRUCE_LOG)) continue;   // ya es de piedra
+            towers++;
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) for (int dy = -6; dy <= 9; dy++) {
+                BlockPos p = c.offset(dx, dy, dz);
+                BlockState n = stoneOf(level.getBlockState(p), dy == 9);
+                if (n != null) plan.put(p, n);
+            }
+        }
+        if (towers == 0) return Spec.no(u, "No hay torres de madera");
+        return new Spec(u, plan, null, towers * Math.max(1, Upgrade.TOWER_2.cost - Upgrade.TOWER_1.cost), "",
+                towers + " torre(s) pasan a piedra");
     }
 
     // ------------------------------------------------------------------ terreno
@@ -427,9 +582,11 @@ public final class Works {
     static void finish(TownData.Town t, TownData.Job job) {
         Upgrade u = job.upgrade;
         if (u.defenseLevel() > 0) {
+            Set<Long> drawn = u == Upgrade.STONE_WALLS ? wallColumns(t) : null;   // el anillo de H12 no se anota
             for (int i = 0; i < job.size(); i++) {
                 BlockPos p = job.pos(i);
                 BlockState s = job.state(i);
+                if (drawn != null && !drawn.contains(BlockPos.asLong(p.getX(), 0, p.getZ()))) continue;
                 if (s.isAir()) t.defense.remove(p.asLong());
                 else t.defense.put(p.asLong(), s);
                 if (s.getBlock() instanceof FenceGateBlock && !t.gates.contains(p)) {
@@ -441,8 +598,8 @@ public final class Works {
                 }
             }
             if (u == Upgrade.WALL_1 || u == Upgrade.WALL_2) t.built.add(Upgrade.PALISADE);
-            if (u == Upgrade.WALL_2) t.built.add(Upgrade.WALL);
-            if (u == Upgrade.TOWER_1 || u == Upgrade.TOWER_2) {
+            if (u == Upgrade.WALL_2 || u == Upgrade.STONE_WALLS) t.built.add(Upgrade.WALL);
+            if (u == Upgrade.TOWER_1 || u == Upgrade.TOWER_2 || u == Upgrade.STONE_TOWERS) {
                 t.built.add(Upgrade.TOWERS);
                 if (job.siteKey.startsWith("tower:")) {
                     BlockPos c = BlockPos.of(Long.parseLong(job.siteKey.substring(6)));

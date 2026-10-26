@@ -810,6 +810,10 @@ public final class WorkerSupply {
         if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity o && !o.getMissing().isEmpty()) {
             return new Status(com.ale.warbandcraft.camp.Organizer.missingText(o.getMissing()), YELLOW);
         }
+        if (w instanceof com.ale.warbandcraft.worker.MaintainerEntity m) {
+            if (!m.getMissing().isEmpty()) return new Status(Component.translatable("status.warbandcraft.maintenance.missing", m.getMissing()), RED);
+            if (!m.getDoing().isEmpty()) return new Status(Component.translatable("status.warbandcraft.maintenance.doing", m.getDoing()), GREEN);
+        }
         if (!smith && w.needsToGetItems()) {
             MutableComponent list = null;
             for (NeededItem ni : w.neededItems) {

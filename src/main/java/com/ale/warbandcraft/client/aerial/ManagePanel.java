@@ -36,7 +36,7 @@ final class ManagePanel {
     private static final int ROW = 18;
     private static final int TAB_SUMMARY = 0, TAB_VILLAGERS = 1, TAB_WORK = 2, TAB_UPGRADES = 3, TAB_ROUTES = 4, TAB_HOUSING = 5, TAB_TROOPS = 6, TAB_GROWTH = 7;
     private static final String[] TABS = {"Resumen", "Aldeanos", "Trabajo", "Construir", "Rutas", "Casas", "Tropas", "Pueblo"};
-    private static final String[] JOBS = {"Granjero", "Leñador", "Minero", "Pescador", "Ganadero", "Cocinero", "Herrero", "Tabernero", "Mercader", "Organizador"};
+    private static final String[] JOBS = {"Granjero", "Leñador", "Minero", "Pescador", "Ganadero", "Cocinero", "Herrero", "Tabernero", "Mercader", "Organizador", "Mantenimiento"};
     private static final int VILLAGERS_VISIBLE = 6, UPGRADES_VISIBLE = 7, WORKERS_VISIBLE = 5, AREAS_VISIBLE = 5;
     private static final int GOLD = 0xFFFFD24A;
     /** Pestaña Tropas: filas visibles y su alto. */
@@ -193,7 +193,9 @@ final class ManagePanel {
                     if (u.state() != Upgrades.State.AVAILABLE.ordinal()) continue;
                     boolean plant = plantable(u.id());
                     add.accept(Button.builder(Component.literal(plant ? toolLabel(u.id()) : u.cost() + " esm."), x -> {
-                        if (plant) {
+                        if (u.id().startsWith("stoneup:")) {   // de un click: toda la empalizada / las torres a piedra
+                            send(ManageActionMessage.Action.PLACE, c, null, 0, u.id());
+                        } else if (plant) {
                             startPlacing(u.id());
                             rebuild.run();
                         } else {
@@ -465,6 +467,7 @@ final class ManagePanel {
         if (id.startsWith("wall:")) return "Dibujar";
         if (id.startsWith("earth:")) return "Marcar";
         if (id.equals("demolish")) return "Elegir";
+        if (id.startsWith("stoneup:")) return "Mejorar";
         return "Plantar";
     }
 
@@ -507,6 +510,8 @@ final class ManagePanel {
                 out.add(toolRow("gate:2", "Portón de piedra (control 2)", "Más alto y fuerte; va sobre uno de madera", 8, 2));
                 out.add(toolRow("tower:1", "Torre de madera (nivel 1)", "5×5 de troncos: arqueros del cuartel arriba", 6, 1));
                 out.add(toolRow("tower:2", "Torre de piedra (nivel 2)", "Va encima de la de madera o suelta", 12, 2));
+                out.add(toolRow("stoneup:walls", "Toda la empalizada a piedra", "Un click: troncos a ladrillo con almenas, portones de piedra", 0, 2));
+                out.add(toolRow("stoneup:towers", "Todas las torres de madera a piedra", "Un click: cobra la piedra de todas juntas", 0, 2));
             }
             case 2 -> {
                 out.add(toolRow("earth:0", "Allanar", "Arrastrá un rectángulo: corta y rellena a la altura del 1er click", 1, 0));

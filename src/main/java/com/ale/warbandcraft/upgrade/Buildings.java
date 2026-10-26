@@ -52,6 +52,7 @@ final class Buildings {
             case MARKET, MARKET_2 -> new int[]{6, 6};
             case MARKET_3 -> new int[]{6, 4};
             case BARRACKS -> new int[]{5, 5};
+            case MAINTENANCE -> new int[]{3, 3};
             default -> null;
         };
     }
@@ -69,6 +70,7 @@ final class Buildings {
             case TRAINING_1, TRAINING_2, TRAINING_3 -> training(c, u.trainingLevel());
             case CHAPEL -> chapel(c);
             case GRANARY -> granary(c);
+            case MAINTENANCE -> maintenance(c);
             case BUILDER_1, BUILDER_2, BUILDER_3 -> builder(c, u.givesBuilder());
             default -> {
             }
@@ -452,6 +454,28 @@ final class Buildings {
         c.hanging(4, 4, 3);
         c.path(4, 0);
         c.late(7, 1, 0, Blocks.HAY_BLOCK.defaultBlockState());
+    }
+
+    /**
+     * Caseta de mantenimiento (pedido de Ale, un mini cobertizo) de 5×4: abierta adelante, con banco de trabajo, piedra
+     * de afilar, barril de herramientas, pila de adoquines y troncos, estandarte atrás y un farol en la entrada.
+     */
+    private static void maintenance(Canvas c) {
+        c.walls(1, 2, 5, 5, 0, 3);
+        c.roof(1, 2, 5, 5, 3, false);
+        for (int x = 2; x <= 4; x++) for (int y = 1; y <= 2; y++) c.air(x, y, 2);   // el frente abierto
+        c.set(2, 1, 4, Blocks.CRAFTING_TABLE.defaultBlockState());
+        c.set(4, 1, 4, Blocks.GRINDSTONE.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
+                .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR));
+        c.barrel(4, 1, 3);
+        c.banner(3, 3, 4, Direction.NORTH);
+        c.hanging(3, 3, 3);
+        c.set(0, 1, 5, Blocks.COBBLESTONE.defaultBlockState());   // la pila de materiales al costado
+        c.log(0, 1, 4, Direction.Axis.Z);
+        c.log(0, 2, 4, Direction.Axis.Z);
+        c.post(6, 1);
+        c.path(3, 0);
+        c.path(3, 1);
     }
 
     /** Taller del constructor: cobertizo (1), taller con pila de troncos (2), casa de dos pisos con su cuarto (3). */

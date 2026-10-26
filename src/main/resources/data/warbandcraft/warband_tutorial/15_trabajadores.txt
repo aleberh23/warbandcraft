@@ -68,3 +68,10 @@ Pero solo mientras haya alguien de tu facción conectado: sin nadie, tus aldeas 
 
 ## Puesto de leñador
 Al leñador le podés marcar la zona afuera del territorio, hasta 200 bloques del centro y lejos de otras aldeas. Se muda ahí con su cofre y su cama. Lo que deja en el cofre pasa solo al almacén de la aldea.
+---
+## Mantenimiento
+Necesita una Caseta de mantenimiento (Construir, Edificios). Se asigna en Aldeanos, uno por aldea, y no lleva zona.
+
+De día embellece la aldea: estandartes de tu facción al lado de los portones y en las torres, faroles donde está oscuro y caminitos con flores entre las casas, los edificios y el centro.
+---
+Nunca pisa edificios, murallas ni zonas de trabajo. Gasta madera, piedra y esmeraldas del almacén; si falta algo, se queda esperando y lo dice en su cartelito.

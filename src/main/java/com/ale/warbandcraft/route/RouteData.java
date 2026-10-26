@@ -242,6 +242,10 @@ public class RouteData extends SavedData {
         return true;
     }
 
+    public Collection<Route> routes() {
+        return routes.values();
+    }
+
     public List<Route> routesOf(UUID owner) {
         List<Route> out = new ArrayList<>();
         for (Route r : routes.values()) if (com.ale.warbandcraft.faction.Allies.same(r.owner(), owner)) out.add(r);

@@ -249,6 +249,33 @@ public final class Roads {
         }
     }
 
+    /** Hasta cuánto del centro del trazado es camino (la grava es de 3 de ancho). */
+    public static double ROAD_HALF_WIDTH = 1.6;
+
+    /**
+     * La columna (x, z) es parte de un camino de H14 (hecho o en obra): la muralla que pasa por ahí lleva un portón
+     * (pedido de Ale). Se mira el trazado, no la grava (la del río no cuenta, y la obra puede no haber llegado todavía).
+     */
+    public static boolean onRoad(ServerLevel level, int x, int z) {
+        RouteData data = RouteData.get(level);
+        for (RouteData.Route r : data.routes()) {
+            if (!r.road() && data.roadJob(r.id()) == null) continue;
+            List<BlockPos> pts = r.points();
+            for (int i = 1; i < pts.size(); i++) {
+                if (segmentDistSq(x + 0.5, z + 0.5, pts.get(i - 1), pts.get(i)) <= ROAD_HALF_WIDTH * ROAD_HALF_WIDTH) return true;
+            }
+        }
+        return false;
+    }
+
+    private static double segmentDistSq(double x, double z, BlockPos a, BlockPos b) {
+        double ax = a.getX() + 0.5, az = a.getZ() + 0.5, dx = b.getX() - a.getX(), dz = b.getZ() - a.getZ();
+        double len = dx * dx + dz * dz;
+        double t = len < 1e-9 ? 0 : Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len));
+        double px = ax + dx * t - x, pz = az + dz * t - z;
+        return px * px + pz * pz;
+    }
+
     /** Un constructor de caminos sin obra (de un guardado viejo): sobra. */
     public static boolean isOrphanBuilder(ServerLevel level, Entity e, String route) {
         try {

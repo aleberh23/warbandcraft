@@ -51,7 +51,7 @@ src/main/java/com/ale/warbandcraft/
   camp/                      Campamento: bloque, cofre de 54 espacios + cofres vinculados (H6), búsqueda por radio,
                              nombre (H8), Barracks + BarracksData (H8: barracón), Prisoners (H9: presos, reclutar, rescate),
                              Forge (H10: herreros), CampStats (H10: totales), WorkerZone (H10: puente con Villager Workers),
-                             Organizer (ordena los cofres vinculados)
+                             Organizer (ordena los cofres vinculados); village/Maintenance (Mantenimiento), upgrade/Heraldry (colores)
   kit/                       Clases de soldado: carga de JSON, asignación + conversión de entidad; Armament (H10)
   item/MarshalBatonItem      Bastón de Mariscal (elige clase / arma soldados)
   faction/                   Facciones NPC (H2): Faction, Troop, FactionManager (carga JSON)
@@ -785,6 +785,27 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 - Después (a probar): no se planta encima de una **zona de trabajo** de Workers ("Pisa una zona de trabajo"). **Demoler
   muralla**: en Demoler, click donde no hay edificio = "demolish:wall:x,z" → saca lo dibujado a ≤`Works.WALL_CUT` (4) del
   click, sin tocar torres; deja de contar para reparar y saca los portones de ahí.
+
+## Portones en caminos, piedra de un click, Mantenimiento y colores de facción (pedido de Ale, a probar; números sin Ale)
+
+- **Portón donde un camino cruza la muralla**: `Blueprints.pathAt` (dirt_path, o grava/natural sobre un camino de H14:
+  `Roads.onRoad`, a ≤`ROAD_HALF_WIDTH` del trazado) lo usan el anillo de H12 y `Works.wall` (tramo de camino ±1 = portón con
+  `Blueprints.gateRun`; si el camino va a lo largo del muro, no). Caminos de H14: `RoadPlanner.plan` → `Works.roadGates` (al
+  final de la obra, sobre columnas dibujadas o del anillo; anota `defense` y `Town.gates`). Murallas ya hechas con hueco: no se
+  arreglan solas (el anillo, con Reparar murallas).
+- **A piedra de un click** (Gestión → Construir → Defensa): `stoneup:walls` (`Upgrade.STONE_WALLS`, `Works.stoneWalls`: tronco
+  → ladrillo, hilera arriba con almenas, portones de abeto → roble oscuro; el anillo de H12 se rehace de piedra) y
+  `stoneup:towers` (`STONE_TOWERS`, `Works.stoneTowers`). Una obra, todo junto; esmeraldas por columnas / por torre.
+- **Mantenimiento**: edificio `Upgrade.MAINTENANCE` (caseta 7×7, `Buildings.maintenance`), oficio `Job.MAINTENANCE` =
+  `worker/MaintainerEntity` + `MaintainerGoal` (camina, trabaja `WORK_TICKS`, `runNow` para pruebas), uno por aldea, sin zona.
+  `village/Maintenance.next`: estandarte al lado de cada portón → en las torres → faroles (2 muros + farol al lado de los
+  caminitos, luz < `LAMP_LIGHT`) → caminitos (A* de la campana a la puerta de cada edificio y a cada portón, de tierra con flores;
+  arena = arenisca lisa). `Area` no pisa terrenos de edificios, zonas de Workers, muralla, portones, torres ni estructuras.
+  Cobra madera/piedra del Campamento de la aldea + esmeraldas (`apply`); sin, espera y lo dice en el cartelito.
+- **Colores de facción** (`upgrade/Heraldry`): `of(v)` = dueño → su facción de Recruits (`FactionStyle`); sin dueño → JSON de la
+  facción. `tint` al empezar una obra (vidrios y estandartes al color), `refresh` repinta terrenos + `Town.decor` (estandartes y
+  faroles del de Mantenimiento) si cambió `Town.heraldry`; `tick` cada 10 s (`InvasionEvents`): conquistas en ambos sentidos.
+- Pruebas: `DecorGameTests`.
 
 ## Fundar una aldea (pedido de Ale, a probar; números decididos sin Ale, a revisar)
 
