@@ -54,14 +54,16 @@ Su zona es una escalera: marcá un rectángulo largo y angosto (mínimo 8 de lar
 Además saca piedra, carbón, hierro, oro y a veces diamante.
 ---
 ## Cuánto producen
-Sobre cada zona, y en la lista de la pestaña Trabajo, dice cuánto produce por día. Al principio es un estimado. Después de medio día trabajando se mide lo de verdad.
+Sobre cada zona, y en la lista de la pestaña Trabajo, dice cuánto produce por día. Nunca menos de lo normal de su oficio; si trabaja más, cuenta lo medido.
 
 En Resumen está el total de la aldea.
 
-El trigo llega al almacén como pan (3 trigos, 1 pan): la aldea no come trigo.
+El trigo llega al almacén como pan (3 trigos, 1 pan): la aldea no come trigo. Las semillas que le sobran al granjero no van al almacén.
 ---
 ## Aunque no estés
 Los trabajadores producen aunque la aldea no esté cargada. Cuando volvés, lo del tiempo que pasó (hasta 7 días) entra de golpe al almacén y te avisa por el chat.
+
+Pero solo mientras haya alguien de tu facción conectado: sin nadie, tus aldeas y Campamentos no producen ni consumen nada (impuestos, comida, armamento, taberna, herreros, raciones).
 
 ## Puesto de leñador
 Al leñador le podés marcar la zona afuera del territorio, hasta 200 bloques del centro y lejos de otras aldeas. Se muda ahí con su cofre y su cama. Lo que deja en el cofre pasa solo al almacén de la aldea.

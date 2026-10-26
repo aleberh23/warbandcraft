@@ -70,6 +70,7 @@ public final class Forge {
             return 0;
         }
         long days = Math.min(MAX_CATCH_UP_DAYS, today - last);
+        if (camp.getOwner() != null) days = Math.min(days, com.ale.warbandcraft.faction.OnlineDays.count(level, camp.getOwner(), last, today));   // solo días con la facción conectada
         if (days <= 0) return 0;
         camp.setLastForgeDay(today);
         int smiths = smiths(level, camp.getBlockPos()).size();

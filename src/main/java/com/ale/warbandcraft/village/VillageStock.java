@@ -167,6 +167,7 @@ public final class VillageStock {
         Map<UUID, Stock> made = new HashMap<>();
         for (VillageData.Village v : data.all()) {
             if (!v.isConquered()) continue;
+            if (!com.ale.warbandcraft.faction.OnlineDays.active(level, v.owner())) continue;   // pedido de Ale: sin nadie de la facción conectado no producen
             made.merge(v.owner(), produce(level, v), Stock::plus);
         }
         made.forEach((owner, s) -> {

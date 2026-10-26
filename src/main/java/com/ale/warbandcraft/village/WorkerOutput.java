@@ -137,6 +137,27 @@ public class WorkerOutput extends SavedData {
         return out;
     }
 
+    /**
+     * Pedido de Ale: "tiene que haber alguien de la facción conectado para que produzcan y consuman". El que es de alguien sin
+     * nadie de su facción conectado (aldea: su dueño; Campamento común: el del Campamento) no junta tiempo sin atender.
+     */
+    public void freeze(ServerLevel level, long now) {
+        long delta = lastFreeze < 0 || now < lastFreeze ? 0 : now - lastFreeze;   // lo que pasó desde la última vez
+        lastFreeze = now;
+        if (delta <= 0) return;
+        for (Rec r : recs.values()) {
+            VillageData.Village v = VillageData.get(level).at(r.village);
+            UUID owner = v != null ? v.owner() : com.ale.warbandcraft.camp.CampRegistry.get(level).ownerOf(r.village);
+            if (owner == null || com.ale.warbandcraft.faction.OnlineDays.active(level, owner)) continue;
+            // se corre el reloj (no se pisa): lo que juntó antes de que se desconectaran, se le sigue debiendo
+            r.lastTick = Math.min(now, r.lastTick + delta);
+            setDirty();
+        }
+    }
+
+    /** Última vez que se corrió {@link #freeze} (en memoria; -1 = todavía no). */
+    private long lastFreeze = -1;
+
     /** Se lo atendió ahora: cuenta el tiempo trabajado (si fue seguido) y devuelve cuánto hubo sin atenderlo (0 = nada). */
     public long seen(Rec r, long now) {
         long gap = Math.max(0, now - r.lastTick);

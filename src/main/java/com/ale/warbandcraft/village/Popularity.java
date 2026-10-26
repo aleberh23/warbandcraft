@@ -215,6 +215,7 @@ public final class Popularity {
         TownData towns = TownData.get(level);
         for (VillageData.Village v : new ArrayList<>(VillageData.get(level).all())) {
             if (!v.isConquered() || v.castle()) continue;
+            if (!com.ale.warbandcraft.faction.OnlineDays.active(level, v.owner())) continue;   // sin nadie de la facción conectado la aldea queda quieta
             if (level.isPositionEntityTicking(v.center())) minute(level, v, towns.getOrCreate(v.center()));
             else paperMinute(towns.getOrCreate(v.center()));
             towns.changed();
@@ -391,6 +392,7 @@ public final class Popularity {
         TownData towns = TownData.get(level);
         for (VillageData.Village v : new ArrayList<>(VillageData.get(level).all())) {
             if (!v.isConquered() || v.castle() || !level.isPositionEntityTicking(v.center())) continue;
+            if (!com.ale.warbandcraft.faction.OnlineDays.active(level, v.owner())) continue;   // sin nadie de la facción conectado no comen
             TownData.Town t = towns.getOrCreate(v.center());
             eat(level, v, t);
             towns.changed();

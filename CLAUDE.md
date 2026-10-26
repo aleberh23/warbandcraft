@@ -217,6 +217,12 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `setHoldPos` (el 2 pisa el puesto). Los demás salen siguiéndote (estado 1).
 - Comida: 4 puntos por soldado y día, del almacén entero, la más barata, nada dañino; días atrasados (máx. 7) al
   cargarse el Campamento; sin nadie de la facción del dueño conectado no comen (`Barracks.tick` corre `lastFedDay`, pedido de Ale).
+- **Sin nadie de la facción conectado no se produce ni se consume nada** (pedido de Ale, 26/10): `faction/OnlineDays` (días con alguien
+  de cada facción conectado, se anota cada 1 s desde `BarracksEvents`; `active(level, owner)`, en GameTestServer siempre sí).
+  Lo usan `VillageStock.produceAll` (impuestos/comida/armamento), `Tavern.onNewDay`, `Popularity.onNewDay/tick` (raciones y
+  crecimiento), `Forge.catchUp` (solo días con alguien: `OnlineDays.count`), `WorkerSupply.tick` (no atiende) y
+  `WorkerOutput.freeze` (corre el reloj de los trabajadores de aldeas y Campamentos comunes sin la facción conectada: lo juntado antes
+  se sigue debiendo). Las obras (`Job.due`) siguen corriendo por tiempo (a revisar).
   2º día sin comer: se va el 10% (mín. 1), menor nivel primero. Constantes en `BarracksData`.
 - "Al barracón" trabado (pedido de Ale, a probar): `Barracks.checkArrivals` (1 s) anota lo más cerca que llegó cada uno
   (`GOING`, en memoria); si en `STUCK_SECONDS` (10) no se acercó `STUCK_PROGRESS` (1) bloque, se guarda directo desde donde

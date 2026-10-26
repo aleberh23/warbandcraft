@@ -25,6 +25,7 @@ public class BarracksEvents {
         // guardaría solo en medio de otras pruebas. H8GameTests llama a esta lógica a mano.
         if (server instanceof GameTestServer) return;
         int tick = server.getTickCount();
+        if (tick % 20 == 0) com.ale.warbandcraft.faction.OnlineDays.tick(server);   // qué días hubo alguien de cada facción conectado
         if (tick % QUARTERS_INTERVAL == 0) {
             for (ServerLevel level : server.getAllLevels()) com.ale.warbandcraft.village.Quarters.tick(level);   // cuartel: patrullas
         }

@@ -135,8 +135,10 @@ public final class WorkerSupply {
     public static void tick(ServerLevel level) {
         WorkerOutput out = WorkerOutput.get(level);
         long now = level.getGameTime();
+        out.freeze(level, now);   // pedido de Ale: sin nadie de la facción conectado no producen (el reloj de cada uno queda quieto)
         for (VillageData.Village v : new ArrayList<>(VillageData.get(level).all())) {
             if (!v.isConquered() || !level.isPositionEntityTicking(v.center())) continue;
+            if (!com.ale.warbandcraft.faction.OnlineDays.active(level, v.owner())) continue;
             CampBlockEntity camp = VillageStorehouse.camp(level, v);
             java.util.Set<UUID> served = new java.util.HashSet<>();
             List<ItemStack> paid = new ArrayList<>();

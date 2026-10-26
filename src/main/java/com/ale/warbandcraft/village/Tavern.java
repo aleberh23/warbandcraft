@@ -108,6 +108,7 @@ public final class Tavern {
         TownData towns = TownData.get(level);
         for (VillageData.Village v : new ArrayList<>(VillageData.get(level).all())) {
             if (!v.isConquered() || v.castle()) continue;
+            if (!com.ale.warbandcraft.faction.OnlineDays.active(level, v.owner())) continue;   // sin nadie de la facción conectado no llega ni se va nadie
             TownData.Town t = towns.at(v.center());
             if (t == null || t.tavernLevel() == 0) continue;
             int arrived = arrive(level, v, t, day);
