@@ -127,7 +127,7 @@ public class H22GameTests {
         h.succeed();
     }
 
-    /** La cuenta: una cama = 3 de lana + 3 de madera, un tronco = 4 de madera, lo que ya está no se cobra. */
+    /** La cuenta: una cama = 3 de madera (la lana no se cobra), un tronco = 4 de madera, lo que ya está no se cobra. */
     @GameTest(template = TEMPLATE)
     public static void billCountsEachBlock(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -142,15 +142,13 @@ public class H22GameTests {
         level.setBlockAndUpdate(a.south(), Blocks.COBBLESTONE.defaultBlockState());   // ya está: gratis
         BuildCost.Bill bill = BuildCost.of(level, plan, 3);
         check(bill.get(BuildCost.Material.WOOD) == 7, "madera: " + bill.get(BuildCost.Material.WOOD));
-        check(bill.get(BuildCost.Material.WOOL) == 3, "lana: " + bill.get(BuildCost.Material.WOOL));
         check(bill.get(BuildCost.Material.STONE) == 0, "cobró la piedra que ya estaba");
         check(bill.emeralds() == 3, "esmeraldas: " + bill.emeralds());
 
         // Pagar con troncos da vuelto en tablones
         FakePlayer player = player(h);
         player.getInventory().add(new ItemStack(Items.OAK_LOG, 2));
-        player.getInventory().add(new ItemStack(Items.WHITE_WOOL, 3));
-        check(BuildCost.missing(bill, null, player) == null, "con 2 troncos y 3 de lana no alcanza");
+        check(BuildCost.missing(bill, null, player) == null, "con 2 troncos no alcanza");
         BuildCost.pay(bill, null, player);
         check(player.getInventory().countItem(Items.OAK_LOG) == 0, "no usó los troncos");
         check(player.getInventory().countItem(Items.OAK_PLANKS) == 1, "el vuelto no es 1 tablón: " + player.getInventory().countItem(Items.OAK_PLANKS));

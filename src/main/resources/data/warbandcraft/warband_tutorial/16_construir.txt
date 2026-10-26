@@ -3,7 +3,7 @@ cartel: Construir|y mejoras
 ## Plantar edificios
 Gestión, pestaña Construir. Elegís un edificio, el contorno sigue al mouse, R lo gira y click lo planta (verde = se puede). Click derecho o Esc cancela.
 
-Se paga al encargar: materiales (madera, piedra, vidrio...) y esmeraldas, del almacén de la aldea y lo que falte de tu inventario.
+Se paga al encargar: solo madera, piedra y esmeraldas (vidrio, lana, hierro y adornos van gratis), del almacén de la aldea y lo que falte de tu inventario.
 ---
 Un constructor lo levanta de a poco. Una obra por aldea. "Cancelar obra" devuelve lo que no se puso.
 
@@ -16,7 +16,7 @@ Muchos tienen niveles (Taberna 1 a 3, Mercado, Plaza de mercado y Lonja...). El 
 Muralla: hacés click punto por punto y Enter la encarga (empalizada o piedra). Portones y torres se ponen con un click. Reparar murallas: arriba de las mejoras. Si conquistaste una aldea con una empalizada vieja con huecos, Reparar murallas la cierra y le pone portones.
 ---
 ## Terreno
-Allanar o rellenar un rectángulo (rueda = altura). Demoler: edificios, torres o tramos de muralla.
+Allanar o rellenar un rectángulo (rueda = altura). Allanar cuesta 1 o 2 esmeraldas; rellenar, la tierra que pone y esmeraldas. Demoler: edificios, torres o tramos de muralla.
 
 Lo que una obra saca del suelo va al almacén.
 

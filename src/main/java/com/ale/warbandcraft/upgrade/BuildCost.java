@@ -28,12 +28,10 @@ import java.util.function.Predicate;
 /**
  * H22: lo que cuesta una obra en materiales (estilo Stronghold): cada bloque del plano pide su madera, piedra, tierra...
  * Se paga todo al encargar, primero del almacén de la aldea y después del inventario; lo que no se puso se devuelve al
- * cancelar. Los bloques sin material (heno, calabazas, blancos...) son adornos gratis.
+ * cancelar. Pedido de Ale: los edificios piden solo madera y piedra (más esmeraldas); vidrio, lana, hierro, heno... son
+ * adornos gratis. La tierra solo se cobra al rellenar terreno ({@link Upgrade#EARTH_FILL}).
  */
 public final class BuildCost {
-    /** Hierro de un yunque (de verdad son 31: a revisar). */
-    public static int ANVIL_IRON = 8;
-
     private BuildCost() {}
 
     /** Una forma de pagar un material: qué ítem y cuánto vale cada uno. */
@@ -42,10 +40,7 @@ public final class BuildCost {
     public enum Material {
         WOOD("Madera", Items.OAK_PLANKS, List.of(new Accept(s -> s.is(ItemTags.PLANKS), 1), new Accept(s -> s.is(ItemTags.LOGS), 4))),
         STONE("Piedra", Items.COBBLESTONE, List.of(new Accept(s -> s.is(ItemTags.STONE_CRAFTING_MATERIALS) || s.is(Items.STONE), 1))),
-        DIRT("Tierra", Items.DIRT, List.of(new Accept(s -> s.is(Items.DIRT) || s.is(Items.COARSE_DIRT), 1))),
-        GLASS("Vidrio", Items.GLASS, List.of(new Accept(s -> s.is(Items.GLASS), 1))),
-        WOOL("Lana", Items.WHITE_WOOL, List.of(new Accept(s -> s.is(ItemTags.WOOL), 1))),
-        IRON("Hierro", Items.IRON_INGOT, List.of(new Accept(s -> s.is(Items.IRON_INGOT), 1)));
+        DIRT("Tierra", Items.DIRT, List.of(new Accept(s -> s.is(Items.DIRT) || s.is(Items.COARSE_DIRT), 1)));
 
         public final String label;
         /** Lo que se devuelve al cancelar o de vuelto (1 = una unidad del material). */
@@ -91,8 +86,13 @@ public final class BuildCost {
 
     // ------------------------------------------------------------------ calcular
 
-    /** Lo que cuesta poner {@code plan} en el mundo como está ahora, más {@code emeralds}. */
+    /** {@link #of(ServerLevel, Blueprints.Plan, int, boolean)} sin cobrar la tierra (edificios, murallas...). */
     public static Bill of(ServerLevel level, Blueprints.Plan plan, int emeralds) {
+        return of(level, plan, emeralds, false);
+    }
+
+    /** Lo que cuesta poner {@code plan} en el mundo como está ahora, más {@code emeralds}; {@code dirt} = cobrar la tierra. */
+    public static Bill of(ServerLevel level, Blueprints.Plan plan, int emeralds, boolean dirt) {
         double[] need = new double[Material.values().length];
         int removed = 0;
         for (Map.Entry<BlockPos, BlockState> e : plan.blocks.entrySet()) {
@@ -102,6 +102,7 @@ public final class BuildCost {
             if (!now.isAir() && !now.canBeReplaced()) removed++;
             add(want, need);
         }
+        if (!dirt) need[Material.DIRT.ordinal()] = 0;
         int[] amounts = new int[need.length];
         for (int i = 0; i < need.length; i++) amounts[i] = (int) Math.ceil(need[i] - 1e-6);
         return new Bill(amounts, emeralds, removed);
@@ -112,12 +113,8 @@ public final class BuildCost {
         if (s.isAir()) return;
         Block b = s.getBlock();
         int wood = Material.WOOD.ordinal(), stone = Material.STONE.ordinal(), dirt = Material.DIRT.ordinal();
-        int glass = Material.GLASS.ordinal(), wool = Material.WOOL.ordinal(), iron = Material.IRON.ordinal();
         if (b instanceof BedBlock) {
-            if (s.getValue(BedBlock.PART) == BedPart.HEAD) {
-                n[wool] += 3;
-                n[wood] += 3;
-            }
+            if (s.getValue(BedBlock.PART) == BedPart.HEAD) n[wood] += 3;
         } else if (b instanceof DoorBlock) {
             if (s.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER) n[wood] += 2;
         } else if (s.is(BlockTags.LOGS)) n[wood] += 4;
@@ -139,26 +136,12 @@ public final class BuildCost {
             n[stone] += 8;
             n[wood] += 16;
         } else if (s.is(Blocks.FURNACE)) n[stone] += 8;
-        else if (s.is(Blocks.BLAST_FURNACE)) {
-            n[stone] += 8;
-            n[iron] += 5;
-        } else if (s.is(Blocks.GRINDSTONE)) {
+        else if (s.is(Blocks.BLAST_FURNACE)) n[stone] += 8;
+        else if (s.is(Blocks.GRINDSTONE)) {
             n[stone] += 1;
             n[wood] += 2;
-        } else if (s.is(Blocks.STONECUTTER)) {
-            n[stone] += 3;
-            n[iron] += 1;
-        } else if (s.is(Blocks.SMITHING_TABLE)) {
-            n[wood] += 4;
-            n[iron] += 2;
-        } else if (s.is(BlockTags.ANVIL)) n[iron] += ANVIL_IRON;
-        else if (s.is(Blocks.CAULDRON) || s.is(Blocks.LAVA_CAULDRON) || s.is(Blocks.WATER_CAULDRON)) n[iron] += 7;
-        else if (s.is(Blocks.LANTERN)) n[iron] += 1;
-        else if (s.is(Blocks.IRON_BARS)) n[iron] += 0.375;
-        else if (s.is(Blocks.GLASS)) n[glass] += 1;
-        else if (s.is(Blocks.GLASS_PANE)) n[glass] += 0.375;
-        else if (s.is(BlockTags.WOOL)) n[wool] += 1;
-        else if (s.is(BlockTags.WOOL_CARPETS)) n[wool] += 0.67;
+        } else if (s.is(Blocks.STONECUTTER)) n[stone] += 3;
+        else if (s.is(Blocks.SMITHING_TABLE)) n[wood] += 4;
         else if (s.is(Blocks.DIRT) || s.is(Blocks.GRASS_BLOCK) || s.is(Blocks.COARSE_DIRT) || s.is(Blocks.DIRT_PATH)
                 || s.is(Blocks.FARMLAND) || s.is(Blocks.ROOTED_DIRT) || s.is(Blocks.PACKED_MUD) || s.is(Blocks.SAND)) n[dirt] += 1;
         else if (s.is(BlockTags.SLABS)) n[stone] += 0.5;
@@ -169,7 +152,7 @@ public final class BuildCost {
                 || s.is(Blocks.POLISHED_DIORITE) || s.is(Blocks.GRANITE) || s.is(Blocks.POLISHED_GRANITE)
                 || s.is(Blocks.SANDSTONE) || s.is(Blocks.CUT_SANDSTONE) || s.is(Blocks.SMOOTH_SANDSTONE) || s.is(Blocks.CHISELED_SANDSTONE)
                 || s.is(BlockTags.TERRACOTTA) || s.is(Blocks.MUD_BRICKS) || s.is(Blocks.DEEPSLATE_TILES) || s.is(Blocks.BRICKS)) n[stone] += 1;   // estilos: arenisca, terracota, barro, pizarra
-        // el resto (heno, calabazas, blancos...): adorno gratis
+        // el resto (vidrio, lana, hierro, yunques, faroles, heno...): adorno gratis
     }
 
     // ------------------------------------------------------------------ pagar

@@ -44,6 +44,8 @@ public final class Works {
     public static int WALL_1_COLUMNS_PER_EMERALD = 8, WALL_2_COLUMNS_PER_EMERALD = 4, WALL_MIN_EMERALDS = 2;
     /** Terreno: lado máximo, desnivel máximo de una columna y esmeraldas (1 cada tantos bloques, mín. 1). */
     public static int EARTH_SIDE = 32, EARTH_DEPTH = 8, EARTH_BLOCKS_PER_EMERALD = 64;
+    /** Pedido de Ale: allanar cuesta 1 esmeralda, o 2 si mueve más de {@link #LEVEL_BIG_BLOCKS} bloques (sin materiales). */
+    public static int LEVEL_SMALL_EMERALDS = 1, LEVEL_BIG_EMERALDS = 2, LEVEL_BIG_BLOCKS = 256;
     /** Portones: se abren con uno de los tuyos a esta distancia y ningún enemigo a la otra. */
     public static int GATE_OPEN_RANGE = 3, GATE_ENEMY_RANGE = 8;
     /** Cuánto se puede salir del territorio al dibujar la muralla. */
@@ -331,7 +333,8 @@ public final class Works {
             }
         }
         if (plan.size() == 0) return Spec.no(u, "Ya está a esa altura" + (skipped > 0 ? " (" + skipped + " columnas no se tocan)" : ""));
-        int emeralds = Math.max(1, (plan.size() + EARTH_BLOCKS_PER_EMERALD - 1) / EARTH_BLOCKS_PER_EMERALD);
+        int emeralds = fillOnly ? Math.max(1, (plan.size() + EARTH_BLOCKS_PER_EMERALD - 1) / EARTH_BLOCKS_PER_EMERALD)   // + la tierra
+                : plan.size() > LEVEL_BIG_BLOCKS ? LEVEL_BIG_EMERALDS : LEVEL_SMALL_EMERALDS;
         String note = "Altura " + y + (skipped > 0 ? " · " + skipped + " columnas no se tocan (casas, agua o más de " + EARTH_DEPTH + ")" : "");
         return new Spec(u, plan, null, emeralds, "", note);
     }

@@ -181,7 +181,7 @@ public final class Upgrades {
     /** La cuenta del plano y si alcanza la plata y los materiales. */
     private static Prepared billed(ServerLevel level, ServerPlayer player, Upgrade u, VillageData.Village v, TownData.Town town,
                                    Blueprints.Plan plan, int emeralds, String key, @Nullable BlockPos site, int rot, String note) {
-        BuildCost.Bill bill = BuildCost.of(level, plan, emeralds);
+        BuildCost.Bill bill = BuildCost.of(level, plan, emeralds, u == Upgrade.EARTH_FILL);   // la tierra, solo al rellenar
         Component problem = null;
         int inStock = VillageStock.total(level, v).emeralds();
         int inHand = player.getInventory().countItem(Items.EMERALD);

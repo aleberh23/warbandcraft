@@ -24,6 +24,8 @@ public final class Placement {
     public static int MAX_LEVEL = 8;
     /** Cuánto arriba del piso tiene que estar libre (de casas y cosas con datos). */
     public static int CLEAR_ABOVE = 12;
+    /** Hasta cuánto abajo de un piso que no es natural se busca aire (si hay, es un techo). */
+    public static int ROOF_DEPTH = 6;
 
     private Placement() {}
 
@@ -77,7 +79,9 @@ public final class Placement {
                 BlockPos ground = new BlockPos(x, g, z);
                 BlockState gs = level.getBlockState(ground);
                 if (!gs.getFluidState().isEmpty()) return Spot.no("Hay agua");
-                if (!Blueprints.natural(gs) || level.getBlockEntity(ground) != null) return Spot.no("Pisa una casa o una construcción");
+                if (level.getBlockEntity(ground) != null) return Spot.no("Pisa un cofre, una cama o algo así");
+                // Pedido de Ale: lo que hay abajo (camino, piso, adoquín...) no importa; solo que no sea el techo de una casa
+                if (!Blueprints.natural(gs) && roof(level, ground)) return Spot.no("Pisa una casa o una construcción");
                 for (int dy = 1; dy <= CLEAR_ABOVE; dy++) {
                     BlockPos p = ground.above(dy);
                     if (level.getBlockEntity(p) != null) return Spot.no("Pisa un cofre, una cama o algo así");
@@ -91,6 +95,16 @@ public final class Placement {
         if (slope > MAX_LEVEL) return Spot.no("Muy empinado (desnivel " + slope + ", máximo " + MAX_LEVEL + ")");
         int floor = heights[heights.length / 2];   // la mediana: se rellena lo bajo y se corta lo alto
         return new Spot(new BlockPos(x0, floor, z0), null);
+    }
+
+    /** Un piso que no es natural con aire abajo (a {@link #ROOF_DEPTH}) es un techo, no un camino ni un piso. */
+    private static boolean roof(ServerLevel level, BlockPos ground) {
+        for (int dy = 1; dy <= ROOF_DEPTH; dy++) {
+            BlockState s = level.getBlockState(ground.below(dy));
+            if (s.isAir()) return true;
+            if (Blueprints.natural(s)) return false;
+        }
+        return false;
     }
 
     /** Adentro del territorio de la aldea (sin territorio: a {@link WorkZones#REACH} del centro). */

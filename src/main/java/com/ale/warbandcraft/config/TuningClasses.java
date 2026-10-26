@@ -79,7 +79,6 @@ final class TuningClasses {
             "sapper.SapperRules",
             "tutorial.Tutorial",
             "upgrade.Blueprints",
-            "upgrade.BuildCost",
             "upgrade.BuilderNpc",
             "upgrade.Placement",
             "upgrade.Upgrades",
