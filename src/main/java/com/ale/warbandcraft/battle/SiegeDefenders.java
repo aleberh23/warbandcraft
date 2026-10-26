@@ -63,6 +63,22 @@ public final class SiegeDefenders {
     public static double SPOT_BEST_DISTANCE = 14, SPOT_SPACING = 2.0, RANGED_REACH = 48;
     /** Cada cuánto se vuelven a buscar los lugares de los arqueros (ticks). */
     public static int SPOT_REFRESH = 20 * 10;
+    /**
+     * Caminos nuevos (A* de la malla) por vuelta de cada defensa: el resto espera a la vuelta siguiente. Sin tope, con muchos
+     * arqueros replaneando a la vez, había ticks de 0,3 s (spark, 26/10).
+     */
+    public static int PATHS_PER_TICK = 3;
+    /** Arquero que terminó su camino a menos de esto de su lugar: el último tramo lo camina Recruits, sin replanear. */
+    public static double ARCHER_CLOSE_ENOUGH = 4;
+
+    private static int pathBudget;
+
+    /** Gasta uno de los caminos de esta vuelta; false = no quedan, probar la próxima. */
+    private static boolean takePath() {
+        if (pathBudget <= 0) return false;
+        pathBudget--;
+        return true;
+    }
 
     private static final int WANDER = 0, BACK_TO_POS = 3, NEUTRAL = 0;
     private static final String BY = "defense";
@@ -98,6 +114,7 @@ public final class SiegeDefenders {
         BlockPos center = host.center();
         Memory m = MEMORY.computeIfAbsent(key, k -> new Memory());
         long now = level.getGameTime();
+        pathBudget = PATHS_PER_TICK;
         List<SiegeLanes.LaneInfo> lanes = new ArrayList<>(allLanes);
         lanes.removeIf(l -> l.attackers() == 0);
         if (lanes.isEmpty()) return;
@@ -212,6 +229,17 @@ public final class SiegeDefenders {
         if (s.position().distanceTo(at) > 1.6) {
             Mover.Run r = Mover.run(s);
             if (r == null || !r.active() || r.goal.distanceToSqr(at) > 1) {
+                if (r != null && r.done && !r.failed && s.position().distanceTo(at) <= ARCHER_CLOSE_ENOUGH) {
+                    Mover.stop(s);
+                    s.setHoldPos(at);
+                    s.setFollowState(BACK_TO_POS);
+                    aim(s, enemies);
+                    return;
+                }
+                if (!(r != null && r.failed) && !takePath()) {
+                    aim(s, enemies);
+                    return;
+                }
                 if (r != null && r.failed || !Mover.go(s, at, 0.6, caps, NavPath.Bounds.around(center, 96), BY)) {
                     m.badSpots.add(spot.asLong());   // no llega: otro lugar
                     m.jobs.remove(s.getUUID());
@@ -306,6 +334,7 @@ public final class SiegeDefenders {
         }
         Mover.Run r = Mover.run(s);
         if (r != null && r.active()) return;
+        if (!(r != null && r.failed) && !takePath()) return;
         NavPath.Bounds b = NavPath.Bounds.around(center, w.radius() + 24);
         // Primero arriba del muro; si no se llega, al pie de adentro
         if (r != null && r.failed || !Mover.go(s, top, 1.5, caps, b, BY) || !reaches(Mover.run(s), top, 2.5)) {
@@ -364,7 +393,7 @@ public final class SiegeDefenders {
         Vec3 at = node != null ? Vec3.atBottomCenterOf(node) : spot;
         if (s.position().distanceTo(at) > 2) {
             Mover.Run r = Mover.run(s);
-            if (r == null || !r.active() || r.goal.distanceToSqr(at) > 4) Mover.go(s, at, 1.0, caps, NavPath.Bounds.around(center, 96), BY);
+            if ((r == null || !r.active() || r.goal.distanceToSqr(at) > 4) && takePath()) Mover.go(s, at, 1.0, caps, NavPath.Bounds.around(center, 96), BY);
             return;
         }
         Mover.stop(s);
