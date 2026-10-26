@@ -349,10 +349,11 @@ public final class WorkerSupply {
 
     /**
      * Lo que juntó (salvo su equipo y un poco de comida) pasa al almacén y queda anotado como producción. Si no entra,
-     * queda anotado. El trigo del granjero se hace pan (3 → 1): la aldea no come trigo.
+     * queda anotado. El trigo del granjero se hace pan (3 → 1): la aldea no come trigo; sus semillas de más se tiran.
      */
     public static void collect(CampBlockEntity camp, AbstractWorkerEntity w) {
-        if (WorkZones.jobOf(w) == VillageManagement.Job.FARMER) bake(w);
+        boolean farmer = WorkZones.jobOf(w) == VillageManagement.Job.FARMER;
+        if (farmer) bake(w);
         List<Kit> kit = kit(w);
         int[] kept = new int[kit.size()];
         int food = 0;
@@ -374,6 +375,11 @@ public final class WorkerSupply {
                 food += keep;
             }
             if (keep >= s.getCount()) continue;
+            if (farmer && WorkerOutput.junk(WorkerOutput.key(s.getItem()))) {   // pedido de Ale: las semillas de más no van al almacén
+                s.setCount(keep);
+                if (s.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+                continue;
+            }
             ItemStack out = s.split(s.getCount() - keep);
             int moving = out.getCount();
             Item item = out.getItem();

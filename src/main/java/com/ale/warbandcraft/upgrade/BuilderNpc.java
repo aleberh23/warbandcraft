@@ -73,8 +73,15 @@ public final class BuilderNpc {
         }
         Integer y = Ground.surfaceY(level, Mth.floor(nx), Mth.floor(nz), Mth.floor(pos.y), 3, 6);
         ny = y == null ? pos.y : y;
-        if (dist > TELEPORT) {
+        // pedido de Ale ("en ciertas zonas se traba"): sin piso a mano (lo taparon o le cortaron el piso), aparece al lado
+        // de la obra en vez de quedarse enterrado o flotando
+        boolean lost = y == null;
+        if (dist > TELEPORT || lost) {
             Vec3 at = Ground.nearestStandable(level, BlockPos.containing(dest), 4);
+            if (at == null) {
+                Integer top = Ground.surfaceY(level, Mth.floor(dest.x), Mth.floor(dest.z), target.getY(), 32, 32);
+                if (top != null) at = new Vec3(dest.x, top, dest.z);
+            }
             if (at != null) {
                 nx = at.x;
                 ny = at.y;

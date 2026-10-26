@@ -203,13 +203,17 @@ public class H18GameTests {
             check(camp != null, "no se puso el Campamento de la aldea");
             farmer.addItem(new ItemStack(Items.STONE_HOE));
             farmer.addItem(new ItemStack(Items.WHEAT, 30));
+            farmer.addItem(new ItemStack(Items.WHEAT_SEEDS, 60));
             WorkerSupply.serve(level, v, camp, farmer);
+            check(camp.count(Items.WHEAT_SEEDS) == 0, "las semillas fueron al almacén: " + camp.count(Items.WHEAT_SEEDS));
+            check(farmer.countMatchingItems(s -> s.is(Items.WHEAT_SEEDS)) <= 32, "se quedó con todas las semillas");
             int kept = farmer.countMatchingItems(s -> s.is(Items.BREAD));
             check(camp.count(Items.WHEAT) == 0 && farmer.countMatchingItems(s -> s.is(Items.WHEAT)) == 0, "quedó trigo");
             check(camp.count(Items.BREAD) + kept == 10, "30 de trigo no dieron 10 panes: " + camp.count(Items.BREAD) + " + " + kept);
             WorkerOutput.Rec rec = WorkerOutput.get(level).of(farmer.getUUID());
             check(rec != null && rec.made.getOrDefault("minecraft:bread", 0D) == camp.count(Items.BREAD), "el pan no se anotó: "
                     + (rec == null ? null : rec.made));
+            check(!rec.rate().containsKey("minecraft:wheat_seeds"), "las semillas cuentan como producción: " + rec.rate());
         } finally {
             cleanup(level, v, around);
         }

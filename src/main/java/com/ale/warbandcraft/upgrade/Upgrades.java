@@ -424,7 +424,9 @@ public final class Upgrades {
         long now = level.getGameTime();
         for (TownData.Town t : data.all()) {
             TownData.Job job = t.job;
-            if (job == null || !level.isPositionEntityTicking(t.center)) continue;
+            // la aldea cargada, o donde va la obra (pedido de Ale: lejos del centro se trababa, p. ej. allanar en el borde del territorio)
+            if (job == null || !level.isPositionEntityTicking(t.center)
+                    && !level.isPositionEntityTicking(job.pos(Math.min(job.placed, job.size() - 1)))) continue;
             int due = job.due(now);
             int before = job.placed;
             CampBlockEntity camp = null;
@@ -435,7 +437,8 @@ public final class Upgrades {
             while (job.placed < due) {
                 BlockPos p = job.pos(job.placed);
                 if (!level.isLoaded(p)) break;   // esa parte todavía no está cargada: sigue después
-                place(level, p, job.state(job.placed), job.placed % 3 == 0, camp, job.upgrade == Upgrade.DEMOLISH || job.upgrade.isLevelUp());
+                place(level, p, job.state(job.placed), job.placed % 3 == 0, camp, job.upgrade == Upgrade.DEMOLISH || job.upgrade == Upgrade.EARTH_LEVEL
+                        || job.upgrade.isLevelUp());
                 job.placed++;
             }
             if (job.placed != before) data.changed();

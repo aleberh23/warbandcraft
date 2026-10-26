@@ -283,27 +283,39 @@ public final class Works {
 
     // ------------------------------------------------------------------ terreno
 
+    /**
+     * Pedido de Ale (allanar más práctico): allanar saca TODO lo que hay arriba de la altura (casas, antorchas, árboles,
+     * agua, lo que sea; lo de los cofres va al almacén) hasta {@link #LEVEL_CLEAR_UP} bloques, y el piso queda siempre de
+     * tierra (arena en el desierto), rellenando huecos de abajo hasta {@link #LEVEL_FILL_DOWN}. Nunca toca la campana ni un
+     * Campamento. Rellenar solo sube (no corta) y deja el mismo piso.
+     */
+    public static int LEVEL_CLEAR_UP = 24, LEVEL_FILL_DOWN = 16;
+
     static Spec earth(ServerLevel level, VillageData.Village v, Upgrade u, int x0, int z0, int x1, int z1, int y) {
         int ax = Math.min(x0, x1), bx = Math.max(x0, x1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
         if (bx - ax + 1 > EARTH_SIDE || bz - az + 1 > EARTH_SIDE) return Spec.no(u, "Muy grande (máximo " + EARTH_SIDE + "×" + EARTH_SIDE + ")");
         if (!Placement.inside(level, v, ax, az) || !Placement.inside(level, v, bx, az) || !Placement.inside(level, v, ax, bz)
                 || !Placement.inside(level, v, bx, bz)) return Spec.no(u, "Afuera del territorio");
         boolean fillOnly = u == Upgrade.EARTH_FILL;
-        Blueprints.Plan plan = new Blueprints.Plan();
+        List<BlockPos> loose = new ArrayList<>(), solid = new ArrayList<>();   // lo que se saca: primero lo colgado (antorchas, puertas...)
+        Blueprints.Plan ground = new Blueprints.Plan();
+        BlockState dirt = Blocks.DIRT.defaultBlockState();
         int skipped = 0;
         for (int x = ax; x <= bx; x++) {
             for (int z = az; z <= bz; z++) {
-                Integer g = Blueprints.groundY(level, x, z, y);
-                if (g == null) {
+                BlockPos floor = new BlockPos(x, y, z);
+                if (!level.isLoaded(floor)) {
                     skipped++;
                     continue;
                 }
-                BlockState gs = level.getBlockState(new BlockPos(x, g, z));
-                if (!gs.getFluidState().isEmpty() || !Blueprints.natural(gs) || Math.abs(g - y) > EARTH_DEPTH) {
-                    skipped++;
-                    continue;
-                }
-                if (g < y) {   // rellenar con tierra; arriba, pasto
+                BlockState top = level.getBiome(floor).is(net.minecraftforge.common.Tags.Biomes.IS_DESERT)
+                        ? Blocks.SAND.defaultBlockState() : dirt;
+                if (fillOnly) {   // rellenar: solo donde el piso está más abajo, sin sacar nada
+                    Integer g = Blueprints.groundY(level, x, z, y);
+                    if (g == null || g >= y || y - g > EARTH_DEPTH) {
+                        if (g == null || y - g > EARTH_DEPTH) skipped++;
+                        continue;
+                    }
                     boolean ok = true;
                     for (int yy = g + 1; yy <= y && ok; yy++) {
                         BlockPos p = new BlockPos(x, yy, z);
@@ -313,30 +325,42 @@ public final class Works {
                         skipped++;
                         continue;
                     }
-                    for (int yy = g + 1; yy < y; yy++) plan.put(new BlockPos(x, yy, z), Blocks.DIRT.defaultBlockState());
-                    plan.put(new BlockPos(x, y, z), Blocks.GRASS_BLOCK.defaultBlockState());
-                } else if (g > y && !fillOnly) {   // cortar: de arriba para abajo (los árboles de encima también)
-                    boolean ok = true;
-                    for (int yy = y + 1; yy <= g && ok; yy++) ok = level.getBlockEntity(new BlockPos(x, yy, z)) == null;
-                    if (!ok) {
-                        skipped++;
-                        continue;
-                    }
-                    for (int yy = g + 10; yy > g; yy--) {
-                        BlockPos p = new BlockPos(x, yy, z);
-                        BlockState s = level.getBlockState(p);
-                        if (!s.isAir() && Blueprints.clearable(s) && level.getBlockEntity(p) == null) plan.put(p, Blocks.AIR.defaultBlockState());
-                    }
-                    for (int yy = g; yy > y; yy--) plan.put(new BlockPos(x, yy, z), Blocks.AIR.defaultBlockState());
-                    if (level.getBlockState(new BlockPos(x, y, z)).is(Blocks.DIRT)) plan.put(new BlockPos(x, y, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                    for (int yy = g + 1; yy < y; yy++) ground.put(new BlockPos(x, yy, z), dirt);
+                    ground.put(floor, top);
+                    continue;
+                }
+                for (int yy = y + LEVEL_CLEAR_UP; yy > y; yy--) {   // todo lo de arriba, de arriba para abajo
+                    BlockPos p = new BlockPos(x, yy, z);
+                    BlockState s = level.getBlockState(p);
+                    if (s.isAir() || untouchable(level, p, s)) continue;
+                    (s.isCollisionShapeFullBlock(level, p) ? solid : loose).add(p);
+                }
+                BlockState now = level.getBlockState(floor);
+                if (!untouchable(level, floor, now) && !now.is(top.getBlock())) ground.put(floor, top);
+                for (int yy = y - 1; yy >= y - LEVEL_FILL_DOWN; yy--) {   // huecos de abajo (aire, agua, plantas): tierra
+                    BlockPos p = new BlockPos(x, yy, z);
+                    BlockState s = level.getBlockState(p);
+                    if (level.getBlockEntity(p) != null || !(s.isAir() || s.canBeReplaced() || !s.getFluidState().isEmpty())) break;
+                    ground.put(p, dirt);
                 }
             }
         }
+        Blueprints.Plan plan = new Blueprints.Plan();
+        for (BlockPos p : loose) plan.put(p, Blocks.AIR.defaultBlockState());
+        for (BlockPos p : solid) plan.put(p, Blocks.AIR.defaultBlockState());
+        ground.blocks.forEach(plan::put);
         if (plan.size() == 0) return Spec.no(u, "Ya está a esa altura" + (skipped > 0 ? " (" + skipped + " columnas no se tocan)" : ""));
         int emeralds = fillOnly ? Math.max(1, (plan.size() + EARTH_BLOCKS_PER_EMERALD - 1) / EARTH_BLOCKS_PER_EMERALD)   // + la tierra
                 : plan.size() > LEVEL_BIG_BLOCKS ? LEVEL_BIG_EMERALDS : LEVEL_SMALL_EMERALDS;
-        String note = "Altura " + y + (skipped > 0 ? " · " + skipped + " columnas no se tocan (casas, agua o más de " + EARTH_DEPTH + ")" : "");
+        String note = "Altura " + y + (fillOnly ? "" : " · saca todo lo de arriba") + (skipped > 0 ? " · " + skipped + " columnas no se tocan"
+                + (fillOnly ? " (casas, agua o más de " + EARTH_DEPTH + ")" : " (sin cargar)") : "");
         return new Spec(u, plan, null, emeralds, "", note);
+    }
+
+    /** Lo que allanar nunca saca: la campana (es la aldea), un Campamento y lo irrompible. */
+    private static boolean untouchable(ServerLevel level, BlockPos p, BlockState s) {
+        return s.getBlock() instanceof net.minecraft.world.level.block.BellBlock || s.getDestroySpeed(level, p) < 0
+                || level.getBlockEntity(p) instanceof com.ale.warbandcraft.camp.CampBlockEntity;
     }
 
     // ------------------------------------------------------------------ demoler

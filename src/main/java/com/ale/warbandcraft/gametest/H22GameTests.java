@@ -335,6 +335,8 @@ public class H22GameTests {
             check(town.job != null && town.job.upgrade == Upgrade.EARTH_LEVEL, "no empezó a allanar: " + msg.getString());
             finishJob(level, town);
             check(h.getBlockState(new BlockPos(2, 2, 2)).isAir() && h.getBlockState(new BlockPos(3, 3, 3)).isAir(), "la loma sigue ahí");
+            BlockState leveled = h.getBlockState(new BlockPos(2, 1, 2));
+            check(leveled.is(Blocks.DIRT) || leveled.is(Blocks.SAND), "el piso allanado no quedó de tierra: " + leveled);
 
             int dirt = player.getInventory().countItem(Items.DIRT);
             BlockPos c = h.absolutePos(new BlockPos(6, 1, 6)), d = h.absolutePos(new BlockPos(7, 1, 7));
@@ -342,7 +344,7 @@ public class H22GameTests {
             check(town.job != null && town.job.upgrade == Upgrade.EARTH_FILL, "no empezó a rellenar: " + msg.getString());
             check(player.getInventory().countItem(Items.DIRT) == dirt - 4, "no cobró 4 de tierra: " + (dirt - player.getInventory().countItem(Items.DIRT)));
             finishJob(level, town);
-            check(h.getBlockState(new BlockPos(6, 2, 6)).is(Blocks.GRASS_BLOCK), "no rellenó");
+            check(h.getBlockState(new BlockPos(6, 2, 6)).is(Blocks.DIRT) || h.getBlockState(new BlockPos(6, 2, 6)).is(Blocks.SAND), "no rellenó");
         } finally {
             cleanup(h, v);
         }

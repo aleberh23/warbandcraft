@@ -761,12 +761,16 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `ManageActionMessage.PLACE/PREVIEW` con ":" → `Upgrades.orderWork/previewWork`: "wall:<1|2>:x,z;x,z..." (tramos sin cortar
   esquinas, `Works.columns`; caminos = hueco), "gate:<1|2>:x,z" (sobre la columna de muralla más cercana, 3 de abertura con
   2 puertas de cerco + postes), "tower:<1|2>:x,z" (`Blueprints.tower(..., stone)`, devuelve el piso), "earth:<0 allanar|1
-  rellenar>:x0,z0,x1,z1,y", "demolish:<clave de terreno | tower:pos>" (saca también block entities: su contenido al almacén).
+  rellenar>:x0,z0,x1,z1,y" (pedido de Ale: allanar saca TODO hasta `LEVEL_CLEAR_UP` 24 arriba —casas, antorchas, árboles, agua; lo
+  colgado primero; cofres al almacén—, menos campana, Campamento e irrompibles, y el piso queda de tierra / arena en desierto
+  (`Tags.Biomes.IS_DESERT`) con huecos rellenos hasta `LEVEL_FILL_DOWN`; rellenar solo sube), "demolish:<clave de terreno | tower:pos>" (saca también block entities: su contenido al almacén).
   Al terminar (`Works.finish`): bloques de defensa en `Town.defense` (los usa `WallRepair`), `Town.gates`, `Town.towers`
   (`Quarters.drawnTowerPosts`), flags PALISADE/WALL/TOWERS. `Town.ringWalls` = el anillo viejo de H12 (las pruebas que lo
   simulan lo prenden). En aldeas, PALISADE/WALL/TOWERS no salen en `Upgrades.status`. Portones: `Works.tickGates` cada 10
   ticks (`UpgradeEvents`). `Breach.walls` usa `Works.radius` con muralla dibujada. Cliente: `ManagePanel.Mode` (BUILDING,
   POINT, WALL, DRAG, PICK), categorías Edificios / Defensa / Terreno / Otros.
+- Obras trabadas (pedido de Ale): una obra avanza si está cargado el centro de la aldea **o** el bloque que le toca (allanar en el borde
+  del territorio no avanzaba). El constructor sin piso (enterrado o con el piso cortado) aparece al lado de la obra.
 - Pruebas: `H22GameTests` (taberna girada + cancelar, sin materiales / encima de un cofre, la cuenta, muralla + portón +
   reparar, torre + demoler, allanar y rellenar, demoler un tramo de muralla).
 - Después (a probar): no se planta encima de una **zona de trabajo** de Workers ("Pisa una zona de trabajo"). **Demoler
@@ -975,7 +979,9 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   sin atenderlo (hueco > `GAP_TICKS`): al volver a atenderlo, o cada 5 s si el almacén de la aldea está cargado y él no
   (`WorkerSupply.tick`), se paga rate × tiempo (máx. 7 días, fracciones en `carry`) al almacén; si fue >2 min, aviso por chat.
   Sin su entidad con su lugar cargado `MISSING_CHECKS` veces → se olvida. Gestión: `AreaRow.production` (cartelito + lista) y
-  `Data.production` (Resumen, total de la aldea). El trigo del granjero se hace pan al juntarlo (`bake`, 3 → 1).
+  `Data.production` (Resumen, total de la aldea). El trigo del granjero se hace pan al juntarlo (`bake`, 3 → 1); sus semillas de
+  más se tiran (no van al almacén ni cuentan: `WorkerOutput.junk`). Pedido de Ale ("al volver no veo lo que generan"): `rate` usa lo
+  esperado del oficio como piso (lo medido manda solo si es más).
 - **Mina en escalera** (pedido de Ale): la zona del minero es `MiningMode.STAIRS_DOWN` de Workers (`WorkZones.placeStairs`:
   rectángulo largo ≥ `MIN_MINE_LENGTH` y angosto ≤ `MAX_MINE_WIDTH`, baja desde la punta más cerca del almacén; Workers mide los
   escalones desde la posición de la zona, parada sobre el piso). Marcas `warbandcraft:mine_stage/mine_dir/mine_end`. Cuando

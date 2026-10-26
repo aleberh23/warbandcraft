@@ -57,11 +57,14 @@ public class WorkerOutput extends SavedData {
             this.pos = pos;
         }
 
-        /** Ítems por día: lo medido si alcanza, si no lo esperado. */
+        /**
+         * Ítems por día: lo medido si alcanza, si no lo esperado. Pedido de Ale ("al volver no veo lo que generan"): lo
+         * esperado de su oficio es el piso (un trabajador con zona nunca da menos que eso), y las semillas no cuentan.
+         */
         public Map<String, Double> rate() {
-            if (loadedTicks < MIN_MEASURE_TICKS) return estimate;
-            Map<String, Double> out = new HashMap<>();
-            made.forEach((k, n) -> out.put(k, n * DAY / loadedTicks));
+            Map<String, Double> out = new HashMap<>(estimate);
+            if (loadedTicks >= MIN_MEASURE_TICKS) made.forEach((k, n) -> out.merge(k, n * DAY / loadedTicks, Math::max));
+            out.keySet().removeIf(WorkerOutput::junk);
             return out;
         }
 
@@ -203,6 +206,12 @@ public class WorkerOutput extends SavedData {
             });
         }
         return out;
+    }
+
+    /** Lo que no sirve en el almacén: semillas (al granjero le aparecen solas). */
+    static boolean junk(String key) {
+        return key.equals("minecraft:wheat_seeds") || key.equals("minecraft:beetroot_seeds") || key.equals("minecraft:melon_seeds")
+                || key.equals("minecraft:pumpkin_seeds") || key.equals("minecraft:torchflower_seeds") || key.equals("minecraft:pitcher_pod");
     }
 
     public static String key(Item item) {
