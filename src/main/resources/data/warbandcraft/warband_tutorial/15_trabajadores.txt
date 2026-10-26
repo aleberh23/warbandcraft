@@ -1,7 +1,7 @@
 titulo: Trabajadores
 cartel: Trabajadores|y zonas
 ## Asignar
-Gestión, pestaña Aldeanos: elegís un aldeano libre (en el mundo se marcan) y le das un oficio: granjero, leñador, minero, pescador, ganadero, cocinero, herrero, tabernero o mercader.
+Gestión, pestaña Aldeanos: elegís un aldeano libre (en el mundo se marcan) y le das un oficio: granjero, leñador, minero, pescador, ganadero, cocinero, herrero, tabernero, mercader u organizador.
 
 Los que ya tienen oficio de aldeano también se pueden asignar (pierden sus tratos).
 ---
@@ -26,16 +26,28 @@ Sobre cada zona se ve qué le pasa: "Falta en el almacén", "Almacén lleno", "C
 Convierte 1 hierro + 1 carbón en 2 de armamento, hasta 8 por día. Trabaja en la Herrería o al lado de un yunque. También desguaza lo que marques en la pestaña Cofre (Desguace).
 
 ## Trabajador de un Campamento
-Un Campamento común (no el de una aldea) puede tener un Herrero y un Granjero.
+Un Campamento común (no el de una aldea) puede tener un Herrero, un Granjero y un Organizador.
 ---
 Se contrata hablándole al Tabernero de cualquier taberna (10 esmeraldas). Llega uno por día, hasta 1, 2 o 3 según el nivel de la taberna (las sueltas, 2). Elegís a qué Campamento va y va solo; si se traba, aparece ahí.
 ---
 Al llegar espera quieto. Pestaña Cofre del Campamento, botón Trabajador:
 - Herrero: necesita un yunque a 24 bloques o menos.
 - Granjero: la huerta la elige él (una hecha, o el terreno de 9×9 más parejo a 40 bloques o menos del Campamento, aunque sea afuera). Pide una azada y 8 semillas del almacén.
+- Organizador: ordena los cofres vinculados (ver abajo).
 ---
-Los dos necesitan una cama libre a 24 bloques o menos, y comen del almacén. Lo que juntan va al almacén, y siguen produciendo aunque estés lejos (como en las aldeas). Si fundás una aldea en ese Campamento, pasan a ser pobladores de ella.
+Todos necesitan una cama libre a 24 bloques o menos, y comen del almacén. Lo que juntan va al almacén, y siguen produciendo aunque estés lejos (como en las aldeas). Si fundás una aldea en ese Campamento, pasan a ser pobladores de ella.
 
+## Organizador
+Ordena los cofres vinculados al Campamento (o al almacén de una aldea: uno por almacén, sin zona). El Campamento es la entrada: lo que llega ahí (botín, impuestos, envíos, lo que juntan los trabajadores) él lo lleva caminando a los cofres.
+---
+Cada cofre guarda una cosa: comida; armas, armaduras y herramientas; construcción; minerales y lingotes; semillas y plantas; varios. Cuántos cofres usa para cada cosa lo calcula solo, según cuánto hay, y deja aire para lo que llegue.
+---
+Un marco con un ítem puesto en un cofre lo deja fijo: ese ítem va ahí primero, y también lo de su categoría. Los cofres que sobran quedan vacíos de reserva.
+---
+Si no alcanzan los cofres, lo chico va a Varios. Si igual no entra, queda en el Campamento y avisa "Faltan cofres para: ...".
+
+No toca los cofres de las zonas de trabajo, lo que tiene nombre puesto a mano ni lo marcado para desguace.
+---
 ## Minero
 Su zona es una escalera: marcá un rectángulo largo y angosto (mínimo 8 de largo, máximo 5 de ancho). Baja desde la punta más cerca del almacén. Abajo de todo sigue cavando pasillos por el territorio.
 

@@ -85,6 +85,7 @@ public final class WorkZones {
         if (e instanceof SmithEntity) return VillageManagement.Job.SMITH;
         if (e instanceof com.ale.warbandcraft.worker.InnkeeperEntity) return VillageManagement.Job.INNKEEPER;
         if (e instanceof com.ale.warbandcraft.worker.MerchantEntity) return VillageManagement.Job.MERCHANT;
+        if (e instanceof com.ale.warbandcraft.worker.OrganizerEntity) return VillageManagement.Job.ORGANIZER;
         if (e instanceof FarmerEntity) return VillageManagement.Job.FARMER;
         if (e instanceof LumberjackEntity) return VillageManagement.Job.LUMBERJACK;
         if (e instanceof MinerEntity) return VillageManagement.Job.MINER;
@@ -101,7 +102,7 @@ public final class WorkZones {
         if (a != null && a.isAlive()) return a;
         VillageManagement.Job job = jobOf(w);
         if (job == null || job == VillageManagement.Job.SMITH || job == VillageManagement.Job.INNKEEPER
-                || job == VillageManagement.Job.MERCHANT) return null;
+                || job == VillageManagement.Job.MERCHANT || job == VillageManagement.Job.ORGANIZER) return null;
         List<AbstractWorkAreaEntity> near = level.getEntitiesOfClass(AbstractWorkAreaEntity.class, w.getBoundingBox().inflate(REACH, 48, REACH),
                 x -> x.isAlive() && jobOfArea(x) == job && com.ale.warbandcraft.faction.Allies.same(w.getOwnerUUID(), x.getPlayerUUID()));
         near.sort(Comparator.comparingDouble(x -> x.distanceToSqr(w)));
@@ -112,6 +113,7 @@ public final class WorkZones {
     public static boolean hasPlace(AbstractWorkerEntity w) {
         if (w instanceof com.ale.warbandcraft.worker.InnkeeperEntity k) return k.getWorkplace() != null;
         if (w instanceof com.ale.warbandcraft.worker.MerchantEntity m) return m.getWorkplace() != null;
+        if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity o) return o.getCamp() != null;
         return w instanceof SmithEntity s ? s.getWorkplace() != null : w.getCurrentWorkArea() != null;
     }
 
@@ -128,6 +130,7 @@ public final class WorkZones {
             case SMITH -> 0xFFE53935;
             case INNKEEPER -> 0xFFB8860B;
             case MERCHANT -> 0xFF2ECC71;
+            case ORGANIZER -> 0xFF8E7CC3;
         };
     }
 
@@ -246,6 +249,7 @@ public final class WorkZones {
         AbstractWorkerEntity w = worker(player, v, workerId);
         VillageManagement.Job job = w == null ? null : jobOf(w);
         if (job == null) return error("no_worker");
+        if (job == VillageManagement.Job.ORGANIZER) return organizerCamp(level, v, w);   // no tiene zona: el almacén
         int ax = Math.min(x0, x1), bx = Math.max(x0, x1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
         BlockPos mid = new BlockPos((ax + bx) / 2, v.center().getY(), (az + bz) / 2);
         boolean outpost = false;
@@ -294,6 +298,9 @@ public final class WorkZones {
         if (job == null) return error("no_worker");
         BlockPos c = v.center();
         switch (job) {
+            case ORGANIZER -> {
+                return organizerCamp(level, v, w);
+            }
             case MERCHANT -> {
                 BlockPos place = com.ale.warbandcraft.market.Market.workplace(level, v);
                 if (place == null) return error("no_market");
@@ -813,6 +820,30 @@ public final class WorkZones {
 
     /** Marcas en la zona de Workers: dónde está su cofre y su zona de almacén. */
     private static final String TAG_CHEST = "warbandcraft:zone_chest", TAG_STORAGE = "warbandcraft:zone_storage";
+
+    /** El Organizador trabaja en el almacén de la aldea (su Campamento y los cofres vinculados). */
+    private static Component organizerCamp(ServerLevel level, VillageData.Village v, AbstractWorkerEntity w) {
+        com.ale.warbandcraft.camp.CampBlockEntity camp = VillageStorehouse.camp(level, v);
+        if (camp == null) return Component.translatable("msg.warbandcraft.manage.no_camp").withStyle(ChatFormatting.RED);
+        ((com.ale.warbandcraft.worker.OrganizerEntity) w).setCamp(camp.getBlockPos());
+        return Component.translatable("msg.warbandcraft.organizer.set").withStyle(ChatFormatting.GREEN);
+    }
+
+    /** Los cofres de las zonas de trabajo cerca de un Campamento (el Organizador no los toca). */
+    public static java.util.Set<BlockPos> zoneChests(ServerLevel level, BlockPos camp) {
+        java.util.Set<BlockPos> out = new java.util.HashSet<>();
+        for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new net.minecraft.world.phys.AABB(camp).inflate(96, 48, 96))) {
+            if (!a.getPersistentData().contains(TAG_CHEST)) continue;
+            BlockPos p = BlockPos.of(a.getPersistentData().getLong(TAG_CHEST));
+            out.add(p);
+            net.minecraft.world.level.block.state.BlockState st = level.getBlockState(p);
+            if (st.getBlock() instanceof net.minecraft.world.level.block.ChestBlock
+                    && st.getValue(net.minecraft.world.level.block.ChestBlock.TYPE) != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                out.add(p.relative(net.minecraft.world.level.block.ChestBlock.getConnectedDirection(st)));
+            }
+        }
+        return out;
+    }
 
     /**
      * Un cofre al lado de la zona (del lado del almacén, adentro del territorio), con su zona de almacén de Workers para

@@ -88,9 +88,11 @@ public class CampWorkerGameTests {
         check(camp.count(net.minecraft.world.item.Items.IRON_INGOT) == 2, "tendrían que quedar 2 lingotes");
         check(camp.count(net.minecraft.world.item.Items.BREAD) < 4, "no comió");
 
-        // El segundo: no puede ser otro Herrero; con él ya no hay lugar para un tercero
+        // El segundo: no puede ser otro Herrero; con un tercero (Herrero + Granjero + Organizador) ya no hay lugar para un cuarto
         CampWorkers.hire(player, campAbs, Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(2, 2, 3))));
-        check(!CampWorkers.canTake(level, owner, campAbs), "un Campamento no tiene tres trabajadores");
+        check(CampWorkers.canTake(level, owner, campAbs), "tendría lugar para un tercero (el Organizador)");
+        CampWorkers.hire(player, campAbs, Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(3, 2, 3))));
+        check(!CampWorkers.canTake(level, owner, campAbs), "un Campamento no tiene cuatro trabajadores");
         CampWorkers.tick(level);
         CampWorkers.assign(player, camp, VillageManagement.Job.SMITH);
         check(CampWorkers.Data.get(level).of(campAbs).stream().filter(x -> CampWorkers.SMITH.equals(x.job)).count() == 1,

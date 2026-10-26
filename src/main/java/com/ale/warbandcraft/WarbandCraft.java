@@ -57,6 +57,8 @@ public class WarbandCraft {
                 e.put(com.ale.warbandcraft.init.ModEntities.INNKEEPER.get(), com.ale.warbandcraft.worker.InnkeeperEntity.setAttributes().build()));   // H19
         modBus.addListener((net.minecraftforge.event.entity.EntityAttributeCreationEvent e) ->
                 e.put(com.ale.warbandcraft.init.ModEntities.MERCHANT.get(), com.ale.warbandcraft.worker.MerchantEntity.setAttributes().build()));   // H24
+        modBus.addListener((net.minecraftforge.event.entity.EntityAttributeCreationEvent e) ->
+                e.put(com.ale.warbandcraft.init.ModEntities.ORGANIZER.get(), com.ale.warbandcraft.worker.OrganizerEntity.setAttributes().build()));   // Organizador
 
         MinecraftForge.EVENT_BUS.register(new CommonEvents());
         MinecraftForge.EVENT_BUS.register(new VillageEvents());

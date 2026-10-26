@@ -679,6 +679,9 @@ public final class WorkerSupply {
         if (w.needsToSleep()) {
             return new Status(Component.translatable("status.warbandcraft.worker.sleeping").append(noBed), hasHome(w) ? GREY : YELLOW);
         }
+        if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity o && !o.getMissing().isEmpty()) {
+            return new Status(com.ale.warbandcraft.camp.Organizer.missingText(o.getMissing()), YELLOW);
+        }
         if (!smith && w.needsToGetItems()) {
             MutableComponent list = null;
             for (NeededItem ni : w.neededItems) {

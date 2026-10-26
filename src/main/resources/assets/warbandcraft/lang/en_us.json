@@ -902,5 +902,19 @@
   "msg.warbandcraft.report.fought": "It was fought for real.",
   "msg.warbandcraft.report.auto": "It was auto-resolved (nobody was nearby).",
   "msg.warbandcraft.report.lost_guards": "%s of ours fell.",
-  "cmd.warbandcraft.reports.none": "No war reports: nobody has attacked your villages yet."
+  "cmd.warbandcraft.reports.none": "No war reports: nobody has attacked your villages yet.",
+  "entity.warbandcraft.organizer": "Organizer",
+  "gui.warbandcraft.organizer.cat.food": "food",
+  "gui.warbandcraft.organizer.cat.gear": "weapons, armor and tools",
+  "gui.warbandcraft.organizer.cat.building": "building",
+  "gui.warbandcraft.organizer.cat.ores": "ores and ingots",
+  "gui.warbandcraft.organizer.cat.plants": "seeds and plants",
+  "gui.warbandcraft.organizer.cat.misc": "misc",
+  "status.warbandcraft.organizer.missing": "Needs more chests for: %s",
+  "msg.warbandcraft.organizer.set": "The Organizer sorts the chests linked to the village storehouse.",
+  "msg.warbandcraft.organizer.full": "This storehouse already has its Organizer.",
+  "gui.warbandcraft.camp_worker.organizer": "Make Organizer",
+  "gui.warbandcraft.camp_worker.organizer_chests": "Organizer: %s linked chests to sort (an item frame with an item on a chest pins it).",
+  "gui.warbandcraft.camp_worker.organizer_plan": "Chests: %s",
+  "msg.warbandcraft.camp_worker.organizer_ok": "Done: Organizer. By day it spreads the Camp's items among the linked chests."
 }

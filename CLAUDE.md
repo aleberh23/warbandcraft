@@ -50,7 +50,8 @@ src/main/java/com/ale/warbandcraft/
   init/                      DeferredRegisters (bloques, ítems, block entities)
   camp/                      Campamento: bloque, cofre de 54 espacios + cofres vinculados (H6), búsqueda por radio,
                              nombre (H8), Barracks + BarracksData (H8: barracón), Prisoners (H9: presos, reclutar, rescate),
-                             Forge (H10: herreros), CampStats (H10: totales), WorkerZone (H10: puente con Villager Workers)
+                             Forge (H10: herreros), CampStats (H10: totales), WorkerZone (H10: puente con Villager Workers),
+                             Organizer (ordena los cofres vinculados)
   kit/                       Clases de soldado: carga de JSON, asignación + conversión de entidad; Armament (H10)
   item/MarshalBatonItem      Bastón de Mariscal (elige clase / arma soldados)
   faction/                   Facciones NPC (H2): Faction, Troop, FactionManager (carga JSON)
@@ -637,6 +638,24 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   (cama, zona y `WorkerOutput` siguen); el que esperaba/venía = aldeano libre al lado del Campamento. `tickOne` lo hace también si
   un Campamento ya es aldea y alguno no estaba cargado.
 - Tope de reclutas de tus tabernas: 4/7/10 (pedido de Ale: nunca más de 10).
+
+## Organizador (pedido de Ale, a probar; números sin Ale)
+
+- `camp/Organizer` (cálculo y movidas) + `worker/OrganizerEntity` (`warbandcraft:organizer`, como el Herrero; `Job.ORGANIZER`) +
+  `worker/OrganizerGoal` (camina de verdad). Campamento común: tercer oficio de `CampWorkers` ("O", `MAX_PER_CAMP` 3); aldea:
+  Gestión → Aldeanos, uno por almacén (`VillageManagement.organizersOf`), sin zona (Zona/Auto = `WorkZones.organizerCamp`).
+- El Campamento es la bandeja de entrada; cofres = vinculados cargados (doble = una unidad, barriles sí) menos los de zonas de
+  trabajo (`WorkZones.zoneChests`). Categorías: comida, armas/armaduras/herramientas (todo lo que se gasta), construcción
+  (`BlockItem`), minerales y lingotes (tags de Forge), semillas y plantas, varios. No mueve lo con nombre ni lo de desguace
+  (eso vuelve al Campamento).
+- `plan` (cada `PLAN_TICKS`, sobre lo asignado antes, guardado en la entidad `WbSort`): marcos (ItemFrame pegado al cofre:
+  ese ítem primero + su categoría, fijo) → suelta cofres vacíos que sobran → uno por categoría de mayor a menor (si no alcanzan,
+  el último libre es Varios) → más cofres pegados a los suyos mientras ocupen > `FILL` (0,8). Lo que no entra: Varios, si no
+  queda en el Campamento y `missing` → estado "Faltan cofres para: ..." (`WorkerSupply.status`, pantalla del Trabajador).
+- Viaje: va al origen, abre la tapa (`lid`: blockEvent / barril OPEN), levanta hasta `STACKS_PER_TRIP` (4) pilas (la primera en
+  la mano), va al destino, deja, `sort` adentro. Trabado `STUCK_TICKS` → aparece al lado. Cortado (noche, huye) o muerto/despedido
+  con algo en la mano → al Campamento (`dropAtCamp`). Descargado no hace nada (nada cambia). Pruebas: `OrganizerGameTests`
+  (`OrganizerGoal.runNow` = viajes en el acto).
 
 ## Taberna, entrenamiento y armar con armamento (H19, a probar — plan en `plan-h19-taberna.md`)
 

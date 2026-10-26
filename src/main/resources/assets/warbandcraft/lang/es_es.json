@@ -902,5 +902,19 @@
   "msg.warbandcraft.report.fought": "Se peleó de verdad.",
   "msg.warbandcraft.report.auto": "Se resolvió sola (no había nadie cerca).",
   "msg.warbandcraft.report.lost_guards": "Cayeron %s de los nuestros.",
-  "cmd.warbandcraft.reports.none": "No hay partes de guerra: nadie atacó tus aldeas todavía."
+  "cmd.warbandcraft.reports.none": "No hay partes de guerra: nadie atacó tus aldeas todavía.",
+  "entity.warbandcraft.organizer": "Organizador",
+  "gui.warbandcraft.organizer.cat.food": "comida",
+  "gui.warbandcraft.organizer.cat.gear": "armas, armaduras y herramientas",
+  "gui.warbandcraft.organizer.cat.building": "construcción",
+  "gui.warbandcraft.organizer.cat.ores": "minerales y lingotes",
+  "gui.warbandcraft.organizer.cat.plants": "semillas y plantas",
+  "gui.warbandcraft.organizer.cat.misc": "varios",
+  "status.warbandcraft.organizer.missing": "Faltan cofres para: %s",
+  "msg.warbandcraft.organizer.set": "El Organizador ordena los cofres vinculados al almacén de la aldea.",
+  "msg.warbandcraft.organizer.full": "Este almacén ya tiene su Organizador.",
+  "gui.warbandcraft.camp_worker.organizer": "Hacerlo Organizador",
+  "gui.warbandcraft.camp_worker.organizer_chests": "Organizador: %s cofres vinculados para ordenar (un marco con un ítem en un cofre lo deja fijo).",
+  "gui.warbandcraft.camp_worker.organizer_plan": "Cofres: %s",
+  "msg.warbandcraft.camp_worker.organizer_ok": "Listo: es Organizador. De día reparte lo del Campamento entre los cofres vinculados."
 }

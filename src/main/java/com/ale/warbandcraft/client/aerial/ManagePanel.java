@@ -36,7 +36,7 @@ final class ManagePanel {
     private static final int ROW = 18;
     private static final int TAB_SUMMARY = 0, TAB_VILLAGERS = 1, TAB_WORK = 2, TAB_UPGRADES = 3, TAB_ROUTES = 4, TAB_HOUSING = 5, TAB_TROOPS = 6, TAB_GROWTH = 7;
     private static final String[] TABS = {"Resumen", "Aldeanos", "Trabajo", "Construir", "Rutas", "Casas", "Tropas", "Pueblo"};
-    private static final String[] JOBS = {"Granjero", "Leñador", "Minero", "Pescador", "Ganadero", "Cocinero", "Herrero", "Tabernero", "Mercader"};
+    private static final String[] JOBS = {"Granjero", "Leñador", "Minero", "Pescador", "Ganadero", "Cocinero", "Herrero", "Tabernero", "Mercader", "Organizador"};
     private static final int VILLAGERS_VISIBLE = 6, UPGRADES_VISIBLE = 7, WORKERS_VISIBLE = 5, AREAS_VISIBLE = 5;
     private static final int GOLD = 0xFFFFD24A;
     /** Pestaña Tropas: filas visibles y su alto. */

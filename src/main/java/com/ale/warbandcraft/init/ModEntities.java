@@ -31,5 +31,10 @@ public final class ModEntities {
             () -> EntityType.Builder.<com.ale.warbandcraft.worker.MerchantEntity>of(com.ale.warbandcraft.worker.MerchantEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F).clientTrackingRange(10).build("merchant"));
 
+    /** El Organizador (trabajador hecho sobre la base de Villager Workers): ordena los cofres del almacén. */
+    public static final RegistryObject<EntityType<com.ale.warbandcraft.worker.OrganizerEntity>> ORGANIZER = ENTITIES.register("organizer",
+            () -> EntityType.Builder.<com.ale.warbandcraft.worker.OrganizerEntity>of(com.ale.warbandcraft.worker.OrganizerEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("organizer"));
+
     private ModEntities() {}
 }

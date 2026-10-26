@@ -27,6 +27,7 @@ final class TuningClasses {
             "camp.CampFinder",
             "camp.CampWorkers",
             "camp.Forge",
+            "camp.Organizer",
             "camp.Prisoners",
             "camp.Scrap",
             "camp.Training",
@@ -112,6 +113,7 @@ final class TuningClasses {
             "village.ZoneCosts",
             "worker.InnkeeperGoal",
             "worker.MerchantGoal",
+            "worker.OrganizerGoal",
             "worker.SmithEntity",
             "worker.SmithWorkGoal",
     };

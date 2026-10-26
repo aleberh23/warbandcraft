@@ -32,5 +32,6 @@ public final class ClientSetup {
         event.registerEntityRenderer(ModEntities.SMITH.get(), com.talhanation.workers.client.render.WorkerVillagerRenderer::new);   // H16
         event.registerEntityRenderer(ModEntities.INNKEEPER.get(), com.talhanation.workers.client.render.WorkerVillagerRenderer::new);   // H19
         event.registerEntityRenderer(ModEntities.MERCHANT.get(), com.talhanation.workers.client.render.WorkerVillagerRenderer::new);   // H24
+        event.registerEntityRenderer(ModEntities.ORGANIZER.get(), com.talhanation.workers.client.render.WorkerVillagerRenderer::new);   // Organizador
     }
 }

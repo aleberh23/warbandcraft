@@ -336,7 +336,7 @@ public class H8GameTests {
         ServerLevel level = h.getLevel();
         CampBlockEntity camp = placeCamp(h);
         AbstractRecruitEntity stuck = spawnRecruit(h, CAMP_POS.east(6));
-        AbstractRecruitEntity changed = spawnRecruit(h, CAMP_POS.west(6));
+        AbstractRecruitEntity changed = spawnRecruit(h, CAMP_POS.south(6));   // adentro de su área (al oeste caía en la prueba vecina)
         stuck.setNoAi(true);
         changed.setNoAi(true);
         check(Barracks.sendHome(level, stuck, null) && Barracks.sendHome(level, changed, null), "no tiene Campamento al que ir");
@@ -347,7 +347,7 @@ public class H8GameTests {
             Barracks.checkArrivals(level);
             check(stuck.isRemoved(), "se trabó y no se guardó");
             check(!changed.isRemoved() && !changed.getPersistentData().getBoolean(Barracks.TAG_TO_BARRACKS),
-                    "con otra orden igual siguió yendo al barracón");
+                    "con otra orden igual siguió yendo al barracón (guardado: " + changed.isRemoved() + ", estado " + changed.getFollowState() + ")");
             check(BarracksData.get(level).count(camp.getBlockPos()) == 1, "no quedó en el barracón");
             h.succeed();
         });

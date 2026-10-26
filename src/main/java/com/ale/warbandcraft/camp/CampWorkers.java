@@ -41,7 +41,7 @@ import java.util.UUID;
  * Trabajador de un Campamento común (pedido de Ale): se contrata en una taberna (al Tabernero) y va solo a tu Campamento,
  * como un soldado al barracón (si se traba, aparece ahí; si te alejás, llega "en papel" y aparece cuando el Campamento se
  * carga). Ahí espera quieto hasta que en la pestaña Cofre → "Trabajador" le das oficio: Herrero (al lado de un yunque a
- * ≤24 del Campamento) o Granjero (la huerta la elige él). Hasta uno de cada oficio por Campamento ({@link #MAX_PER_CAMP});
+ * ≤24 del Campamento), Granjero (la huerta la elige él) u Organizador (ordena los cofres vinculados, {@link Organizer}). Hasta uno de cada oficio por Campamento ({@link #MAX_PER_CAMP});
  * cada uno necesita una cama libre a ≤24 y come del almacén. Los Campamentos de aldea no: ahí está el modo Gestión.
  */
 public final class CampWorkers {
@@ -62,9 +62,9 @@ public final class CampWorkers {
     /** Cada cuánto (en revisiones de 1 s) pasa al almacén lo que juntó. */
     public static int COLLECT_EVERY = 30;
 
-    /** Un Herrero y un Granjero (pedido de Ale): dos lugares por Campamento, uno por oficio. */
-    public static final int MAX_PER_CAMP = 2;
-    public static final String SMITH = "smith", FARMER = "farmer";
+    /** Un Herrero, un Granjero y un Organizador (pedido de Ale): un lugar por oficio. */
+    public static final int MAX_PER_CAMP = 3;
+    public static final String SMITH = "smith", FARMER = "farmer", ORGANIZER = "organizer";
 
     private CampWorkers() {}
 
@@ -77,7 +77,7 @@ public final class CampWorkers {
         public boolean away;
         @Nullable
         public BlockPos bed;
-        /** {@link #SMITH}, {@link #FARMER} o "" (todavía sin oficio). */
+        /** {@link #SMITH}, {@link #FARMER}, {@link #ORGANIZER} o "" (todavía sin oficio). */
         public String job = "";
         int missing;
     }
@@ -452,6 +452,7 @@ public final class CampWorkers {
             Entity ent = r.away ? null : level.getEntity(r.worker);
             if (ent instanceof AbstractWorkerEntity w) {
                 WorkerSupply.Status st = WorkerSupply.status(level, w);
+                if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity o) organizerLines(o, lines);
                 lines.add(Component.translatable("gui.warbandcraft.camp_worker.job", w.getType().getDescription())
                         .append(" · ").append(st.text().copy().withStyle(x -> x.withColor(st.color() & 0xFFFFFF))));
                 options.add(Component.translatable("gui.warbandcraft.camp_worker.dismiss_job", w.getType().getDescription()));
@@ -477,12 +478,31 @@ public final class CampWorkers {
                 jobs.add(Component.translatable("gui.warbandcraft.camp_worker.farmer"));
                 jobActions.add("F");
             }
+            if (d.withJob(pos, ORGANIZER) == null) {
+                lines.add(Component.translatable("gui.warbandcraft.camp_worker.organizer_chests", Organizer.units(level, camp).size()));
+                jobs.add(Component.translatable("gui.warbandcraft.camp_worker.organizer"));
+                jobActions.add("O");
+            }
             options.addAll(0, jobs);
             actions.addAll(0, jobActions);
         }
         options.add(Component.translatable("gui.warbandcraft.camp_worker.close"));
         BattleChoices.send(player, KIND, pos.asLong() + ":" + String.join(",", actions), Component.translatable("gui.warbandcraft.camp_worker.title",
                 CampRegistry.get(level).displayName(pos)), lines, options, true);
+    }
+
+    /** Qué guarda cada cofre (por categoría: cuántos) y lo que falta. */
+    private static void organizerLines(com.ale.warbandcraft.worker.OrganizerEntity o, List<Component> lines) {
+        Map<Organizer.Category, Integer> n = new java.util.EnumMap<>(Organizer.Category.class);
+        o.getAssign().values().forEach(c -> n.merge(c, 1, Integer::sum));
+        if (n.isEmpty()) return;
+        net.minecraft.network.chat.MutableComponent l = Component.empty();
+        int i = 0;
+        for (Map.Entry<Organizer.Category, Integer> e : n.entrySet()) {
+            if (i++ > 0) l.append(" · ");
+            l.append(e.getKey().label()).append(" " + e.getValue());
+        }
+        lines.add(Component.translatable("gui.warbandcraft.camp_worker.organizer_plan", l).withStyle(ChatFormatting.GRAY));
     }
 
     private static boolean here(@Nullable Entity ent, BlockPos camp) {
@@ -506,6 +526,7 @@ public final class CampWorkers {
         Component msg = null;
         if (a.equals("S")) msg = assign(player, camp, VillageManagement.Job.SMITH);
         else if (a.equals("F")) msg = assign(player, camp, VillageManagement.Job.FARMER);
+        else if (a.equals("O")) msg = assign(player, camp, VillageManagement.Job.ORGANIZER);
         else if (a.startsWith("d")) {
             List<Rec> recs = Data.get(player.serverLevel()).of(pos);
             try {
@@ -542,7 +563,7 @@ public final class CampWorkers {
         ServerLevel level = player.serverLevel();
         BlockPos pos = camp.getBlockPos();
         Data d = Data.get(level);
-        String jobKey = job == VillageManagement.Job.SMITH ? SMITH : FARMER;
+        String jobKey = job == VillageManagement.Job.SMITH ? SMITH : job == VillageManagement.Job.ORGANIZER ? ORGANIZER : FARMER;
         if (d.withJob(pos, jobKey) != null) return Component.translatable("msg.warbandcraft.camp_worker.job_taken").withStyle(ChatFormatting.RED);
         Rec r = null;
         Villager v = null;
@@ -564,7 +585,7 @@ public final class CampWorkers {
             if (anvil == null) return Component.translatable("msg.warbandcraft.camp_worker.no_anvil", CampBlockEntity.WORK_RADIUS).withStyle(ChatFormatting.RED);
             stand = WorkZones.standNextTo(level, anvil);
             if (stand == null) return Component.translatable("msg.warbandcraft.camp_worker.anvil_blocked").withStyle(ChatFormatting.RED);
-        } else {
+        } else if (job == VillageManagement.Job.FARMER) {
             farm = WorkZones.campFarmSite(level, pos);
             if (farm == null) return Component.translatable("msg.warbandcraft.camp_worker.no_farm").withStyle(ChatFormatting.RED);
             Component miss = com.ale.warbandcraft.village.ZoneCosts.missing(camp, WorkZones.campFarmNeeds());
@@ -595,6 +616,10 @@ public final class CampWorkers {
             smith.setWorkplace(stand);
             smith.setManualWorkplace(true);
             return Component.translatable("msg.warbandcraft.camp_worker.smith_ok").withStyle(ChatFormatting.GREEN);
+        }
+        if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity org) {
+            org.setCamp(pos);
+            return Component.translatable("msg.warbandcraft.camp_worker.organizer_ok").withStyle(ChatFormatting.GREEN);
         }
         Component zone = WorkZones.campFarm(player, camp, w, farm);
         return Component.translatable("msg.warbandcraft.camp_worker.farmer_ok").withStyle(ChatFormatting.GREEN).append(" ").append(zone);
