@@ -1110,7 +1110,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   prendido, click en una pieza (almacén o inventario) = `ScrapMessage` marca/desmarca ese ítem en `CampBlockEntity.scrap` (NBT
   `Scrap`; vuelve `ScrapListMessage`, lo marcado se pinta de rojo). Solo armas/armaduras (`canBeDepleted`) con valor en la tabla
   de armamento. Los herreros sacan del almacén lo marcado (sin nombre puesto a mano) → valor × `YIELD` (0,5) × vida que le queda
-  (mín. 1): aldeanos de H10 `PIECES_PER_SMITH` (16)/día en `Forge.workDay`; el Herrero de H16 `PIECES_PER_JOB` (4) por vuelta en
+  (mín. 1) + lingotes de hierro las de metal (valor × `INGOTS_PER_VALUE` 0,25 × vida, mín. 1, valor ≥ `INGOT_MIN_VALUE` 2; pedido de Ale):
+  aldeanos de H10 `PIECES_PER_SMITH` (16)/día en `Forge.workDay`; el Herrero de H16 `PIECES_PER_JOB` (4) por vuelta en
   vez del lingote (pedido de Ale: ya **no** cuenta para su tope del día de `IRON_PER_DAY`; con el tope gastado sigue si `Scrap.any`). Cada
   desguace va al log ("Desguace en el Campamento ..."). Pruebas: `H10GameTests.smithScrapsMarkedPieces`, `scrapFromLinkedChest`.
 - Pestaña Cofre: línea de totales arriba (`CampStats`, ContainerData, se recalcula 1 vez por segundo; los valores

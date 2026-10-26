@@ -159,6 +159,7 @@ public class H10GameTests {
         check(camp.toggleScrap(Items.CHAINMAIL_CHESTPLATE), "no quedó marcada");
         int made = Forge.workDay(level, camp, 1);
         check(made == 6, "debería dar 6 de armamento (4 + 2), dio " + made);
+        check(camp.count(Items.IRON_INGOT) == 3, "debería dar 3 lingotes (2 + 1), dio " + camp.count(Items.IRON_INGOT));
         check(camp.count(Items.CHAINMAIL_CHESTPLATE) == 1, "la cota con nombre no se toca");
         check(camp.count(Items.IRON_CHESTPLATE) == 1, "la pechera de hierro no estaba marcada");
         check(!camp.toggleScrap(Items.CHAINMAIL_CHESTPLATE) && !camp.hasScrap(), "no se desmarcó");
