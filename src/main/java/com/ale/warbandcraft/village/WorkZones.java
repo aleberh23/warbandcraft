@@ -369,37 +369,81 @@ public final class WorkZones {
 
     // ------------------------------------------------------------------ el granjero de un Campamento común
 
+    /** Hasta dónde del Campamento puede quedar el medio de su huerta (pedido de Ale: no solo adentro del Campamento). */
+    public static int CAMP_FARM_RANGE = 40;
+    /** Desnivel que acepta la huerta de un Campamento (el granjero ara igual con unos escalones). */
+    public static int CAMP_FARM_SLOPE = 3;
+
     /**
-     * Trabajador de un Campamento común: la huerta la elige él. Una huerta hecha (tierra de cultivo + agua) adentro de la
-     * jurisdicción del Campamento, o si no un terreno libre de 9×9 ahí (la ara él). Null = no hay lugar.
+     * Trabajador de un Campamento común: la huerta la elige él. Una huerta hecha (tierra de cultivo + agua) cerca, o si no el
+     * terreno libre de 9×9 más parejo y más cerca a ≤{@link #CAMP_FARM_RANGE}. Se prueban todas las esquinas, bloque por
+     * bloque (antes se salteaba de a 3-6 y un 9×9 justo no se encontraba nunca). Null = no hay lugar.
      */
     @Nullable
     public static BoundingBox campFarmSite(ServerLevel level, BlockPos camp) {
+        int s = Blueprints.SITE, range = CAMP_FARM_RANGE;
         BoundingBox farm = VillageManagement.findFarm(level, camp);
-        if (farm != null && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, new BlockPos(farm.minX(), farm.minY(), farm.minZ()))
-                && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, new BlockPos(farm.maxX(), farm.minY(), farm.maxZ()))) return farm;
-        int s = Blueprints.SITE;
+        if (farm != null) return farm;
         List<Blueprints.Lot> taken = new ArrayList<>();
-        int r = com.ale.warbandcraft.camp.CampBlockEntity.WORK_RADIUS;
-        for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(camp).inflate(r + 16, 64, r + 16),
+        for (AbstractWorkAreaEntity a : level.getEntitiesOfClass(AbstractWorkAreaEntity.class, new AABB(camp).inflate(range + s + 16, 64, range + s + 16),
                 WorkZones::usesGround)) {
             AABB b = a.getArea();
-            for (int x = (int) Math.floor(b.minX) - s; x < b.maxX; x += s) {
-                for (int z = (int) Math.floor(b.minZ) - s; z < b.maxZ; z += s) taken.add(new Blueprints.Lot(new BlockPos(x, 0, z), s));
-            }
+            int x0 = (int) Math.floor(b.minX), z0 = (int) Math.floor(b.minZ);
+            taken.add(new Blueprints.Lot(new BlockPos(x0, 0, z0), (int) Math.ceil(Math.max(b.maxX - x0, b.maxZ - z0))));
         }
         taken.add(new Blueprints.Lot(camp.offset(-2, 0, -2), 5));   // el Campamento mismo
-        for (int tries = 0; tries < 24; tries++) {
-            BlockPos site = Blueprints.findSite(level, camp, 3, r, s, taken);
-            if (site == null) site = Blueprints.findSiteRelaxed(level, camp, 3, r, s, taken);   // un poco desparejo: el granjero ara igual
-            if (site == null) return null;
-            if (com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, site)
-                    && com.ale.warbandcraft.camp.CampBlockEntity.covers(level, camp, site.offset(s - 1, 0, s - 1))) {
-                return new BoundingBox(site.getX(), site.getY(), site.getZ(), site.getX() + s - 1, site.getY(), site.getZ() + s - 1);
-            }
-            taken.add(new Blueprints.Lot(site, s));
+        // El piso de cada columna, una sola vez
+        int half = range + s;
+        int side = 2 * half + 1, ox = camp.getX() - half, oz = camp.getZ() - half;
+        int[] ground = new int[side * side];
+        for (int i = 0; i < side; i++) for (int j = 0; j < side; j++) {
+            Integer g = farmGround(level, ox + i, oz + j, camp.getY());
+            ground[i * side + j] = g == null ? Integer.MIN_VALUE : g;
         }
-        return null;
+        BlockPos best = null;
+        long bestScore = Long.MAX_VALUE;
+        for (int i = 0; i + s <= side; i++) for (int j = 0; j + s <= side; j++) {
+            int cx = ox + i + s / 2, cz = oz + j + s / 2;
+            long d2 = (long) (cx - camp.getX()) * (cx - camp.getX()) + (long) (cz - camp.getZ()) * (cz - camp.getZ());
+            if (d2 > (long) range * range) continue;
+            int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+            boolean ok = true;
+            for (int dx = 0; dx < s && ok; dx++) for (int dz = 0; dz < s; dz++) {
+                int g = ground[(i + dx) * side + j + dz];
+                if (g == Integer.MIN_VALUE) {
+                    ok = false;
+                    break;
+                }
+                min = Math.min(min, g);
+                max = Math.max(max, g);
+            }
+            if (!ok || max - min > CAMP_FARM_SLOPE) continue;
+            BlockPos corner = new BlockPos(ox + i, min, oz + j);
+            if (Blueprints.overlaps(corner, s, taken)) continue;
+            long score = (max - min) * 10_000L + d2;   // primero lo más parejo, después lo más cerca
+            if (score < bestScore) {
+                bestScore = score;
+                best = corner;
+            }
+        }
+        if (best == null) return null;
+        return new BoundingBox(best.getX(), best.getY(), best.getZ(), best.getX() + s - 1, best.getY(), best.getZ() + s - 1);
+    }
+
+    /** El piso de una columna donde se puede arar: tierra (o arena, o ya arada), sin agua, sin nada con datos ni sólido encima. */
+    @Nullable
+    private static Integer farmGround(ServerLevel level, int x, int z, int hintY) {
+        Integer g = Blueprints.groundY(level, x, z, hintY);
+        if (g == null) return null;
+        BlockPos p = new BlockPos(x, g, z);
+        BlockState gs = level.getBlockState(p);
+        if (!gs.getFluidState().isEmpty() || gs.is(Blocks.DIRT_PATH)
+                || !(gs.is(BlockTags.DIRT) || gs.is(Blocks.FARMLAND) || gs.is(BlockTags.SAND))) return null;
+        for (int dy = 1; dy <= 2; dy++) {
+            BlockPos q = p.above(dy);
+            if (!Blueprints.clearable(level.getBlockState(q)) || level.getBlockEntity(q) != null) return null;
+        }
+        return g;
     }
 
     /**

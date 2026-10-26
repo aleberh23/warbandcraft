@@ -286,7 +286,7 @@
   "msg.warbandcraft.camp_worker.no_bed": "Necesita una cama libre a %s bloques o menos del Campamento.",
   "msg.warbandcraft.camp_worker.no_anvil": "Poné un yunque a %s bloques o menos del Campamento.",
   "msg.warbandcraft.camp_worker.anvil_blocked": "No hay lugar para pararse al lado del yunque.",
-  "msg.warbandcraft.camp_worker.no_farm": "No hay lugar para una huerta (9×9 bastante plano) cerca del Campamento.",
+  "msg.warbandcraft.camp_worker.no_farm": "No hay lugar para una huerta (9×9 de tierra bastante plano, sin nada encima) a 40 bloques o menos del Campamento.",
   "msg.warbandcraft.camp_worker.smith_ok": "Listo: es Herrero. Trabaja de día al lado del yunque.",
   "msg.warbandcraft.camp_worker.farmer_ok": "Listo: es Granjero.",
   "msg.warbandcraft.camp_worker.dismissed": "Se fue.",

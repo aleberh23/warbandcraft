@@ -33,6 +33,11 @@ Click derecho y arrastrar con soldados elegidos: los formás en línea. Mientras
 
 El libro 7 explica los botones.
 ---
+## Talar árboles
+Con un hacha, romper un tronco tira el árbol entero. Tarda más cuanto más grande es el árbol.
+
+Agachado (Shift) rompés un solo tronco, como siempre.
+---
 ## Construyendo (Gestión)
 R: girar el edificio.
 Click izquierdo: plantar.

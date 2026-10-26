@@ -46,6 +46,8 @@ public class WarbandCraft {
         com.ale.warbandcraft.config.Tuning.register(modBus);
         com.ale.warbandcraft.dungeon.FlatLands.register(modBus);    // H25: más biomas llanos
         com.ale.warbandcraft.dungeon.DungeonLoot.register(modBus);  // H25: armamento en los cofres de las mazmorras
+        modBus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent e) ->
+                e.enqueueWork(com.ale.warbandcraft.compat.FallingTreeSetup::apply));   // tala de árboles más lenta según el tamaño
         modBus.addListener(com.ale.warbandcraft.dungeon.CompatPacks::onAddPackFinders);   // H25: Cataclysm más espaciado   // todos los números en config/warbandcraft-common.toml
 
         modBus.addListener(this::addCreative);

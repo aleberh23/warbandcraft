@@ -36,6 +36,7 @@ final class TuningClasses {
             "command.SpawnCommand",
             "command.TestArmyCommand",
             "command.WarbandCommand",
+            "compat.FallingTreeSetup",
             "dungeon.Bandits",
             "dungeon.Barrows",
             "dungeon.Compat",

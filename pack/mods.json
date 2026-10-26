@@ -46,6 +46,8 @@
       "url": "https://cdn.modrinth.com/data/aKCwCJlY/versions/FkaSuQb0/Structory_1.20.x_v1.3.5.jar", "sha1": "4196a2fa68f755b46616f4071e84c72ec4d6dacc" },
     { "name": "Structory: Towers", "side": "both", "folder": "mods", "file": "Structory_Towers_1.20.x_v1.0.7.jar",
       "url": "https://cdn.modrinth.com/data/j3FONRYr/versions/fTl6NfPL/Structory_Towers_1.20.x_v1.0.7.jar", "sha1": "fa147459b82e1c0a774c19b598a55a9ca0d7b0ef" },
+    { "name": "FallingTree (talar el árbol entero)", "side": "both", "folder": "mods", "file": "FallingTree-1.20.1-4.3.4.jar",
+      "url": "https://cdn.modrinth.com/data/Fb4jn8m6/versions/NrtzFkZE/FallingTree-1.20.1-4.3.4.jar", "sha1": "617b79628fca3968979c1cc5f42edda882a55adb" },
     { "name": "Embeddium", "side": "client", "folder": "mods", "file": "embeddium-0.3.31+mc1.20.1.jar",
       "url": "https://cdn.modrinth.com/data/sk9rgfiA/versions/UTbfe5d1/embeddium-0.3.31%2Bmc1.20.1.jar", "sha1": "bb2fa8f3e493af16af9160d049f96c614a1faf2f" },
     { "name": "Oculus", "side": "client", "folder": "mods", "file": "oculus-mc1.20.1-1.8.0.jar",

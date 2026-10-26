@@ -32,6 +32,9 @@ Si una decisión de diseño cambia, actualizar ese documento.
 - Estructuras chicas (pedido de Ale): **Dungeons and Taverns** (`nova_structures`), **Structory** y **Structory: Towers**. Igual que
   los de mazmorras (`dungeon_mods`, en libs/ como `dungeonstaverns-`, `structory-`, `structory_towers-`). Su frecuencia va por
   bioma (`dungeon/StructureDensity`, ver H25).
+- Tala (pedido de Ale): **FallingTree** 4.3.4 (`fallingtree`, LGPL): romper un tronco con hacha tira el árbol entero (agachado no).
+  Como los de mazmorras (`dungeon_mods`, `pack/mods.json` both). `compat/FallingTreeSetup` (setup común, por reflexión) le pone
+  `tools.speedMultiplicand` = `SPEED` (0,25: tarda × 0,25 × troncos) y `forceToolUsage` si sigue en 0; el servidor manda su config.
 - Minimapa de la vista aérea (H5): **Xaero's Minimap** (`xaerominimap-forge-1.20.1-26.6.0`, Modrinth).
   Mod aparte que corre solo — no le llamamos nada de su código. NO es una dependencia de Gradle: se
   baja a `libs/` en el primer build (igual que Recruits) pero solo para que `compilar.bat` lo copie
@@ -620,7 +623,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   cada 1 s desde `BarracksEvents`); sin acercarse `STUCK_PROGRESS` en `STUCK_SECONDS` aparece en el Campamento; dueño a >`OWNER_RANGE`
   o Campamento lejos/descargado = `away` (aparece cuando el Campamento se carga). Al llegar, `setNoAi(true)`: queda parado.
 - Pestaña Cofre → "Trabajador" (`CampWorkerMessage` → `CampWorkers.open`, kind `camp_worker`, id "pos:estado"): Herrero (yunque a ≤24,
-  `WorkZones.standNextTo`, `SmithEntity.setCamp/setWorkplace`) o Granjero (`WorkZones.campFarmSite`: huerta hecha o 9×9 libre;
+  `WorkZones.standNextTo`, `SmithEntity.setCamp/setWorkplace`) o Granjero (`WorkZones.campFarmSite`: huerta hecha o el 9×9 de tierra más parejo (≤`CAMP_FARM_SLOPE` 3)
+  a ≤`CAMP_FARM_RANGE` (40) del Campamento, aunque quede fuera de su jurisdicción (pedido de Ale), probando cada esquina bloque por bloque;
   `campFarm` cobra azada + 8 semillas, sin cofre). Ambos piden cama libre a ≤24 (`PoiManager.take` + `WorkerSupply.homeAt`).
   Después `serve`: `WorkerSupply.supply/feed/collect` con ese Campamento, vuelve si se aleja >`LEASH`. Despedir libera cama y zona.
   `VillageManagement.workers` no los cuenta (no los atiende una aldea). Prueba: `CampWorkerGameTests`.
