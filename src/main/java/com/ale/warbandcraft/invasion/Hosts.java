@@ -161,6 +161,7 @@ public final class Hosts {
         for (VillageData.Village v : VillageData.get(level).all()) if (v.isConquered() && !owners.contains(v.owner())) owners.add(v.owner());
         for (Faction f : FactionManager.INSTANCE.ordered()) {
             for (UUID owner : owners) {
+                if (!factionOnline(level, owner)) continue;   // pedido de Ale: solo con alguien de su facción conectado
                 if (!rel.atWar(owner, f.id()) || hostOf(level, f.id(), owner) != null || data.hostCooldown(f.id(), owner) >= day) continue;
                 if (data.hostPool(f.id()) < MIN_SIZE || random.nextDouble() >= chance(rel.opinion(owner, f.id()))) continue;
                 create(level, f.id(), owner, -1);
@@ -451,7 +452,21 @@ public final class Hosts {
         }
     }
 
+    /** Pedido de Ale: la Hueste solo sale (y su plazo solo corre) con el dueño o alguien de su facción conectado. */
+    public static boolean factionOnline(ServerLevel level, UUID owner) {
+        if (level.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) return true;   // pruebas: FakePlayer
+        for (UUID id : com.ale.warbandcraft.faction.Allies.members(owner)) {
+            if (level.getServer().getPlayerList().getPlayer(id) != null) return true;
+        }
+        return false;
+    }
+
     private static void campedTick(ServerLevel level, InvasionData.Host h, long now) {
+        if (!factionOnline(level, h.owner)) {   // sin nadie conectado el plazo queda quieto (tick cada 20)
+            h.deadline += 20;
+            InvasionData.get(level).setDirty();
+            return;
+        }
         if (now >= h.deadline) {
             marchOn(level, h, "msg.warbandcraft.host.marches");
             return;

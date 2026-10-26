@@ -18,7 +18,7 @@ Murallas, torres, cuartel y entrenamiento ayudan mucho (libros 16 y 18).
 ## La Hueste
 A veces una facción junta un ejército grande y acampa cerca de tu aldea. Te avisa y en el mapa sale un círculo amarillo: "Invocá tu ejército acá".
 
-Tiene 3 días. La batalla empieza solo cuando invocás un ejército tuyo en ese círculo.
+Solo sale si estás conectado vos o alguien de tu facción, y sus 3 días solo corren mientras haya alguno conectado. La batalla empieza solo cuando invocás un ejército tuyo en ese círculo.
 ---
 Aparecen formados, esperan un poco, avanzan y cargan. Si los derrotás (o se desbandan): esmeraldas, botín, experiencia y una semana sin hueste.
 

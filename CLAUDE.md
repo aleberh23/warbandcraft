@@ -855,7 +855,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   `Assault.reinforce` en el lugar de partida de un carril; `startSize` cuenta la reserva; al retirarse vuelve a la leva) y
   la Hueste.
 - **Hueste** (`invasion/Hosts`, `InvasionData.Host`, guardada): pozo por facción (`hostPool`, 6/día por asentamiento, tope 150);
-  cada día por facción en guerra con un dueño de aldeas, sin hueste ni descanso (`hostCooldown`): chance 10% + 30% × odio;
+  cada día por facción en guerra con un dueño de aldeas con él o alguien de su facción conectado (`factionOnline`, pedido de Ale;
+  sin nadie conectado el plazo de una hueste acampada queda quieto; las invasiones no cambian), sin hueste ni descanso (`hostCooldown`): chance 10% + 30% × odio;
   tamaño = tu fuerza (barracones + cuarteles + sueltos) × 1,3 ±15%, entre 30 y 100, hasta lo juntado. `Host.camp` = el
   **punto de reunión** (`findField`, por el **terreno**, no el bioma, pedido de Ale: cada 10° alrededor de la aldea a
   150-360 bloques, 8 orientaciones cada uno; el rectángulo de la batalla —60 de ancho, del punto −20 a las carpas +20— medido
