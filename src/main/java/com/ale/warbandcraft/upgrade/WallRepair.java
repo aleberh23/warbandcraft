@@ -70,6 +70,7 @@ public final class WallRepair {
             if (now.is(want.getBlock())) continue;
             if (!Blueprints.clearable(now) || level.getBlockEntity(p) != null) continue;
             long col = BlockPos.asLong(p.getX(), 0, p.getZ());
+            if (t.cutColumns.contains(col)) continue;   // la rompió entera un jugador de la aldea
             if (towerColumn.computeIfAbsent(col, k -> nearTower(level, p))) continue;
             out.put(p, want);
         }
@@ -134,6 +135,97 @@ public final class WallRepair {
         Damage d = damage(level, v);
         if (d.missing() == 0) return Optional.empty();
         return Optional.of(Component.translatable("upgrade.warbandcraft.repair.warning", d.missing(), d.cost()).withStyle(ChatFormatting.GOLD));
+    }
+
+    // ------------------------------------------------------------------ lo que cambia el jugador a mano (pedido de Ale)
+
+    /** Hasta dónde arriba/abajo del bloque roto se busca muralla del anillo que siga en pie en la columna. */
+    private static int COLUMN_SCAN = 6;
+
+    /**
+     * Un jugador de la aldea rompió un bloque: si con eso la columna de muralla queda sin nada en pie, ahí ya no hay
+     * muralla (no se repara ni cuenta). Romper una parte sigue siendo muralla rota. Lo que rompe un enemigo o una
+     * explosión sigue anotado para reparar.
+     */
+    public static void onPlayerBreak(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state) {
+        TownData data = TownData.get(level);
+        long col = BlockPos.asLong(pos.getX(), 0, pos.getZ());
+        for (TownData.Town t : data.all()) {
+            boolean drawn = t.defense.containsKey(pos.asLong());
+            boolean ring = !drawn && ringBlockAt(t, pos, state);
+            if (!drawn && !ring) continue;
+            if (!mine(level, t, player)) return;
+            if (standing(level, t, pos)) return;
+            t.defense.keySet().removeIf(l -> BlockPos.getX(l) == pos.getX() && BlockPos.getZ(l) == pos.getZ());
+            t.gates.removeIf(g -> g.getX() == pos.getX() && g.getZ() == pos.getZ());
+            if (hasRing(t) && (ring || ringBody(state) && nearRing(t, pos))) t.cutColumns.add(col);
+            if (t.defense.isEmpty() && !t.ringWalls) {
+                t.built.remove(Upgrade.PALISADE);
+                t.built.remove(Upgrade.WALL);
+            }
+            data.setDirty();
+            forget(t.center);
+            return;
+        }
+    }
+
+    /** Un jugador de la aldea puso un bloque arriba de la muralla: pasa a ser muralla (se repara si lo rompen). */
+    public static void onPlayerPlace(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state) {
+        if (state.isAir() || !(state.isCollisionShapeFullBlock(level, pos) || state.getBlock() instanceof net.minecraft.world.level.block.WallBlock
+                || state.getBlock() instanceof net.minecraft.world.level.block.FenceBlock)) return;
+        if (level.getBlockEntity(pos) != null) return;
+        BlockPos below = pos.below();
+        BlockState under = level.getBlockState(below);
+        TownData data = TownData.get(level);
+        for (TownData.Town t : data.all()) {
+            BlockState want = t.defense.get(below.asLong());
+            boolean wall = want != null ? under.is(want.getBlock()) : ringBlockAt(t, below, under);
+            if (!wall) continue;
+            if (!mine(level, t, player)) return;
+            t.defense.put(pos.asLong(), state);
+            data.setDirty();
+            forget(t.center);
+            return;
+        }
+    }
+
+    /** ¿El jugador es de la aldea (dueño o compañero)? Los castillos y las aldeas de facción, no. */
+    private static boolean mine(ServerLevel level, TownData.Town t, ServerPlayer player) {
+        VillageData.Village v = VillageData.get(level).at(t.center);
+        return v != null && !v.castle() && v.owner() != null && com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner());
+    }
+
+    /** ¿Queda algo de muralla en pie en la columna de {@code pos}, sin contar {@code pos}? */
+    private static boolean standing(ServerLevel level, TownData.Town t, BlockPos pos) {
+        for (Map.Entry<Long, BlockState> e : t.defense.entrySet()) {
+            long l = e.getKey();
+            if (BlockPos.getX(l) != pos.getX() || BlockPos.getZ(l) != pos.getZ() || l == pos.asLong()) continue;
+            if (level.getBlockState(BlockPos.of(l)).is(e.getValue().getBlock())) return true;
+        }
+        if (!hasRing(t) || !nearRing(t, pos)) return false;
+        BlockPos.MutableBlockPos q = new BlockPos.MutableBlockPos();
+        for (int dy = -COLUMN_SCAN; dy <= COLUMN_SCAN; dy++) {
+            if (dy == 0) continue;
+            q.set(pos.getX(), pos.getY() + dy, pos.getZ());
+            if (ringBody(level.getBlockState(q))) return true;
+        }
+        return false;
+    }
+
+    /** ¿{@code pos} es un bloque del anillo de H12 (material del muro, a la distancia del anillo, columna no cortada)? */
+    private static boolean ringBlockAt(TownData.Town t, BlockPos pos, BlockState state) {
+        return hasRing(t) && ringBody(state) && nearRing(t, pos) && !t.cutColumns.contains(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
+    }
+
+    private static boolean ringBody(BlockState s) {
+        return s.is(Blocks.SPRUCE_LOG) || s.is(Blocks.STONE_BRICKS) || s.is(Blocks.STONE_BRICK_WALL)
+                || s.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock;
+    }
+
+    private static boolean nearRing(TownData.Town t, BlockPos pos) {
+        double dx = pos.getX() - t.center.getX(), dz = pos.getZ() - t.center.getZ();
+        double d = Math.sqrt(dx * dx + dz * dz);
+        return d >= t.ringRadius - Blueprints.RING_DETOUR_IN - 2 && d <= t.ringRadius + Blueprints.RING_DETOUR_OUT + 2;
     }
 
     private static Component error(String key) {

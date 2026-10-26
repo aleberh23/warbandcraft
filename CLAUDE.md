@@ -1054,6 +1054,10 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   están; las columnas de torres se saltean. Fila "Reparar murallas" arriba de las mejoras (Panel K y Gestión → Mejoras,
   `Panel.repairRow`), obra `Upgrade.REPAIR` (no `listed()`), 1 esmeralda cada 8 bloques (mín. 2). Al terminar una pelea
   con el muro roto, aviso en el chat.
+  Cambios a mano (pedido de Ale): un jugador de la aldea (dueño o compañero) que rompe una columna de muralla **entera**
+  (`UpgradeEvents.onBreakWall` → `WallRepair.onPlayerBreak`) la saca de `Town.defense` y de los portones; si es del anillo
+  de H12, va a `Town.cutColumns` (se saltea al reparar; un anillo nuevo las borra). Romper una parte sigue siendo muralla
+  rota; lo que rompen enemigos o explosiones se repara. Un bloque puesto arriba de la muralla (`onPlayerPlace`) pasa a `defense`.
 - `/warband prueba invasion [incursion|ejercito] [cantidad]`: llega en el acto (también `prueba reconquista`).
   Cada decisión de carril va al log ("Asedio a ...: carril N").
 - Pruebas: `H17GameTests` (asedio) y `NavGameTests` (hueco, muro cerrado → escalera/romper, escalera puesta es camino,

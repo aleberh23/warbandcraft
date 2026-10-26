@@ -184,6 +184,25 @@ public class H22GameTests {
             check(WallRepair.missing(level, v).size() == 1, "no ve el tronco roto de la muralla dibujada");
             h.setBlock(new BlockPos(2, 3, 6), Blocks.SPRUCE_LOG);
 
+            // Pedido de Ale: la columna rota entera por el dueño ya no es muralla; un bloque puesto arriba sí.
+            for (int y = 2; y <= 4; y++) {
+                BlockPos p = h.absolutePos(new BlockPos(7, y, 6));
+                WallRepair.onPlayerBreak(level, player, p, level.getBlockState(p));
+                level.setBlockAndUpdate(p, Blocks.AIR.defaultBlockState());
+                if (y < 4) check(town.defense.size() == 21, "una columna a medio romper dejó de ser muralla");
+            }
+            check(town.defense.size() == 18, "la columna rota entera sigue anotada: " + town.defense.size());
+            WallRepair.forget(v.center());
+            check(WallRepair.missing(level, v).size() == 0, "quiere reparar una columna que ya no existe");
+            BlockPos top = h.absolutePos(new BlockPos(6, 5, 6));
+            level.setBlockAndUpdate(top, Blocks.COBBLESTONE.defaultBlockState());
+            WallRepair.onPlayerPlace(level, player, top, Blocks.COBBLESTONE.defaultBlockState());
+            check(town.defense.size() == 19, "el bloque puesto arriba no cuenta como muralla");
+            level.setBlockAndUpdate(top, Blocks.AIR.defaultBlockState());
+            WallRepair.forget(v.center());
+            check(WallRepair.missing(level, v).size() == 1, "no repara el bloque que se le agregó arriba");
+            level.setBlockAndUpdate(top, Blocks.COBBLESTONE.defaultBlockState());
+
             BlockPos mid = h.absolutePos(new BlockPos(4, 1, 6));
             msg = Upgrades.orderWork(player, v.center(), "gate:1:" + mid.getX() + "," + mid.getZ());
             check(town.job != null && town.job.upgrade == Upgrade.GATE_1, "no empezó el portón: " + msg.getString());

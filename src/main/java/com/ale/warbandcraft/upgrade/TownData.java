@@ -126,6 +126,8 @@ public class TownData extends SavedData {
         /** H22c: torres sueltas (centro, y = piso) y portones (el bloque de abajo de cada puerta de cerco). */
         public final List<BlockPos> towers = new ArrayList<>();
         public final List<BlockPos> gates = new ArrayList<>();
+        /** Pedido de Ale: columnas (x, 0, z) del anillo de H12 que un jugador de la aldea rompió enteras: ya no son muralla. */
+        public final java.util.Set<Long> cutColumns = new java.util.HashSet<>();
         /** La empalizada/muralla es el anillo automático de H12 (no una dibujada). */
         public boolean ringWalls;
         /** Radio del anillo de la empalizada/muralla (0 = todavía no se calculó). */
@@ -295,6 +297,7 @@ public class TownData extends SavedData {
             for (int i = 0; i < dp.length && i < ds.length; i++) if (ds[i] < dpal.size()) t.defense.put(dp[i], dpal.get(ds[i]));
             for (long l : c.getLongArray("Towers")) t.towers.add(BlockPos.of(l));
             for (long l : c.getLongArray("Gates")) t.gates.add(BlockPos.of(l));
+            for (long l : c.getLongArray("CutColumns")) t.cutColumns.add(l);
             t.autoHouses = !c.getBoolean("NoAutoHouses");
             t.houses = c.getInt("Houses");
             for (net.minecraft.nbt.Tag w : c.getList("Tavern", net.minecraft.nbt.Tag.TAG_INT_ARRAY)) {
@@ -368,6 +371,7 @@ public class TownData extends SavedData {
             c.put("Defense", def);
             c.putLongArray("Towers", t.towers.stream().mapToLong(BlockPos::asLong).toArray());
             c.putLongArray("Gates", t.gates.stream().mapToLong(BlockPos::asLong).toArray());
+            if (!t.cutColumns.isEmpty()) c.putLongArray("CutColumns", t.cutColumns.stream().mapToLong(Long::longValue).toArray());
             if (!t.autoHouses) c.putBoolean("NoAutoHouses", true);
             c.putInt("Houses", t.houses);
             net.minecraft.nbt.ListTag tav = new net.minecraft.nbt.ListTag();

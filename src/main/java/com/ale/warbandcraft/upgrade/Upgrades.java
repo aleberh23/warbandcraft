@@ -495,6 +495,7 @@ public final class Upgrades {
         if (job.upgrade == Upgrade.REPAIR) WallRepair.forget(t.center);
         if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL) {
             t.ringWalls = true;
+            t.cutColumns.clear();   // anillo nuevo: lo cortado a mano vuelve a ser muralla
             t.ringVersion = com.ale.warbandcraft.village.FactionTowns.RING_VERSION;
         }
         if (job.upgrade == Upgrade.PALISADE || job.upgrade == Upgrade.WALL || job.upgrade == Upgrade.REPAIR) ringGates(t, job);
