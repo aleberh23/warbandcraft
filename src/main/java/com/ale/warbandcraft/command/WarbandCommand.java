@@ -72,7 +72,8 @@ public final class WarbandCommand {
                 .then(Commands.literal("almacen").executes(WarbandCommand::storage))
                 .then(Commands.literal("retirar").executes(WarbandCommand::withdraw))
                 .then(Commands.literal("fundar").executes(WarbandCommand::found))
-                .then(Commands.literal("mazmorras").executes(WarbandCommand::dungeons))   // H25
+                .then(Commands.literal("mazmorras").executes(WarbandCommand::dungeons)   // H25
+                        .then(Commands.literal("borrar").requires(s -> s.hasPermission(2)).executes(WarbandCommand::dungeonForget)))
                 .then(Commands.literal("partes").executes(WarbandCommand::reports))
                 .then(Commands.literal("mercado").executes(WarbandCommand::market))
                 .then(Commands.literal("tutorial").executes(WarbandCommand::tutorialWhere)   // salón del tutorial
@@ -151,6 +152,36 @@ public final class WarbandCommand {
         com.ale.warbandcraft.dungeon.DungeonData.Contract c = data.contractOf(player.getUUID());
         if (c != null) ctx.getSource().sendSuccess(() -> com.ale.warbandcraft.dungeon.Rumors.contractText(level, c), false);
         if (n == 0 && c == null) ctx.getSource().sendSuccess(() -> Component.translatable("cmd.warbandcraft.dungeons.none"), false);
+        return 1;
+    }
+
+    /**
+     * Pedido de Ale: borra la mazmorra donde estás parado (la de adentro, o la más cercana a ≤48): deja de existir como
+     * mazmorra (sin bandidos/draugr, sin rellenarse, sin contratos) pero los bloques quedan como están.
+     */
+    private static int dungeonForget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ServerLevel level = player.serverLevel();
+        com.ale.warbandcraft.dungeon.DungeonData data = com.ale.warbandcraft.dungeon.DungeonData.get(level);
+        com.ale.warbandcraft.dungeon.DungeonData.Dungeon d = data.containing(player.blockPosition(), 8);
+        if (d == null) d = data.near(player.blockPosition(), 48);
+        if (d == null) {
+            ctx.getSource().sendFailure(Component.translatable("cmd.warbandcraft.dungeons.forget_none"));
+            return 0;
+        }
+        int id = d.id;
+        int mobs = 0;
+        for (net.minecraft.world.entity.Mob m : level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                new net.minecraft.world.phys.AABB(d.center).inflate(96, 64, 96),
+                m -> m.getPersistentData().contains(com.ale.warbandcraft.dungeon.Dungeons.TAG_DUNGEON)
+                        && m.getPersistentData().getInt(com.ale.warbandcraft.dungeon.Dungeons.TAG_DUNGEON) == id)) {
+            m.discard();
+            mobs++;
+        }
+        data.remove(d);
+        String name = d.name;
+        int n = mobs;
+        ctx.getSource().sendSuccess(() -> Component.translatable("cmd.warbandcraft.dungeons.forgot", name, n), true);
         return 1;
     }
 

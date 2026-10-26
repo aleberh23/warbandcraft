@@ -916,5 +916,7 @@
   "gui.warbandcraft.camp_worker.organizer": "Make Organizer",
   "gui.warbandcraft.camp_worker.organizer_chests": "Organizer: %s linked chests to sort (an item frame with an item on a chest pins it).",
   "gui.warbandcraft.camp_worker.organizer_plan": "Chests: %s",
-  "msg.warbandcraft.camp_worker.organizer_ok": "Done: Organizer. By day it spreads the Camp's items among the linked chests."
+  "msg.warbandcraft.camp_worker.organizer_ok": "Done: Organizer. By day it spreads the Camp's items among the linked chests.",
+  "cmd.warbandcraft.dungeons.forget_none": "You're not in a dungeon (nor within 48 blocks of one).",
+  "cmd.warbandcraft.dungeons.forgot": "Dungeon removed: %s (%s mobs removed). The blocks stay as they are."
 }

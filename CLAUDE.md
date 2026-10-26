@@ -500,6 +500,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   sin dueño, nivel 0, a 40-90 bloques y a >80 de una aldea; caminan de a tramos (`setHoldPos` + estado 3, cada 10 s). Se
   contratan con la pantalla de Recruits. Marca `warbandcraft:wanderer`: no se guardan (`TavernEvents.onJoin`), contratados
   la pierden. Cerca de una aldea la taberna los mete adentro (`Tavern.isHireable` los acepta).
+- `/warband mazmorras borrar` (operador, pedido de Ale): saca de `DungeonData` la mazmorra donde estás (adentro, o a ≤48) y sus bichos
+  cargados; los bloques quedan.
 - Pruebas: `/warband prueba guarida|tumulo` (12 adelante tuyo; dice la combinación). GameTests `H25GameTests` (arman lejos,
   a ±3000, y limpian al terminar).
 - No hecho (a revisar): gritos (Ale: por ahora no); Draugr Invasion como mod aparte (ARR, en Forge solo con Sinytra

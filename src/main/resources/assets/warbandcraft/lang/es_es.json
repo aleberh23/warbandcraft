@@ -916,5 +916,7 @@
   "gui.warbandcraft.camp_worker.organizer": "Hacerlo Organizador",
   "gui.warbandcraft.camp_worker.organizer_chests": "Organizador: %s cofres vinculados para ordenar (un marco con un ítem en un cofre lo deja fijo).",
   "gui.warbandcraft.camp_worker.organizer_plan": "Cofres: %s",
-  "msg.warbandcraft.camp_worker.organizer_ok": "Listo: es Organizador. De día reparte lo del Campamento entre los cofres vinculados."
+  "msg.warbandcraft.camp_worker.organizer_ok": "Listo: es Organizador. De día reparte lo del Campamento entre los cofres vinculados.",
+  "cmd.warbandcraft.dungeons.forget_none": "No estás en ninguna mazmorra (ni a 48 bloques de una).",
+  "cmd.warbandcraft.dungeons.forgot": "Mazmorra borrada: %s (se sacaron %s bichos). Los bloques quedan como están."
 }
