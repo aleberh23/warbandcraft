@@ -175,7 +175,7 @@ public final class Market {
     }
 
     /** Guerra entre dos facciones de Recruits (su diplomacia: ENEMY en cualquiera de los dos sentidos). */
-    private static boolean atWar(String a, String b) {
+    public static boolean atWar(String a, String b) {
         RecruitsDiplomacyManager d = FactionEvents.recruitsDiplomacyManager;
         if (d == null) return false;
         try {

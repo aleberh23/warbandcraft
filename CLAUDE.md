@@ -1084,7 +1084,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   afuera (o `RING_DETOUR_IN` adentro) y se une con líneas de muro (`Blueprints.connect`). Solo queda hueco con agua muy honda.
   Al terminar la obra (PALISADE/WALL/REPAIR) las puertas de abajo van a `Town.gates` (`Upgrades.ringGates`). Empalizadas de
   antes: aldeas de facción se completan solas una vez (`FactionTowns`, `Town.ringVersion` < `RING_VERSION`); tuyas, con
-  Reparar murallas. Portones (`Works.tickGates`, cada 10 ticks): tuyas = vos, compañeros, sus soldados y aldeanos; de facción =
+  Reparar murallas. Portones (`Works.tickGates`, cada 10 ticks): tuyas = vos, compañeros, sus soldados y aldeanos (cerrados con enemigos cerca:
+  invasores, IA en guerra con vos, bandidos, jugadores de facciones de Recruits en guerra y sus soldados, `Works.enemyOfOwner`); de facción =
   su guarnición, aldeanos y jugadores en paz (y sus soldados); con un enemigo a `GATE_ENEMY_RANGE` cerrados. Un enemigo no lo
   abre a mano (`UpgradeEvents.onUseGate` → `Works.gateLocked`). Soldado enemigo pegado a un portón cerrado lo golpea:
   `GATE_BASH_TICKS` (600, ×2 si es de muralla; hasta `GATE_MAX_BASHERS` suman) y se rompe. Asedios: `NavCaps.bashGates`

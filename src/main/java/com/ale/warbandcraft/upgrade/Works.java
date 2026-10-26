@@ -480,7 +480,8 @@ public final class Works {
 
     /**
      * Cada medio segundo: los portones se abren con uno de los suyos cerca y sin enemigos; si no, quedan cerrados. Tus
-     * aldeas: vos, tus compañeros, sus soldados y los aldeanos. Aldeas de facción (pedido de Ale): su guarnición, sus
+     * aldeas: vos, tus compañeros, sus soldados y los aldeanos (enemigos: invasores, facciones de la IA en guerra con vos,
+     * bandidos y jugadores de facciones de Recruits en guerra con la tuya, con sus soldados). Aldeas de facción (pedido de Ale): su guarnición, sus
      * aldeanos y los jugadores en paz con la facción (y sus soldados). Un soldado enemigo pegado a un portón cerrado lo
      * golpea hasta romperlo (los asedios planean pasar por ahí: {@code NavCaps.bashGates}).
      */
@@ -572,12 +573,39 @@ public final class Works {
         return false;
     }
 
+    /**
+     * Pedido de Ale: en una aldea tuya, también los de facciones enemigas: soldados de facciones de la IA en guerra con
+     * vos (y bandidos), y jugadores de una facción de Recruits en guerra con la tuya (y sus soldados).
+     */
+    private static boolean enemyOfOwner(ServerLevel level, UUID owner, LivingEntity e, net.minecraft.nbt.CompoundTag d) {
+        UUID who = null;
+        if (e instanceof Player p) {
+            if (p.isCreative() || p.isSpectator()) return false;
+            who = p.getUUID();
+        } else if (e instanceof AbstractRecruitEntity r) {
+            if (r.getIsOwned()) {
+                who = r.getOwnerUUID();
+            } else {
+                net.minecraft.resources.ResourceLocation f =
+                        net.minecraft.resources.ResourceLocation.tryParse(d.getString(com.ale.warbandcraft.village.VillageManager.TAG_FACTION));
+                if (f == null || f.getPath().isEmpty()) return false;
+                com.ale.warbandcraft.faction.Faction other = com.ale.warbandcraft.faction.FactionManager.INSTANCE.get(f);
+                if (other != null && other.outlaw()) return true;   // bandidos
+                return com.ale.warbandcraft.faction.Relations.get(level.getServer()).atWar(owner, f);
+            }
+        }
+        if (who == null || com.ale.warbandcraft.faction.Allies.same(owner, who)) return false;
+        String mine = com.ale.warbandcraft.faction.Allies.factionOf(owner), theirs = com.ale.warbandcraft.faction.Allies.factionOf(who);
+        return mine != null && theirs != null && !mine.equals(theirs) && com.ale.warbandcraft.market.Market.atWar(mine, theirs);
+    }
+
     private static boolean hostile(ServerLevel level, VillageData.Village v, LivingEntity e) {
         if (!e.isAlive()) return false;
         if (e instanceof Enemy) return true;
         var d = e.getPersistentData();
         if (v.owner() != null) {   // una aldea tuya: invasores y ejércitos de la IA
-            return d.contains("warbandcraft:invader") || d.contains("warbandcraft:ai_attack") || d.contains("warbandcraft:field_army");
+            if (d.contains("warbandcraft:invader") || d.contains("warbandcraft:ai_attack") || d.contains("warbandcraft:field_army")) return true;
+            return enemyOfOwner(level, v.owner(), e, d);
         }
         // Aldea de facción: quien la ataca o está en guerra con ella
         UUID who = null;
