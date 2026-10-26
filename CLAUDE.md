@@ -216,7 +216,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   Guardia = estado 2/3/4 de Recruits y a ≤3 bloques de su `HoldPos`. Al sacar: `setFollowState` antes que
   `setHoldPos` (el 2 pisa el puesto). Los demás salen siguiéndote (estado 1).
 - Comida: 4 puntos por soldado y día, del almacén entero, la más barata, nada dañino; días atrasados (máx. 7) al
-  cargarse el Campamento. 2º día sin comer: se va el 10% (mín. 1), menor nivel primero. Constantes en `BarracksData`.
+  cargarse el Campamento; sin nadie de la facción del dueño conectado no comen (`Barracks.tick` corre `lastFedDay`, pedido de Ale).
+  2º día sin comer: se va el 10% (mín. 1), menor nivel primero. Constantes en `BarracksData`.
 - "Al barracón" trabado (pedido de Ale, a probar): `Barracks.checkArrivals` (1 s) anota lo más cerca que llegó cada uno
   (`GOING`, en memoria); si en `STUCK_SECONDS` (10) no se acercó `STUCK_PROGRESS` (1) bloque, se guarda directo desde donde
   está. Otra orden en el camino (estado ≠ 2/3 o puesto ≠ el Campamento) le saca `TAG_TO_BARRACKS`.

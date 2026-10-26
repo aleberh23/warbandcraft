@@ -455,10 +455,7 @@ public final class Hosts {
     /** Pedido de Ale: la Hueste solo sale (y su plazo solo corre) con el dueño o alguien de su facción conectado. */
     public static boolean factionOnline(ServerLevel level, UUID owner) {
         if (level.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) return true;   // pruebas: FakePlayer
-        for (UUID id : com.ale.warbandcraft.faction.Allies.members(owner)) {
-            if (level.getServer().getPlayerList().getPlayer(id) != null) return true;
-        }
-        return false;
+        return com.ale.warbandcraft.faction.Allies.anyOnline(level.getServer(), owner);
     }
 
     private static void campedTick(ServerLevel level, InvasionData.Host h, long now) {

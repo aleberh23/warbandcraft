@@ -621,6 +621,13 @@ public final class Barracks {
         BarracksData data = BarracksData.get(level);
         for (Long pos : new ArrayList<>(data.all().keySet())) {
             BlockPos campPos = BlockPos.of(pos);
+            BarracksData.Barracks b = data.at(campPos);
+            if (b != null && b.owner != null && b.lastFedDay >= 0 && b.lastFedDay < today
+                    && !com.ale.warbandcraft.faction.Allies.anyOnline(level.getServer(), b.owner)) {
+                b.lastFedDay = today;   // pedido de Ale: sin nadie de la facción conectado, los soldados no comen
+                data.changed();
+                continue;
+            }
             if (level.isLoaded(campPos) && level.getBlockEntity(campPos) instanceof CampBlockEntity camp) {
                 feed(level, campPos, camp, today);
             }

@@ -83,6 +83,12 @@ public final class Allies {
         return fa != null && Objects.equals(fa, factionOf(b));
     }
 
+    /** Si está conectado {@code player} o alguien de su facción. */
+    public static boolean anyOnline(MinecraftServer server, UUID player) {
+        for (UUID id : members(player)) if (server.getPlayerList().getPlayer(id) != null) return true;
+        return false;
+    }
+
     /** El jugador y todos los de su facción (por UUID; los de la facción que nunca entraron, no). */
     public static Set<UUID> members(UUID player) {
         expire();
