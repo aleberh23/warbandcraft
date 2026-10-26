@@ -13,7 +13,7 @@ Pestaña Trabajo. Cada trabajador necesita su zona dentro del territorio:
 - Auto: la busca sola.
 - Borrar.
 ---
-Cada zona cuesta algo del almacén: azada y semillas (granjero), hacha y retoños (leñador), pico (minero), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén.
+Cada zona cuesta algo del almacén: azada y semillas (granjero), hacha y retoños (leñador), pico (minero), caña (pescador), trigo (ganadero). Se pone un cofre al lado, vinculado al almacén. El agua de la huerta se pone sola (no hace falta balde).
 
 El corral sin animales trae 2 del bioma.
 ---

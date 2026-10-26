@@ -196,6 +196,77 @@ public final class WorkerSupply {
         if (rec.outpost) outpost(level, camp, w, rec);
         else if (w.homeAreaUUID == null) home(level, v, w);
         if (w instanceof MinerEntity miner) mine(level, v, camp, miner, now);
+        if (w instanceof com.talhanation.workers.entities.FarmerEntity farmer) water(level, farmer);
+    }
+
+    /** Cada cuántos bloques va un agua en la huerta (la tierra arada se moja a 4 de un agua: 9 cubre todo). */
+    public static int WATER_SPACING = 9;
+
+    /**
+     * Pedido de Ale ("nunca pone agua, ara infinitamente"): Workers solo pone agua con un balde de agua en la mochila y en
+     * un punto fijo pensado para 9×9; sin agua la tierra arada se seca y vuelve a tierra, y la ara de nuevo para siempre.
+     * Ponemos nosotros el agua (gratis): en ese punto y en una grilla cada {@link #WATER_SPACING} que cubre la huerta
+     * entera, salvo donde ya hay agua cerca. Solo donde el agua no se puede escapar (piso y costados firmes).
+     */
+    public static void water(ServerLevel level, com.talhanation.workers.entities.FarmerEntity farmer) {
+        CropArea area = farmer.currentCropArea;
+        if (area == null || !area.isAlive()) return;
+        WorkZones.fixCropLevel(level, area);   // la huerta metida un bloque en el piso
+        if (area.getArea() == null || area.fieldType == CropArea.FieldType.RICE) return;
+        AABB box = area.getArea();
+        BlockPos center = area.getWaterPosCenter();
+        int y = center.getY();
+        int x0 = (int) Math.floor(box.minX), z0 = (int) Math.floor(box.minZ);
+        int x1 = (int) Math.ceil(box.maxX) - 1, z1 = (int) Math.ceil(box.maxZ) - 1;
+        if (x1 < x0 || z1 < z0) return;
+        List<BlockPos> spots = new ArrayList<>();
+        if (center.getX() >= x0 && center.getX() <= x1 && center.getZ() >= z0 && center.getZ() <= z1) spots.add(center);
+        int half = WATER_SPACING / 2;
+        for (int x = x0 + half; x <= x1 + half; x += WATER_SPACING) {
+            for (int z = z0 + half; z <= z1 + half; z += WATER_SPACING) {
+                spots.add(new BlockPos(Math.min(x, x1), y, Math.min(z, z1)));
+            }
+        }
+        boolean placed = false;
+        for (BlockPos p : spots) {
+            if (waterNear(level, p, half)) continue;
+            if (placeWater(level, p)) placed = true;
+        }
+        if (placed || level.getFluidState(center).is(net.minecraft.tags.FluidTags.WATER)) {
+            // ya no hace falta el balde que Workers pidió
+            farmer.neededItems.removeIf(n -> n.matcher.test(new ItemStack(Items.WATER_BUCKET)));
+        }
+    }
+
+    /** ¿Hay agua quieta a la altura {@code p} dentro del cuadrado de lado 2×{@code r}+1? */
+    private static boolean waterNear(ServerLevel level, BlockPos p, int r) {
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                if (level.getFluidState(p.offset(dx, 0, dz)).is(net.minecraft.tags.FluidTags.WATER)) return true;
+            }
+        }
+        return false;
+    }
+
+    /** Un agua en {@code p} si es tierra (o ya cavado) con piso y costados firmes; lo plantado encima se saca. */
+    private static boolean placeWater(ServerLevel level, BlockPos p) {
+        if (!level.isLoaded(p)) return false;
+        BlockState s = level.getBlockState(p);
+        boolean earth = s.isAir() || s.is(net.minecraft.tags.BlockTags.DIRT) || s.is(net.minecraft.world.level.block.Blocks.FARMLAND)
+                || s.is(net.minecraft.world.level.block.Blocks.DIRT_PATH);
+        if (!earth || level.getBlockEntity(p) != null) return false;
+        if (!solid(level, p.below())) return false;
+        for (Direction d : Direction.Plane.HORIZONTAL) if (!solid(level, p.relative(d))) return false;
+        BlockState up = level.getBlockState(p.above());
+        if (!up.isAir() && !up.canBeReplaced() && !(up.getBlock() instanceof net.minecraft.world.level.block.BushBlock)) return false;
+        if (!up.isAir()) level.destroyBlock(p.above(), true);
+        level.setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.WATER.defaultBlockState());
+        return true;
+    }
+
+    private static boolean solid(ServerLevel level, BlockPos p) {
+        BlockState s = level.getBlockState(p);
+        return !s.isAir() && !s.canBeReplaced() && s.getFluidState().isEmpty() || s.getFluidState().is(net.minecraft.tags.FluidTags.WATER);
     }
 
     /** Lo que le falta (su equipo y lo que pidió Workers), del almacén a su mochila. Lo que no hay queda anotado. */

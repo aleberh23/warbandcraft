@@ -630,9 +630,32 @@ public final class WorkZones {
         if (!left.isEmpty()) w.spawnAtLocation(left);
     }
 
+    /**
+     * Pedido de Ale ("ara la tierra infinitamente"): Workers ara y riega el bloque de debajo de la entidad de la huerta, y
+     * {@link com.ale.warbandcraft.camp.WorkerZone#place} la deja metida en el piso: araba la tierra de abajo del pasto (con
+     * tierra encima no se puede) para siempre. Si arriba de ese bloque hay tierra con aire encima, la sube 1. Sirve también
+     * para las huertas viejas (se llama cada vez que se atiende al granjero). Devuelve true si la movió.
+     */
+    public static boolean fixCropLevel(ServerLevel level, CropArea area) {
+        BlockPos on = area.getOnPos();
+        if (!level.isLoaded(on)) return false;
+        BlockState soil = level.getBlockState(on.above());
+        boolean earth = soil.is(net.minecraft.tags.BlockTags.DIRT) || soil.is(Blocks.FARMLAND) || soil.is(Blocks.DIRT_PATH);
+        if (!earth || !Blueprints.clearable(level.getBlockState(on.above(2)))) return false;
+        area.moveTo(area.getX(), area.getY() + 1, area.getZ(), area.getYRot(), area.getXRot());
+        area.area = null;   // Workers la vuelve a medir
+        area.stackToPlow.clear();
+        area.stackToBreak.clear();
+        area.stackToPlant.clear();
+        return true;
+    }
+
     /** El trabajador queda enganchado a su zona nueva (si no, Workers le elige la más cercana libre). */
     private static void bind(AbstractWorkerEntity w, AbstractWorkAreaEntity a) {
-        if (w instanceof FarmerEntity f && a instanceof CropArea c) f.currentCropArea = c;
+        if (w instanceof FarmerEntity f && a instanceof CropArea c) {
+            if (w.level() instanceof ServerLevel sl) fixCropLevel(sl, c);
+            f.currentCropArea = c;
+        }
         else if (w instanceof LumberjackEntity l && a instanceof LumberArea c) l.currentLumberArea = c;
         else if (w instanceof MinerEntity m && a instanceof MiningArea c) m.currentMiningArea = c;
         else if (w instanceof FishermanEntity f && a instanceof FishingArea c) f.currentFishingArea = c;

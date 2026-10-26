@@ -956,6 +956,12 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
   que juntó pasa al almacén (se queda con su kit, herramientas y 4 de comida; `farmedItems = 0`); cama: zona Hogar de
   Workers sobre una cama libre (POI `home` reservado con `PoiManager.take`, marca `warbandcraft:bed`; al morir se libera).
   Al convertir un aldeano, su cama de aldeano pasa a ser la del trabajador. `Housing` cuenta a los trabajadores sin cama.
+- Agua de la huerta (pedido de Ale: "nunca pone agua, ara infinitamente"): Workers solo pone agua con un balde de agua en un punto
+  fijo para 9×9 (`CropArea.getWaterPosCenter`); sin agua lo arado se seca y lo vuelve a arar. `WorkerSupply.water` (en `serve` y en
+  `CampWorkers.serve`) la pone gratis ahí y en una grilla cada `WATER_SPACING` (9) que cubre la huerta, salvo con agua a ≤4; solo con
+  piso y costados firmes. Saca el balde de `neededItems`. **La causa de fondo**: Workers ara/riega el bloque de debajo de la entidad
+  (`getOnPos`) y `WorkerZone.place` la deja metida en el piso (araba la tierra de abajo del pasto, imposible, para siempre):
+  `WorkZones.fixCropLevel` la sube 1 al engancharla (`bind`) y cada vez que se atiende al granjero (arregla las viejas).
 - Minero: `MiningArea.setKeepOn(true)` (no queda "terminada"); cada 60 s trabajando saca de la veta (`vein`: piedra 60,
   carbón 20, hierro crudo 14, oro crudo 5, diamante 1; bajo y=0 mejor) al almacén; mina vacía → baja 8 bloques (4 veces).
 - Cartelito: `WorkerSupply.status` (Falta en el almacén / Almacén lleno / Con hambre / Buscando / Durmiendo / sin cama /

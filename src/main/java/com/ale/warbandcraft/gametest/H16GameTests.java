@@ -471,6 +471,19 @@ public class H16GameTests {
             BlockPos o = h.absolutePos(new BlockPos(1, 2, 11));   // lejos del almacén (su zona de almacén ocupa el centro)
             var farm = WorkZones.mark(player, v, farmer.getUUID(), o.getX(), o.getZ(), o.getX() + 6, o.getZ() + 3);   // rectángulo: antes no entraba nunca
             check(farmer.getCurrentWorkArea() instanceof com.talhanation.workers.entities.workarea.CropArea, "no se creó la huerta: " + farm.getString());
+            // Pedido de Ale ("ara infinitamente, nunca pone agua"): la huerta queda al nivel del piso y el agua la ponemos nosotros
+            var ca = (com.talhanation.workers.entities.workarea.CropArea) farmer.getCurrentWorkArea();
+            BlockPos on = ca.getOnPos();
+            check(com.ale.warbandcraft.upgrade.Blueprints.clearable(level.getBlockState(on.above())),
+                    "la huerta quedó metida en el piso: arriba de " + on + " hay " + level.getBlockState(on.above()));
+            com.ale.warbandcraft.village.WorkerSupply.water(level, farmer);
+            AABB fb = ca.getArea();
+            int wy = ca.getWaterPosCenter().getY();
+            boolean wet = false;
+            for (int x = (int) fb.minX; x < (int) fb.maxX; x++) for (int z = (int) fb.minZ; z < (int) fb.maxZ; z++) {
+                if (level.getFluidState(new BlockPos(x, wy, z)).is(net.minecraft.tags.FluidTags.WATER)) wet = true;
+            }
+            check(wet, "no puso agua en la huerta: centro " + ca.getWaterPosCenter() + " ahí " + level.getBlockState(ca.getWaterPosCenter()));
             BlockPos p = h.absolutePos(new BlockPos(11, 2, 1));
             var pen = WorkZones.mark(player, v, herder.getUUID(), p.getX(), p.getZ(), p.getX() + 3, p.getZ() + 5);
             check(herder.getCurrentWorkArea() instanceof com.talhanation.workers.entities.workarea.AnimalPenArea, "no se creó el corral: " + pen.getString());

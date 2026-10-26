@@ -287,6 +287,7 @@ public final class CampWorkers {
         paper(level, camp, r, w);
         WorkerSupply.supply(camp, w);
         WorkerSupply.feed(camp, w);
+        if (w instanceof com.talhanation.workers.entities.FarmerEntity farmer) WorkerSupply.water(level, farmer);   // el agua de la huerta
         if ((ticks + w.getId()) % COLLECT_EVERY == 0) WorkerSupply.collect(camp, w);
         if (w.homeAreaUUID == null && r.bed != null) WorkerSupply.homeAt(level, r.owner, w, r.bed);   // se perdió la zona Hogar
         if (w.distanceToSqr(Vec3.atCenterOf(camp.getBlockPos())) > (double) LEASH * LEASH && !w.isPassenger() && !w.isSleeping()) {
