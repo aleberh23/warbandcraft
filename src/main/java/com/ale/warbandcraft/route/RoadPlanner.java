@@ -33,7 +33,7 @@ public final class RoadPlanner {
     /** El resultado: los bloques y qué tiene (para el aviso). */
     public static final class Result {
         public final Blueprints.Plan plan = new Blueprints.Plan();
-        public int bridges, tunnels, docks;
+        public int bridges, tunnels, docks, gates;
     }
 
     /** Una columna del centro del camino y hacia dónde queda el costado. */
@@ -101,6 +101,12 @@ public final class RoadPlanner {
             }
             i = j;
         }
+        // Pedido de Ale: donde cruza una muralla, un portón (al final de la obra, así la muralla no queda abierta)
+        List<int[]> centers = new ArrayList<>();
+        for (int k = 0; k < n; k++) if (!water[k]) centers.add(new int[]{cols.get(k).x, cols.get(k).z});
+        Blueprints.Plan gates = com.ale.warbandcraft.upgrade.Works.roadGates(level, centers);
+        gates.blocks.forEach(res.plan::put);
+        res.gates = Blueprints.gatesOf(gates).size() / 3;
         // Túneles (para el aviso): tramos seguidos con el terreno muy arriba
         boolean inTunnel = false;
         for (int k = 0; k < n; k++) {

@@ -36,5 +36,10 @@ public final class ModEntities {
             () -> EntityType.Builder.<com.ale.warbandcraft.worker.OrganizerEntity>of(com.ale.warbandcraft.worker.OrganizerEntity::new, MobCategory.CREATURE)
                     .sized(0.6F, 1.95F).clientTrackingRange(10).build("organizer"));
 
+    /** Pedido de Ale: el de Mantenimiento (trabajador hecho sobre la base de Villager Workers): embellece la aldea. */
+    public static final RegistryObject<EntityType<com.ale.warbandcraft.worker.MaintainerEntity>> MAINTAINER = ENTITIES.register("maintainer",
+            () -> EntityType.Builder.<com.ale.warbandcraft.worker.MaintainerEntity>of(com.ale.warbandcraft.worker.MaintainerEntity::new, MobCategory.CREATURE)
+                    .sized(0.6F, 1.95F).clientTrackingRange(10).build("maintainer"));
+
     private ModEntities() {}
 }

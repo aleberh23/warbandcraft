@@ -68,3 +68,17 @@ Pero solo mientras haya alguien de tu facción conectado: sin nadie, tus aldeas 
 
 ## Puesto de leñador
 Al leñador le podés marcar la zona afuera del territorio, hasta 200 bloques del centro y lejos de otras aldeas. Se muda ahí con su cofre y su cama. Lo que deja en el cofre pasa solo al almacén de la aldea.
+---
+## Mantenimiento
+Necesita una Caseta de mantenimiento (Construir, Edificios). Se asigna en Aldeanos, uno por aldea, y no lleva zona.
+
+De día embellece la aldea: estandartes de tu facción al lado de los portones y en las torres, faroles donde está oscuro y caminitos con flores entre las casas, los edificios y el centro.
+---
+Nunca pisa edificios, murallas ni zonas de trabajo. Gasta madera, piedra y esmeraldas del almacén; si falta algo, se queda esperando y lo dice en su cartelito.
+---
+## Cocinero y Cocina
+Con la Cocina hecha (Construir, Edificios) y un cocinero asignado, cada medio minuto cocina lo del almacén: el trigo a pan, la carne, el pescado y las papas al horno, tortas de calabaza (calabaza, huevo y azúcar o caña) y galletas (trigo y cacao).
+---
+Deja 16 papas y 8 de trigo por si acaso. Gasta leña del almacén (tablones, troncos o carbón), mucho menos que un horno a mano: un tronco cocina 12 cosas. Sin leña lo dice en su cartelito.
+
+Cuando volvés a la aldea, cocina lo del tiempo que no estuviste. Auto le marca la zona adentro de la Cocina.

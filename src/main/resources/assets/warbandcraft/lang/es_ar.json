@@ -683,6 +683,16 @@
   "upgrade.warbandcraft.earth_level": "Allanar",
   "upgrade.warbandcraft.earth_fill": "Rellenar con tierra",
   "upgrade.warbandcraft.demolish": "Demoler",
+  "upgrade.warbandcraft.maintenance": "Caseta de mantenimiento",
+  "upgrade.warbandcraft.maintenance.effect": "Un trabajador de Mantenimiento embellece la aldea",
+  "upgrade.warbandcraft.stone_walls": "Empalizada a piedra",
+  "upgrade.warbandcraft.stone_towers": "Torres de madera a piedra",
+  "entity.warbandcraft.maintainer": "Mantenimiento",
+  "msg.warbandcraft.maintenance.no_shed": "Primero construí la Caseta de mantenimiento (Gestión → Construir → Edificios).",
+  "msg.warbandcraft.maintenance.full": "Esta aldea ya tiene su trabajador de Mantenimiento.",
+  "msg.warbandcraft.maintenance.set": "El de Mantenimiento embellece toda la aldea: estandartes, faroles y caminitos.",
+  "status.warbandcraft.maintenance.missing": "Falta en el almacén: %s",
+  "status.warbandcraft.maintenance.doing": "Embelleciendo: %s",
   "gui.warbandcraft.panel.tab.armies": "Ejércitos",
   "gui.warbandcraft.army.title": "Ejércitos de campaña",
   "gui.warbandcraft.army.default_name": "Ejército %s",
@@ -942,5 +952,9 @@
   "msg.warbandcraft.peace.favor_taken": "%s espera que limpies la %s %s (%s días). Está en tu mapa.",
   "msg.warbandcraft.peace.made": "Paz con %s: %s días de tregua. Sus ejércitos en camino se vuelven.",
   "msg.warbandcraft.peace.broken": "Rompiste la tregua con %s.",
-  "gui.warbandcraft.contract.current_peace": "Tu favor: %s %s — paz con %s, quedan %s días."
+  "gui.warbandcraft.contract.current_peace": "Tu favor: %s %s — paz con %s, quedan %s días.",
+  "upgrade.warbandcraft.kitchen": "Cocina",
+  "upgrade.warbandcraft.kitchen.effect": "El cocinero cocina lo del almacén (pan, carne, pescado, papas, tortas, galletas) con poca leña; +1 de popularidad",
+  "gui.warbandcraft.growth.factor.kitchen": "Cocina",
+  "gui.warbandcraft.kitchen.fuel": "leña (tablones, troncos o carbón)"
 }

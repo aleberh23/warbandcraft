@@ -31,6 +31,7 @@ public class InvasionEvents {
             if (level.getGameTime() % 100 == 12) com.ale.warbandcraft.market.FactionMarket.tick(level);   // mercaderes de las aldeas de facción
             if (level.getGameTime() % 100 == 37) com.ale.warbandcraft.village.FactionInn.tick(level);   // taberneros de las aldeas de facción
             if (level.getGameTime() % 40 == 12) com.ale.warbandcraft.village.GarrisonLife.tick(level);   // guarniciones con puestos y patrullas
+            if (level.getGameTime() % 200 == 52) com.ale.warbandcraft.upgrade.Heraldry.tick(level);   // vidrios y estandartes del dueño
             if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
                 com.ale.warbandcraft.command.TestArmyCommand.perfTick(level.getServer());   // H23: medidor de rendimiento
             }

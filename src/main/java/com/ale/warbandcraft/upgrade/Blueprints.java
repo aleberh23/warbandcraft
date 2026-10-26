@@ -212,7 +212,7 @@ public final class Blueprints {
         boolean[] path = new boolean[n];
         for (int i = 0; i < n; i++) {
             Integer g = groundY(level, cols.get(i)[0], cols.get(i)[1], hint);
-            path[i] = g != null && level.getBlockState(new BlockPos(cols.get(i)[0], g, cols.get(i)[1])).is(Blocks.DIRT_PATH);
+            path[i] = g != null && pathAt(level, cols.get(i)[0], g, cols.get(i)[1]);
         }
         boolean[] gate = new boolean[n];
         int paths = 0;
@@ -312,6 +312,23 @@ public final class Blueprints {
             wall(plan, toAfter, body, stone, 0);
             connect(level, plan, toAfter, after, height, extra, hint, body, stone);
         }
+    }
+
+    /**
+     * Pedido de Ale: por donde un camino cruza la muralla va un portón. Camino = el de la aldea (dirt_path) o uno de H14
+     * (grava sobre el trazado de una ruta, hecho o en obra).
+     */
+    public static boolean pathAt(ServerLevel level, int x, int g, int z) {
+        BlockState s = level.getBlockState(new BlockPos(x, g, z));
+        if (s.is(Blocks.DIRT_PATH)) return true;
+        return (s.is(Blocks.GRAVEL) || natural(s)) && com.ale.warbandcraft.route.Roads.onRoad(level, x, z);
+    }
+
+    /** Un portón derecho sobre el tramo {@code run} de una muralla dibujada (de madera o de piedra), con sus postes. */
+    public static void gateRun(ServerLevel level, Plan plan, List<int[]> run, boolean stone, int hint) {
+        BlockState body = stone ? Blocks.STONE_BRICKS.defaultBlockState()
+                : Blocks.SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
+        gate(level, plan, run, null, null, stone ? 4 : 3, stone ? 1 : 0, hint, body, stone);
     }
 
     /** Las puertas de cerco de abajo de cada portón del plan (las que abren y cierran, {@code Works.tickGates}). */

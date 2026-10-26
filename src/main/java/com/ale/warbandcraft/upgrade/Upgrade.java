@@ -27,6 +27,10 @@ public enum Upgrade {
     GRANARY("granary", 12, 1, null, true, true),
     /** H22: capilla (popularidad). Solo aldeas. */
     CHAPEL("chapel", 16, 1, null, true, false),
+    /** Pedido de Ale: caseta de mantenimiento (el trabajador de Mantenimiento embellece la aldea). Solo aldeas. */
+    MAINTENANCE("maintenance", 10, 1, null, true, false),
+    /** Pedido de Ale: cocina (el cocinero cocina lo del almacén con poca madera, {@link com.ale.warbandcraft.village.Kitchen}). Solo aldeas. */
+    KITCHEN("kitchen", 12, 1, null, true, false),
     /** H19: taberna (llegan reclutas) en 3 niveles, mismo terreno. Solo aldeas. */
     TAVERN_1("tavern_1", 12, 1, null, true, false),
     TAVERN_2("tavern_2", 24, 2, TAVERN_1, true, false),
@@ -49,6 +53,9 @@ public enum Upgrade {
     GATE_2("gate_2", 8, 2, null, true, false),
     TOWER_1("tower_1", 6, 1, null, true, false),
     TOWER_2("tower_2", 12, 2, null, true, false),
+    /** Pedido de Ale: de un click, toda la empalizada pasa a muralla de piedra y las torres de madera a piedra. */
+    STONE_WALLS("stone_walls", 0, 2, null, true, false),
+    STONE_TOWERS("stone_towers", 0, 2, null, true, false),
     /** H22b: terreno (allanar, rellenar) y demoler un edificio o una torre. */
     EARTH_LEVEL("earth_level", 0, 0, null, true, false),
     EARTH_FILL("earth_fill", 0, 0, null, true, false),
@@ -78,7 +85,7 @@ public enum Upgrade {
     /** H22: obra de Defensa o Terreno de {@link Works} (no queda "hecha", se repite). */
     public boolean isWork() {
         return switch (this) {
-            case WALL_1, WALL_2, GATE_1, GATE_2, TOWER_1, TOWER_2, EARTH_LEVEL, EARTH_FILL, DEMOLISH -> true;
+            case WALL_1, WALL_2, GATE_1, GATE_2, TOWER_1, TOWER_2, STONE_WALLS, STONE_TOWERS, EARTH_LEVEL, EARTH_FILL, DEMOLISH -> true;
             default -> false;
         };
     }
@@ -87,7 +94,7 @@ public enum Upgrade {
     public int defenseLevel() {
         return switch (this) {
             case WALL_1, GATE_1, TOWER_1 -> 1;
-            case WALL_2, GATE_2, TOWER_2 -> 2;
+            case WALL_2, GATE_2, TOWER_2, STONE_WALLS, STONE_TOWERS -> 2;
             default -> 0;
         };
     }
@@ -118,7 +125,7 @@ public enum Upgrade {
     /** True si es un edificio con su propio terreno (el taller usa siempre el mismo). */
     public boolean isBuilding() {
         return switch (this) {
-            case BUILDER_1, BUILDER_2, BUILDER_3, BARRACKS, SMITHY, MARKET, MARKET_2, MARKET_3, GRANARY, CHAPEL,
+            case BUILDER_1, BUILDER_2, BUILDER_3, BARRACKS, SMITHY, MARKET, MARKET_2, MARKET_3, GRANARY, CHAPEL, MAINTENANCE, KITCHEN,
                  TAVERN_1, TAVERN_2, TAVERN_3, TRAINING_1, TRAINING_2, TRAINING_3 -> true;
             default -> false;
         };
@@ -132,6 +139,7 @@ public enum Upgrade {
         return switch (this) {
             case TAVERN_1, TAVERN_2, TAVERN_3, MARKET, MARKET_2, MARKET_3, TRAINING_1, TRAINING_2, TRAINING_3 -> 13;
             case BUILDER_1, BUILDER_2, BUILDER_3, BARRACKS, SMITHY, CHAPEL -> 11;
+            case MAINTENANCE -> 7;
             default -> 9;
         };
     }

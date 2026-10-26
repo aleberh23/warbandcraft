@@ -683,6 +683,16 @@
   "upgrade.warbandcraft.earth_level": "Level ground",
   "upgrade.warbandcraft.earth_fill": "Fill with dirt",
   "upgrade.warbandcraft.demolish": "Demolish",
+  "upgrade.warbandcraft.maintenance": "Maintenance shed",
+  "upgrade.warbandcraft.maintenance.effect": "A Maintenance worker makes the village look nice",
+  "upgrade.warbandcraft.stone_walls": "Palisade to stone",
+  "upgrade.warbandcraft.stone_towers": "Wooden towers to stone",
+  "entity.warbandcraft.maintainer": "Maintenance",
+  "msg.warbandcraft.maintenance.no_shed": "Build the Maintenance shed first (Manage → Build → Buildings).",
+  "msg.warbandcraft.maintenance.full": "This village already has its Maintenance worker.",
+  "msg.warbandcraft.maintenance.set": "The Maintenance worker tends the whole village: banners, lamps and footpaths.",
+  "status.warbandcraft.maintenance.missing": "Missing in the storehouse: %s",
+  "status.warbandcraft.maintenance.doing": "Tidying up: %s",
   "gui.warbandcraft.panel.tab.armies": "Armies",
   "gui.warbandcraft.army.title": "Field armies",
   "gui.warbandcraft.army.default_name": "Army %s",
@@ -942,5 +952,9 @@
   "msg.warbandcraft.peace.favor_taken": "%s expects you to clear the %s %s (%s days). It's on your map.",
   "msg.warbandcraft.peace.made": "Peace with %s: %s days of truce. Their armies on the march turn back.",
   "msg.warbandcraft.peace.broken": "You broke the truce with %s.",
-  "gui.warbandcraft.contract.current_peace": "Your favor: %s %s — peace with %s, %s days left."
+  "gui.warbandcraft.contract.current_peace": "Your favor: %s %s — peace with %s, %s days left.",
+  "upgrade.warbandcraft.kitchen": "Kitchen",
+  "upgrade.warbandcraft.kitchen.effect": "The cook cooks the storehouse food (bread, meat, fish, potatoes, pies, cookies) using little wood; +1 popularity",
+  "gui.warbandcraft.growth.factor.kitchen": "Kitchen",
+  "gui.warbandcraft.kitchen.fuel": "firewood (planks, logs or coal)"
 }

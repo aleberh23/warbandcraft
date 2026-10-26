@@ -134,6 +134,9 @@ public class TownData extends SavedData {
         public int ringRadius;
         /** Versión del anillo con la que se armó (2 = cerrado, con portones): las aldeas de facción de antes se completan solas. */
         public int ringVersion;
+        /** Pedido de Ale: la Cocina. Hasta cuándo cocinó (0 = todavía no) y cuántas cocciones le quedan del último combustible. */
+        public long kitchenTick;
+        public int kitchenFuel;
         @Nullable
         public Job job;
         /** Casas: si se construyen solas cuando faltan camas, y cuántas se hicieron. */
@@ -163,6 +166,10 @@ public class TownData extends SavedData {
         public boolean npcReady;
         /** Aldea de facción: soldados de su reserva que ya se perdieron ({@link com.ale.warbandcraft.village.GarrisonReserve}). */
         public int npcReserveUsed;
+        /** Pedido de Ale: con qué colores/estandarte se pintaron vidrios y estandartes ({@code Heraldry}; "" = nunca). */
+        public String heraldry = "";
+        /** Mantenimiento: estandartes y faroles que puso el trabajador (para repintarlos y no repetirlos). */
+        public final java.util.Set<BlockPos> decor = new java.util.LinkedHashSet<>();
 
         Town(BlockPos center) {
             this.center = center;
@@ -286,6 +293,8 @@ public class TownData extends SavedData {
             t.style = c.getString("Style");
             t.ringRadius = c.getInt("Ring");
             t.ringVersion = c.getInt("RingVersion");
+            t.kitchenTick = c.getLong("KitchenTick");
+            t.kitchenFuel = c.getInt("KitchenFuel");
             t.ringWalls = c.contains("RingWalls") ? c.getBoolean("RingWalls") : t.has(Upgrade.PALISADE) || t.has(Upgrade.WALL);
             CompoundTag def = c.getCompound("Defense");
             long[] dp = def.getLongArray("Positions");
@@ -322,6 +331,8 @@ public class TownData extends SavedData {
             t.npcTier = c.getInt("NpcTier");
             t.npcReady = c.getBoolean("NpcReady");
             t.npcReserveUsed = c.getInt("NpcReserveUsed");
+            t.heraldry = c.getString("Heraldry");
+            for (long l : c.getLongArray("Decor")) t.decor.add(BlockPos.of(l));
             if (c.contains("Job")) t.job = Job.load(level, c.getCompound("Job"));
             data.towns.put(t.center.asLong(), t);
         }
@@ -349,6 +360,8 @@ public class TownData extends SavedData {
             c.putString("Style", t.style);
             c.putInt("Ring", t.ringRadius);
             c.putInt("RingVersion", t.ringVersion);
+            if (t.kitchenTick != 0) c.putLong("KitchenTick", t.kitchenTick);
+            if (t.kitchenFuel != 0) c.putInt("KitchenFuel", t.kitchenFuel);
             c.putBoolean("RingWalls", t.ringWalls);
             CompoundTag def = new CompoundTag();
             long[] dp = new long[t.defense.size()];
@@ -395,6 +408,8 @@ public class TownData extends SavedData {
             if (t.npcTier > 0) c.putInt("NpcTier", t.npcTier);
             if (t.npcReady) c.putBoolean("NpcReady", true);
             if (t.npcReserveUsed > 0) c.putInt("NpcReserveUsed", t.npcReserveUsed);
+            if (!t.heraldry.isEmpty()) c.putString("Heraldry", t.heraldry);
+            if (!t.decor.isEmpty()) c.putLongArray("Decor", t.decor.stream().mapToLong(BlockPos::asLong).toArray());
             if (t.job != null) c.put("Job", t.job.save());
             list.add(c);
         }

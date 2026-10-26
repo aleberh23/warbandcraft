@@ -212,6 +212,9 @@ public final class WorkerSupply {
         else if (w.homeAreaUUID == null) home(level, v, w);
         if (w instanceof MinerEntity miner) mine(level, v, camp, miner, now);
         if (w instanceof com.talhanation.workers.entities.FarmerEntity farmer) water(level, farmer);
+        if (w instanceof com.talhanation.workers.entities.CookEntity && Kitchen.cook(level, v, camp).noFuel()) {
+            note(w, Kind.MISSING, Component.translatable("gui.warbandcraft.kitchen.fuel"));
+        }
     }
 
     /** Cada cuántos bloques va un agua en la huerta (la tierra arada se moja a 4 de un agua: 9 cubre todo). */
@@ -809,6 +812,10 @@ public final class WorkerSupply {
         }
         if (w instanceof com.ale.warbandcraft.worker.OrganizerEntity o && !o.getMissing().isEmpty()) {
             return new Status(com.ale.warbandcraft.camp.Organizer.missingText(o.getMissing()), YELLOW);
+        }
+        if (w instanceof com.ale.warbandcraft.worker.MaintainerEntity m) {
+            if (!m.getMissing().isEmpty()) return new Status(Component.translatable("status.warbandcraft.maintenance.missing", m.getMissing()), RED);
+            if (!m.getDoing().isEmpty()) return new Status(Component.translatable("status.warbandcraft.maintenance.doing", m.getDoing()), GREEN);
         }
         if (!smith && w.needsToGetItems()) {
             MutableComponent list = null;

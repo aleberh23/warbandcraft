@@ -17,4 +17,4 @@ Un constructor acompaña el frente de obra. Lo que está lejos (sin cargar) se p
 
 Si cambiás el trazado de la ruta, el camino viejo se saca. Borrar la ruta corta la obra.
 
-No rompe casas, caminos de aldea ni cofres.
+No rompe casas, caminos de aldea ni cofres. Si cruza una muralla o empalizada, al terminar deja un portón.

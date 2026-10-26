@@ -67,6 +67,8 @@ public final class Popularity {
     public static int MARKET = 1;
     /** H22: capilla. */
     public static int CHAPEL = 2;
+    /** Pedido de Ale: Cocina con cocinero (cocinó en el último día). */
+    public static int KITCHEN = 1;
     /** Ataque reciente (invasión rechazada o perdida a medias): popularidad por minuto y cuántos días dura. */
     public static int RECENT_ATTACK = -2, RECENT_ATTACK_DAYS = 3;
     /** Dónde aparece el que llega (lejos del centro, adentro del territorio). */
@@ -178,6 +180,7 @@ public final class Popularity {
         if (t.tavernLevel() > 0 && t.innkeeper) out.add(new Factor("tavern", t.tavernLevel(), t.tavernLevel()));
         if (t.has(Upgrade.MARKET)) out.add(new Factor("market", 0, MARKET));
         if (t.has(Upgrade.CHAPEL)) out.add(new Factor("chapel", 0, CHAPEL));
+        if (Kitchen.active(level, t)) out.add(new Factor("kitchen", 0, KITCHEN));
         if (level.getGameTime() < t.troubledUntil) out.add(new Factor("recent_attack", 0, RECENT_ATTACK));
         return out;
     }

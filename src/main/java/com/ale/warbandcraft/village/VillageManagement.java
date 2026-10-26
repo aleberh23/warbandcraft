@@ -77,7 +77,9 @@ public final class VillageManagement {
         /** H24: atiende el mercado (sin él no se le vende a otros jugadores). */
         MERCHANT(() -> com.ale.warbandcraft.init.ModEntities.MERCHANT.get()),
         /** Ordena los cofres del almacén (uno por almacén). */
-        ORGANIZER(() -> com.ale.warbandcraft.init.ModEntities.ORGANIZER.get());
+        ORGANIZER(() -> com.ale.warbandcraft.init.ModEntities.ORGANIZER.get()),
+        /** Pedido de Ale: embellece la aldea (pide la caseta de mantenimiento; uno por aldea). */
+        MAINTENANCE(() -> com.ale.warbandcraft.init.ModEntities.MAINTAINER.get());
 
         private final Supplier<EntityType<? extends AbstractWorkerEntity>> type;
 
@@ -261,6 +263,12 @@ public final class VillageManagement {
             if (camp == null) return Component.translatable("msg.warbandcraft.manage.no_camp").withStyle(ChatFormatting.RED);
             if (organizersOf(level, camp.getBlockPos()) >= 1) return Component.translatable("msg.warbandcraft.organizer.full").withStyle(ChatFormatting.RED);
         }
+        if (job == Job.MAINTENANCE) {   // uno por aldea, con su caseta
+            if (!Maintenance.hasShed(com.ale.warbandcraft.upgrade.TownData.get(level).at(v.center()))) {
+                return Component.translatable("msg.warbandcraft.maintenance.no_shed").withStyle(ChatFormatting.RED);
+            }
+            if (maintainersOf(level, v.center()) >= 1) return Component.translatable("msg.warbandcraft.maintenance.full").withStyle(ChatFormatting.RED);
+        }
         if (job == Job.MERCHANT) {   // H24: tantos mercaderes como el nivel del mercado
             Component full = com.ale.warbandcraft.market.Market.canHire(level, v);
             if (full != null) return full;
@@ -271,6 +279,7 @@ public final class VillageManagement {
         if (worker instanceof com.ale.warbandcraft.worker.InnkeeperEntity keeper && camp != null) keeper.setCamp(camp.getBlockPos());
         if (worker instanceof com.ale.warbandcraft.worker.MerchantEntity merchant && camp != null) merchant.setCamp(camp.getBlockPos());
         if (worker instanceof com.ale.warbandcraft.worker.OrganizerEntity org && camp != null) org.setCamp(camp.getBlockPos());
+        if (worker instanceof com.ale.warbandcraft.worker.MaintainerEntity m) m.setTown(v.center());
 
         if (camp != null) WorkerZone.create(level, camp, player.getUUID(), player.getGameProfile().getName());
         // Su zona de trabajo sugerida (huerta, árboles, agua, la casa del almacén, el yunque); si no hay, la marcás vos
@@ -287,6 +296,12 @@ public final class VillageManagement {
     public static int smithsOf(ServerLevel level, BlockPos camp) {
         return Forge.smiths(level, camp).size() + level.getEntitiesOfClass(SmithEntity.class, new AABB(camp).inflate(96),
                 s -> s.isAlive() && camp.equals(s.getCamp())).size();
+    }
+
+    /** Los de Mantenimiento de la aldea de centro {@code center}. */
+    public static int maintainersOf(ServerLevel level, BlockPos center) {
+        return level.getEntitiesOfClass(com.ale.warbandcraft.worker.MaintainerEntity.class, new AABB(center).inflate(128, 64, 128),
+                m -> m.isAlive() && center.equals(m.getTown())).size();
     }
 
     /** Organizadores atados al almacén {@code camp}. */

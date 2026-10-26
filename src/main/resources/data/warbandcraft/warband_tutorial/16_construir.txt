@@ -8,12 +8,20 @@ Se paga al encargar: solo madera, piedra y esmeraldas (vidrio, lana, hierro y ad
 Un constructor lo levanta de a poco. Una obra por aldea. "Cancelar obra" devuelve lo que no se puso.
 
 ## Edificios
-Taller del constructor, Taberna, Mercado, Entrenamiento, Cuartel, Herrería, Capilla, Granero y Casas. Cada uno con su estilo según el bioma.
+Taller del constructor, Taberna, Mercado, Entrenamiento, Cuartel, Herrería, Capilla, Granero, Caseta de mantenimiento, Cocina y Casas. Cada uno con su estilo según el bioma.
 ---
 Muchos tienen niveles (Taberna 1 a 3, Mercado, Plaza de mercado y Lonja...). El nivel siguiente va sobre el mismo terreno.
 
 ## Defensa
 Muralla: hacés click punto por punto y Enter la encarga (empalizada o piedra). Portones y torres se ponen con un click. Reparar murallas: arriba de las mejoras. Si rompés vos una columna entera de la muralla, ahí deja de haber muralla (no se repara); si le ponés bloques arriba, pasan a ser muralla y se reparan. Si conquistaste una aldea con una empalizada vieja con huecos, Reparar murallas la cierra y le pone portones.
+
+Donde la muralla cruza un camino (de aldea o de grava), queda un portón solo.
+---
+## A piedra de un click
+En Defensa: "Toda la empalizada a piedra" pasa todas tus empalizadas a muralla de piedra (con almenas y portones de piedra) en una sola obra; "Todas las torres de madera a piedra" hace lo mismo con las torres. Se cobra toda la piedra junta y algunas esmeraldas.
+---
+## Colores de la facción
+Los vidrios y estandartes de tus edificios (los nuevos y los que ya estaban) toman el color y el estandarte de tu facción. Si conquistás una aldea o te la conquistan, cambian solos.
 ---
 ## Terreno
 Allanar o rellenar un rectángulo (rueda = altura). Allanar saca todo lo que haya arriba (casas, antorchas, árboles, agua) y deja el piso de tierra (arena en el desierto); cuesta 1 o 2 esmeraldas; rellenar, la tierra que pone y esmeraldas. Demoler: edificios, torres o tramos de muralla.
