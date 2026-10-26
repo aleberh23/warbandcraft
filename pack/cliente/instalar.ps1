@@ -172,12 +172,24 @@ try {
             Copy-Item -LiteralPath $p -Destination "$p.antes-de-warbandcraft" -Force
             $json = Get-Content -Raw -Encoding UTF8 -LiteralPath $p | ConvertFrom-Json
             if (-not $json.profiles) { $json | Add-Member -NotePropertyName profiles -NotePropertyValue ([pscustomobject]@{}) -Force }
+            # El launcher le cambia la clave a los perfiles que agregamos: buscamos los nuestros por nombre o carpeta,
+            # nos quedamos con uno (el mismo, así sigue elegido) y borramos los repetidos de antes.
+            $nuestros = @($json.profiles.PSObject.Properties | Where-Object {
+                $_.Name -eq 'warbandcraft' -or $_.Value.name -eq 'Warband Craft' -or
+                ($_.Value.gameDir -and $_.Value.gameDir.TrimEnd('\') -eq $Juego.TrimEnd('\')) })
+            $clave = 'warbandcraft'; $creado = $ahora
+            if ($nuestros.Count -gt 0) {
+                $clave = $nuestros[0].Name
+                if ($nuestros[0].Value.created) { $creado = $nuestros[0].Value.created }
+                foreach ($n in $nuestros) { $json.profiles.PSObject.Properties.Remove($n.Name) }
+                if ($nuestros.Count -gt 1) { Info "Borré $($nuestros.Count - 1) perfil(es) repetido(s) de Warband Craft" }
+            }
             $perfil = [pscustomobject]@{
                 name = 'Warband Craft'; type = 'custom'; icon = 'Furnace'
                 lastVersionId = $forgeId; gameDir = $Juego; javaArgs = $jvm
-                created = $ahora; lastUsed = $ahora
+                created = $creado; lastUsed = $ahora
             }
-            $json.profiles | Add-Member -NotePropertyName 'warbandcraft' -NotePropertyValue $perfil -Force
+            $json.profiles | Add-Member -NotePropertyName $clave -NotePropertyValue $perfil -Force
             [IO.File]::WriteAllText($p, ($json | ConvertTo-Json -Depth 32), (New-Object Text.UTF8Encoding $false))
         }
         Ok "Perfil listo ($mem GB de memoria)"

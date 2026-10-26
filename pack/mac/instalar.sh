@@ -247,8 +247,19 @@ function run(argv) {
     const j = JSON.parse($.NSString.stringWithContentsOfFileEncodingError(path, $.NSUTF8StringEncoding, null).js);
     const ahora = new Date().toISOString();
     j.profiles = j.profiles || {};
-    j.profiles.warbandcraft = { name: 'Warband Craft', type: 'custom', icon: 'Furnace', lastVersionId: version,
-        gameDir: dir, javaArgs: jvm, created: ahora, lastUsed: ahora };
+    // El launcher le cambia la clave a los perfiles que agregamos: buscamos los nuestros por nombre o carpeta,
+    // nos quedamos con uno (el mismo, así sigue elegido) y borramos los repetidos de antes.
+    const sinBarra = s => String(s || '').replace(/\/+$/, '');
+    const nuestros = Object.keys(j.profiles).filter(k => k === 'warbandcraft' ||
+        (j.profiles[k] && (j.profiles[k].name === 'Warband Craft' || sinBarra(j.profiles[k].gameDir) === sinBarra(dir))));
+    let clave = 'warbandcraft', creado = ahora;
+    if (nuestros.length > 0) {
+        clave = nuestros[0];
+        if (j.profiles[clave].created) creado = j.profiles[clave].created;
+        nuestros.forEach(k => delete j.profiles[k]);
+    }
+    j.profiles[clave] = { name: 'Warband Craft', type: 'custom', icon: 'Furnace', lastVersionId: version,
+        gameDir: dir, javaArgs: jvm, created: creado, lastUsed: ahora };
     if (!$(JSON.stringify(j, null, 2)).writeToFileAtomicallyEncodingError(path, true, $.NSUTF8StringEncoding, null))
         throw new Error('no se pudo guardar');
     return 'ok';
