@@ -240,7 +240,8 @@ Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir
 
 - `faction/Allies`: misma facción de Recruits = mismo equipo del marcador (por nombre; desconectado: `ProfileCache`). `same(a, b)`
   (mismo jugador o misma facción; null → false), `members(p)` (él + los del equipo), `factionOf` (cache 5 s; el servidor se anota
-  en `ServerAboutToStart`). Cliente: `sameTeam(player, owner, entity)` (equipo del soldado = el tuyo).
+  en `ServerAboutToStart`). **Nunca `GameProfileCache.get(nombre)`**: le pregunta a Mojang por internet en el hilo del
+  servidor (spark, 26/10: lag de segundos desde `OnlineDays.active`); `uuidOf` offline calcula el UUID del nombre, online usa `getAsync`. Cliente: `sameTeam(player, owner, entity)` (equipo del soldado = el tuyo).
 - **Todo "¿es tuyo?" pasa por ahí**: `CampBlockEntity.canBeUsedBy` (todas las pestañas), `CampRegistry.campsOf/isCampOf/hasCamp/
   nearestCamp` (lo de todos los miembros), aldeas (`Allies.same(player, v.owner())`: Gestión, mejoras, Panel, mercado, taberna,
   almacén, rutas, mapa, vista aérea), rutas/envíos (`RouteData`), ejércitos (`ArmyData.of`, `Armies.get`), órdenes a soldados
