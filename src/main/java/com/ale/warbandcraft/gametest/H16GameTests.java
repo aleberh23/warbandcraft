@@ -230,6 +230,35 @@ public class H16GameTests {
         h.succeed();
     }
 
+    /** Cuartel: un soldado de patrulla adentro de la aldea es enemigo si su facción está en guerra con vos; a -8, no. */
+    @GameTest(template = TEMPLATE)
+    public static void quartersSeesPatrolAtWar(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        UUID owner = owner(h);
+        VillageData.Village v = village(h);
+        com.ale.warbandcraft.faction.Relations rel = com.ale.warbandcraft.faction.Relations.get(level.getServer());
+        ResourceLocation other = new ResourceLocation(WarbandCraft.MODID, "valdren");
+        try {
+            var s = (com.talhanation.recruits.entities.AbstractRecruitEntity) h.spawn(
+                    EntityType.byString("recruits:recruit").orElseThrow(), new BlockPos(4, 2, 4));
+            s.setNoAi(true);
+            s.getPersistentData().putString(com.ale.warbandcraft.village.VillageManager.TAG_FACTION, other.toString());
+            s.getPersistentData().putLong(com.ale.warbandcraft.invasion.Patrols.TAG_PATROL, s.blockPosition().asLong());
+            rel.set(owner, other, -8);
+            check(!Quarters.enemiesIn(level, v).contains(s), "una patrulla a -8 (en paz) quedó como enemiga");
+            rel.set(owner, other, -50);
+            check(Quarters.enemiesIn(level, v).contains(s), "una patrulla de una facción en guerra adentro de la aldea no es enemiga");
+            check(rel.dailyRecovery().stream().noneMatch(c -> c.player().equals(owner)), "a -48 la guerra se terminó sola");
+            rel.set(owner, other, com.ale.warbandcraft.faction.Relations.WAR_THRESHOLD);
+            check(rel.dailyRecovery().stream().anyMatch(c -> c.player().equals(owner) && c.faction().equals(other)),
+                    "la guerra se calmó y no se avisó");
+        } finally {
+            rel.set(owner, other, 0);
+            VillageData.get(level).add(v.withOwner(null).withLootedUntil(Long.MAX_VALUE));
+        }
+        h.succeed();
+    }
+
     @GameTest(template = TEMPLATE)
     public static void villageBarracksDefends(GameTestHelper h) {
         ServerLevel level = h.getLevel();

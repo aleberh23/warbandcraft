@@ -947,6 +947,7 @@
   "gui.warbandcraft.peace.favor_line": "Favor: clear the %s %s within %s days.",
   "msg.warbandcraft.peace.no_war": "You're not at war with any faction.",
   "msg.warbandcraft.peace.already": "You're no longer at war.",
+  "msg.warbandcraft.war_calmed": "%s are no longer at war with you: time calmed them down (their opinion rose above %s). They won't send invasions, and their patrols are no longer enemies of your villages.",
   "msg.warbandcraft.peace.cant_pay": "Not enough emeralds: peace costs %s (inventory + your nearest Camp).",
   "msg.warbandcraft.peace.paid": "You paid %s emeralds to %s.",
   "msg.warbandcraft.peace.favor_taken": "%s expects you to clear the %s %s (%s days). It's on your map.",

@@ -937,6 +937,7 @@
   "gui.warbandcraft.peace.favor_line": "Favor: limpiar la %s %s en %s días.",
   "msg.warbandcraft.peace.no_war": "No estás en guerra con ninguna facción.",
   "msg.warbandcraft.peace.already": "Ya no están en guerra.",
+  "msg.warbandcraft.war_calmed": "%s ya no están en guerra contigo: el tiempo los calmó (su opinión subió de %s). No te envían invasiones y sus patrullas ya no son enemigas de tus aldeas.",
   "msg.warbandcraft.peace.cant_pay": "Te faltan esmeraldas: la paz cuesta %s (inventario + tu Campamento más cercano).",
   "msg.warbandcraft.peace.paid": "Pagaste %s esmeraldas a %s.",
   "msg.warbandcraft.peace.favor_taken": "%s espera que limpies la %s %s (%s días). Está en tu mapa.",

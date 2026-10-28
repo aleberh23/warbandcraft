@@ -181,6 +181,9 @@ Golpe de un jugador o de su tropa a un soldado de guarnición → `RaidManager.o
 Saquear: botín al Campamento vía `CampRegistry.deliver`, aldea `lootedUntil` = +3 días. Conquistar: `owner` = jugador,
 impuestos diarios (`VillageEconomy.checkNewDay`). Opiniones y umbrales: constantes en `Relations`.
 Desde H9 los ataques en curso se guardan (`RaidData`) y siguen al volver a abrir el mundo.
+La opinión vuelve sola hacia 0 (`DAILY_RECOVERY` 2/día): una guerra se termina sola. `dailyRecovery` devuelve las que pasaron
+de `WAR_THRESHOLD` y `VillageEconomy.checkNewDay` avisa por chat al jugador conectado (pedido de Ale: a -8 creía seguir en
+guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrulla). Prueba: `H16GameTests.quartersSeesPatrolAtWar`.
 
 ## Amenazas por cercanía, quemar aldeas y hacer la paz (pedido de Ale, a probar; números sin Ale)
 

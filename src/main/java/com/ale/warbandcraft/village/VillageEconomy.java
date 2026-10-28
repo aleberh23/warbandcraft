@@ -57,7 +57,16 @@ public final class VillageEconomy {
         }
         // H15a: las facciones juntan su almacén y su leva, y las que están en guerra mandan ejércitos
         com.ale.warbandcraft.invasion.Invasions.onNewDay(level, !(level.getServer() instanceof net.minecraft.gametest.framework.GameTestServer));
-        if (level == level.getServer().overworld()) Relations.get(level.getServer()).dailyRecovery();
+        if (level == level.getServer().overworld()) {
+            for (Relations.Calmed c : Relations.get(level.getServer()).dailyRecovery()) {   // guerras que se calmaron solas
+                Faction f = FactionManager.INSTANCE.get(c.faction());
+                if (f == null) continue;
+                com.ale.warbandcraft.WarbandCraft.LOGGER.info("{} ya no está en guerra con {}", f.id(), c.player());
+                net.minecraft.server.level.ServerPlayer p = level.getServer().getPlayerList().getPlayer(c.player());
+                if (p != null) p.sendSystemMessage(net.minecraft.network.chat.Component.translatable("msg.warbandcraft.war_calmed",
+                        net.minecraft.network.chat.Component.literal(f.name()).withStyle(f.color()), Relations.WAR_THRESHOLD));
+            }
+        }
     }
 
     /** Impuesto diario de una aldea: base + medio por aldeano (si la aldea está cargada para contarlos). */

@@ -88,19 +88,29 @@ public class Relations extends SavedData {
         if (FactionManager.INSTANCE.get(target) == null) add(player, target, targetDelta);
     }
 
-    /** Un día de juego: todas las opiniones se acercan {@link #DAILY_RECOVERY} a 0. */
-    public void dailyRecovery() {
+    /** Una facción que dejó de estar en guerra con un jugador (la opinión subió por encima de {@link #WAR_THRESHOLD}). */
+    public record Calmed(UUID player, ResourceLocation faction) {}
+
+    /**
+     * Un día de juego: todas las opiniones se acercan {@link #DAILY_RECOVERY} a 0. Devuelve las guerras que se terminaron
+     * así (pedido de Ale: la guerra se terminaba sola sin avisar y seguía creyendo que estaba en guerra).
+     */
+    public java.util.List<Calmed> dailyRecovery() {
+        java.util.List<Calmed> calmed = new java.util.ArrayList<>();
         boolean changed = false;
-        for (Map<ResourceLocation, Integer> m : opinions.values()) {
-            for (Map.Entry<ResourceLocation, Integer> e : m.entrySet()) {
+        for (Map.Entry<UUID, Map<ResourceLocation, Integer>> p : opinions.entrySet()) {
+            for (Map.Entry<ResourceLocation, Integer> e : p.getValue().entrySet()) {
                 int v = e.getValue();
                 if (v == 0) continue;
                 int nv = v > 0 ? Math.max(0, v - DAILY_RECOVERY) : Math.min(0, v + DAILY_RECOVERY);
                 e.setValue(nv);
                 changed = true;
+                Faction f = FactionManager.INSTANCE.get(e.getKey());
+                if (v <= WAR_THRESHOLD && nv > WAR_THRESHOLD && (f == null || !f.outlaw())) calmed.add(new Calmed(p.getKey(), e.getKey()));
             }
         }
         if (changed) setDirty();
+        return calmed;
     }
 
     public static Relations load(CompoundTag tag) {

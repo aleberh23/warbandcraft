@@ -15,6 +15,8 @@ Cada facción tiene sus tropas, sus colores, su estandarte y su estilo de edific
 Cada facción tiene una opinión de vos, de -100 a 100. Con -40 o menos estás en guerra.
 
 Baja si atacás sus aldeas, a sus patrullas o ayudás a sus enemigos. Sube si pagás rescates, ayudás en sus batallas o hacés trabajos para ellos (libro 24).
+
+Con el tiempo se olvidan: cada día la opinión se acerca 2 a 0. Si pasa de -40, la guerra se termina sola y te avisa por el chat: ya no te invaden y sus patrullas no son enemigas de tus aldeas.
 ---
 ## Ver cómo estás
 /warband facciones: la lista.
