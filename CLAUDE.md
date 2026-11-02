@@ -34,7 +34,8 @@ Si una decisión de diseño cambia, actualizar ese documento.
   bioma (`dungeon/StructureDensity`, ver H25).
 - Tala (pedido de Ale): **FallingTree** 4.3.4 (`fallingtree`, LGPL): romper un tronco con hacha tira el árbol entero (agachado no).
   Como los de mazmorras (`dungeon_mods`, `pack/mods.json` both). `compat/FallingTreeSetup` (setup común, por reflexión) le pone
-  `tools.speedMultiplicand` = `SPEED` (0,25: tarda × 0,25 × troncos) y `forceToolUsage` si sigue en 0; el servidor manda su config.
+  `tools.speedMultiplicand` = `SPEED` (0,25: tarda × 0,25 × troncos) si sigue en 0 y apaga siempre `forceToolUsage` (pedido de Ale:
+  sin herramienta se rompe el tronco de a uno); el servidor manda su config.
 - Minimapa de la vista aérea (H5): **Xaero's Minimap** (`xaerominimap-forge-1.20.1-26.6.0`, Modrinth).
   Mod aparte que corre solo — no le llamamos nada de su código. NO es una dependencia de Gradle: se
   baja a `libs/` en el primer build (igual que Recruits) pero solo para que `compilar.bat` lo copie
