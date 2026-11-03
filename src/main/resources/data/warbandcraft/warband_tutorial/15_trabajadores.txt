@@ -67,7 +67,7 @@ Los trabajadores producen aunque la aldea no esté cargada. Cuando volvés, lo d
 Pero solo mientras haya alguien de tu facción conectado: sin nadie, tus aldeas y Campamentos no producen ni consumen nada (impuestos, comida, armamento, taberna, herreros, raciones).
 
 ## Puesto de leñador
-Al leñador le podés marcar la zona afuera del territorio, hasta 200 bloques del centro y lejos de otras aldeas. Se muda ahí con su cofre y su cama. Lo que deja en el cofre pasa solo al almacén de la aldea.
+Al leñador le podés marcar la zona afuera del territorio, hasta 200 bloques del centro y lejos de otras aldeas. Se muda ahí con su cofre y su cama. Lo que deja en el cofre pasa solo al almacén de la aldea. Los trabajadores que andan afuera de la aldea no los atacan ni los bichos ni los soldados de otras facciones.
 ---
 ## Mantenimiento
 Necesita una Caseta de mantenimiento (Construir, Edificios). Se asigna en Aldeanos, uno por aldea, y no lleva zona.

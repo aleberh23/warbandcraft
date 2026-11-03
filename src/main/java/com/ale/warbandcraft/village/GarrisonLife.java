@@ -4,6 +4,9 @@ import com.ale.warbandcraft.battle.BattleGeneral;
 import com.ale.warbandcraft.battle.SiegeLanes;
 import com.ale.warbandcraft.invasion.AiWars;
 import com.ale.warbandcraft.invasion.InvasionData;
+import com.ale.warbandcraft.nav.Mover;
+import com.ale.warbandcraft.nav.NavCaps;
+import com.ale.warbandcraft.nav.NavPath;
 import com.ale.warbandcraft.raid.RaidManager;
 import com.ale.warbandcraft.upgrade.Blueprints;
 import com.ale.warbandcraft.upgrade.TownData;
@@ -39,10 +42,17 @@ public final class GarrisonLife {
     public static int MARKET_GUARDS = 2, MARKET_RADIUS = 7;
     /** Patrulla: cuánto espera en cada punto (ticks, mínimo + al azar) y cuánto le da para llegar. */
     public static int WAIT_MIN = 20 * 6, WAIT_EXTRA = 20 * 12, GIVE_UP = 20 * 45;
-    /** Arquero a tanto del pie de su torre: aparece arriba (no trepan escaleras solos). */
-    public static double CLIMB_DISTANCE = 6;
-    /** Una pelea más lejos que esto del centro (más el radio de patrulla) se deja: vuelven a la aldea. */
+    /**
+     * Arquero a tanto de su torre y a otra altura: sube caminando por la malla de H17 (escaleras de mano). Pedido de Ale:
+     * nunca aparece arriba; si no hay camino o no llega en {@link #TOWER_GIVE_UP}, deja esa torre.
+     */
+    public static double NAV_DISTANCE = 40;
+    public static long TOWER_GIVE_UP = 20 * 90;
+    /** Una pelea más lejos que esto del centro (más el radio de patrulla) se deja: vuelven a la aldea (sin muralla). */
     public static int CHASE_MARGIN = 16;
+    /** El arquero tira hasta esta distancia (desde su lugar, sin moverse). */
+    public static double ARCHER_RANGE = 32;
+    private static final String BY = "garrison";
 
     private enum Kind { TOWER, GATE, MARKET, PLAZA, PATROL, CAPTAIN }
 
@@ -50,6 +60,8 @@ public final class GarrisonLife {
         Kind kind;
         Vec3 at;
         BlockPos around;   // MARKET: el medio de la ronda
+        Vec3 fightAt;   // arquero sin torre peleando: dónde se paró
+        long climbTried = Long.MIN_VALUE / 2;
         long since, waitUntil;
     }
 
@@ -75,6 +87,7 @@ public final class GarrisonLife {
             if (v.isConquered() || data.isTest(c) || !level.isPositionEntityTicking(c)) continue;
             if (RaidManager.get(level, c) != null || InvasionData.get(level).battleAt(c) != null) continue;   // lo maneja la pelea
             List<AbstractRecruitEntity> garrison = AiWars.defenders(level, c, v.faction());
+            garrison.removeIf(s -> s.getPersistentData().getBoolean(GarrisonReserve.TAG_RETURNING));   // vuelven caminando al cuartel
             if (garrison.isEmpty()) continue;
             garrison.sort(Comparator.comparing(e -> e.getUUID().toString()));   // siempre el mismo orden: mismos puestos
             assign(level, v, garrison, now);
@@ -96,9 +109,20 @@ public final class GarrisonLife {
                 set(s, Kind.CAPTAIN, Vec3.atBottomCenterOf(v.center()), now);
                 continue;
             }
-            boolean archer = BattleGeneral.roleOf(s) == BattleGeneral.Role.RANGED;
-            if (archer && !towers.isEmpty()) {
-                set(s, Kind.TOWER, Vec3.atBottomCenterOf(towers.remove(0)), now);
+            boolean archer = !s.isPassenger() && BattleGeneral.roleOf(s) == BattleGeneral.Role.RANGED;
+            BlockPos post = null;
+            if (archer) {
+                Duty d = DUTIES.get(s.getUUID());   // la que ya tenía, si sigue libre
+                if (d != null && d.kind == Kind.TOWER) {
+                    for (BlockPos p : towers) if (Vec3.atBottomCenterOf(p).distanceToSqr(d.at) < 1) post = p;
+                }
+                for (int i = 0; post == null && i < towers.size(); i++) {
+                    if (!Quarters.unreachable(s, towers.get(i), now)) post = towers.get(i);
+                }
+            }
+            if (post != null) {
+                towers.remove(post);
+                set(s, Kind.TOWER, Vec3.atBottomCenterOf(post), now);
                 continue;
             }
             rest.add(s);
@@ -156,33 +180,69 @@ public final class GarrisonLife {
         Duty d = DUTIES.get(s.getUUID());
         if (d == null) return;
         int radius = v.castle() ? CastleManager.PATROL_RADIUS : VillageManager.PATROL_RADIUS;
+        boolean archer = d.kind == Kind.TOWER || !s.isPassenger() && BattleGeneral.roleOf(s) == BattleGeneral.Role.RANGED;
+        boolean walled = InsideWalls.walled(level, v);
         LivingEntity t = s.getTarget();
         if (t != null && t.isAlive()) {
-            boolean far = SiegeLanes.dist(t, v.center()) > radius + CHASE_MARGIN;
-            if (t instanceof Creeper || far) {
+            // Pedido de Ale: esperan adentro de la muralla. Los de a pie no salen a buscar a nadie afuera; los arqueros
+            // tiran desde su lugar a lo que tienen a tiro, sin moverse.
+            boolean away = archer ? s.distanceToSqr(t) > ARCHER_RANGE * ARCHER_RANGE
+                    : walled ? !InsideWalls.inside(level, v, t.blockPosition()) : SiegeLanes.dist(t, v.center()) > radius + CHASE_MARGIN;
+            if (t instanceof Creeper || away) {
                 s.setTarget(null);
+            } else if (archer) {
+                if (d.kind == Kind.TOWER) {
+                    hold(s, d.at);
+                } else {
+                    if (d.fightAt == null) d.fightAt = s.position();   // se para donde está y tira
+                    hold(s, d.fightAt);
+                }
+                return;
             } else {
-                if (d.kind != Kind.TOWER && s.getFollowState() != 0) s.setFollowState(0);   // de a pie: a pelear
-                return;   // el de la torre tira desde arriba
+                if (s.getFollowState() != 0) s.setFollowState(0);   // de a pie: a pelear
+                return;
             }
         }
+        d.fightAt = null;
         switch (d.kind) {
             case TOWER -> {
+                if (Mover.moving(s)) return;   // subiendo por la escalera
                 double dx = s.getX() - d.at.x, dz = s.getZ() - d.at.z;
-                if (dx * dx + dz * dz <= CLIMB_DISTANCE * CLIMB_DISTANCE && Math.abs(s.getY() - d.at.y) > 1.5) {
+                boolean onPost = dx * dx + dz * dz <= 1.44 && Math.abs(s.getY() - d.at.y) < 1;
+                if (onPost) d.since = now;
+                BlockPos post = BlockPos.containing(d.at);
+                if (!onPost && now - d.since > TOWER_GIVE_UP) {   // no llega: esa torre no, otra cosa
+                    Quarters.markUnreachable(s, post, now);
+                    DUTIES.remove(s.getUUID());
+                    return;
+                }
+                if (!onPost && dx * dx + dz * dz <= NAV_DISTANCE * NAV_DISTANCE && Math.abs(s.getY() - d.at.y) > 1.5
+                        && now - d.climbTried >= 20 * 10) {
                     if (s.isPassenger()) s.stopRiding();
-                    s.teleportTo(d.at.x, d.at.y, d.at.z);
-                    s.getNavigation().stop();
+                    d.climbTried = now;
+                    if (!Mover.go(s, d.at, 0.6, NavCaps.SOLDIER, NavPath.Bounds.around(post, (int) NAV_DISTANCE + 8), BY) || !reaches(Mover.run(s), d.at)) {
+                        Mover.stop(s);
+                        Quarters.markUnreachable(s, post, now);
+                        DUTIES.remove(s.getUUID());
+                    }
+                    return;
                 }
                 hold(s, d.at);
             }
             case GATE, PLAZA, CAPTAIN -> hold(s, d.at);
-            case PATROL -> patrol(level, v.center(), s, d, radius - 4, now);
-            case MARKET -> patrol(level, d.around, s, d, MARKET_RADIUS, now);
+            case PATROL -> patrol(level, v, v.center(), s, d, radius - 4, now);
+            case MARKET -> patrol(level, v, d.around, s, d, MARKET_RADIUS, now);
         }
     }
 
-    private static void patrol(ServerLevel level, BlockPos around, AbstractRecruitEntity s, Duty d, int radius, long now) {
+    /** El camino termina en el puesto (arriba de la torre, no al pie). */
+    private static boolean reaches(@Nullable Mover.Run r, Vec3 at) {
+        if (r == null || r.path.isEmpty()) return false;
+        Vec3 end = r.path.get(r.path.size() - 1).center();
+        return Math.abs(end.y - at.y) <= 1 && end.distanceToSqr(at.x, end.y, at.z) <= 2.25;
+    }
+
+    private static void patrol(ServerLevel level, VillageData.Village v, BlockPos around, AbstractRecruitEntity s, Duty d, int radius, long now) {
         boolean arrived = d.at != null && SiegeLanes.horizontal(s.position(), d.at) <= 2.5;
         if (arrived) {
             if (d.waitUntil == 0) d.waitUntil = now + WAIT_MIN + level.getRandom().nextInt(WAIT_EXTRA);
@@ -194,7 +254,7 @@ public final class GarrisonLife {
             hold(s, d.at);
             return;
         }
-        BlockPos next = randomPoint(level, around, radius, level.getRandom());
+        BlockPos next = randomPoint(level, v, around, radius, level.getRandom());
         if (next == null) return;
         d.at = Vec3.atBottomCenterOf(next);
         d.since = now;
@@ -211,15 +271,17 @@ public final class GarrisonLife {
     }
 
     @Nullable
-    private static BlockPos randomPoint(ServerLevel level, BlockPos center, int radius, RandomSource r) {
-        for (int i = 0; i < 10; i++) {
+    private static BlockPos randomPoint(ServerLevel level, VillageData.Village v, BlockPos center, int radius, RandomSource r) {
+        for (int i = 0; i < 16; i++) {
             double a = r.nextDouble() * Math.PI * 2, d = Math.min(4, radius / 2.0) + r.nextDouble() * Math.max(1, radius - Math.min(4, radius / 2.0));
             int x = center.getX() + (int) Math.round(Math.cos(a) * d), z = center.getZ() + (int) Math.round(Math.sin(a) * d);
             if (!level.hasChunk(x >> 4, z >> 4)) continue;
             Integer y = Ground.surfaceY(level, x, z, center.getY(), 16, 16);
             if (y == null) continue;
             BlockPos p = new BlockPos(x, y, z);
-            if (Ground.canStand(level, p) && level.getFluidState(p.below()).isEmpty()) return p;
+            // Pedido de Ale: adentro de la muralla y nunca arriba de la empalizada
+            if (Ground.canStand(level, p) && level.getFluidState(p.below()).isEmpty() && !InsideWalls.onPalisade(level, p)
+                    && InsideWalls.inside(level, v, p)) return p;
         }
         return null;
     }

@@ -1,7 +1,7 @@
 titulo: Crecimiento
 cartel: Crecimiento|y popularidad
 ## Popularidad
-Cada aldea tuya tiene popularidad de 0 a 100 (Gestión, pestaña Pueblo). Con 50 o más y camas libres llegan habitantes nuevos. Con menos de 50 se van.
+Cada aldea tuya tiene popularidad de 0 a 100 (Gestión, pestaña Pueblo). Con 50 o más y camas que sobren (después de darles una a los que no tienen) llegan habitantes nuevos; sin camas, no llega nadie. Con muralla, los aldeanos se quedan adentro. Con menos de 50 se van.
 
 Tope: 12 en una aldea, 24 en un pueblo, 48 en una ciudad.
 ---

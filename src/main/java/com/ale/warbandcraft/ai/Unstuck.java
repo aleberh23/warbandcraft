@@ -141,6 +141,23 @@ public final class Unstuck {
         info.lastPos = pos;
         info.stuck += elapsed;
 
+        // Pedido de Ale: los del cuartel no aparecen en otro lado (saltaban la muralla). Solo saltan; si no llegan, el
+        // cuartel les da otro punto.
+        if (r.getPersistentData().contains(com.ale.warbandcraft.village.Quarters.TAG_QUARTERS)
+                && !r.getPersistentData().getBoolean(com.ale.warbandcraft.village.Quarters.TAG_ORDERED)) {
+            if (info.stuck >= JUMP_AFTER && !info.jumped) {
+                info.jumped = true;
+                if (body.onGround() && body == r) r.getJumpControl().jump();
+                r.getNavigation().stop();
+                return Action.JUMP;
+            }
+            if (info.stuck >= BIG_AFTER) {
+                info.stuck = 0;
+                info.jumped = false;
+            }
+            return Action.NONE;
+        }
+
         if (info.stuck >= BIG_AFTER) {
             info.stuck = 0;
             info.jumped = false;

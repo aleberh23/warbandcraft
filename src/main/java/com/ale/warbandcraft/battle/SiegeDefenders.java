@@ -259,7 +259,7 @@ public final class SiegeDefenders {
             List<SiegeLanes.LaneInfo> order = new ArrayList<>(byThreat);
             order.sort(Comparator.comparingInt(l -> haveR.getOrDefault(l.index(), 0) - wantR.getOrDefault(l.index(), 0)));
             for (SiegeLanes.LaneInfo lane : order) {   // el que más le falta primero; sin lugar ahí, el siguiente
-                BlockPos spot = freeSpot(level, m, lane, high, now);
+                BlockPos spot = freeSpot(level, m, lane, high, center, now);
                 if (spot == null) continue;
                 m.jobs.put(s.getUUID(), new Assignment(Job.ARCHER, lane.index(), spot, null));
                 haveR.merge(lane.index(), 1, Integer::sum);
@@ -346,10 +346,10 @@ public final class SiegeDefenders {
     }
 
     @Nullable
-    private static BlockPos freeSpot(ServerLevel level, Memory m, SiegeLanes.LaneInfo lane, List<BlockPos> high, long now) {
+    private static BlockPos freeSpot(ServerLevel level, Memory m, SiegeLanes.LaneInfo lane, List<BlockPos> high, BlockPos center, long now) {
         Long at = m.spotsAt.get(lane.index());
         if (at == null || now - at > SPOT_REFRESH) {
-            m.spots.put(lane.index(), spots(level, lane, high));
+            m.spots.put(lane.index(), spots(level, lane, high, center));
             m.spotsAt.put(lane.index(), now);
         }
         Set<Long> taken = new HashSet<>();
@@ -369,10 +369,10 @@ public final class SiegeDefenders {
      * ({@code high}) que tienen vista también entran, con {@link #HIGH_POINT_BONUS} de más.
      */
     public static List<BlockPos> spots(ServerLevel level, SiegeLanes.LaneInfo lane) {
-        return spots(level, lane, List.of());
+        return spots(level, lane, List.of(), null);
     }
 
-    public static List<BlockPos> spots(ServerLevel level, SiegeLanes.LaneInfo lane, List<BlockPos> high) {
+    public static List<BlockPos> spots(ServerLevel level, SiegeLanes.LaneInfo lane, List<BlockPos> high, @Nullable BlockPos center) {
         BlockPos cross = lane.inside() != null ? lane.inside() : lane.outside();
         if (cross == null) return List.of();
         Vec3 out = lane.outside() != null ? Vec3.atBottomCenterOf(lane.outside()) : lane.approach();
@@ -395,12 +395,18 @@ public final class SiegeDefenders {
             all.add(new Scored(p, 2.0 * (p.getY() - baseY) + 6 * seen - 0.4 * Math.abs(d - SPOT_BEST_DISTANCE) + bonus));
         };
         for (BlockPos p : high) consider.accept(p, HIGH_POINT_BONUS);   // primero: así no los pisa la grilla sin el extra
+        // Pedido de Ale: los arqueros tiran desde adentro (o arriba de la muralla de piedra), nunca desde afuera ni arriba de la empalizada
+        com.ale.warbandcraft.village.VillageData.Village village = center == null ? null
+                : com.ale.warbandcraft.village.VillageData.get(level).at(center);
         for (int dx = -SPOT_SEARCH; dx <= SPOT_SEARCH; dx += 2) {
             for (int dz = -SPOT_SEARCH; dz <= SPOT_SEARCH; dz += 2) {
                 int x = cross.getX() + dx, z = cross.getZ() + dz;
                 for (int y : NavGrid.standable(level, x, z, baseY - 3, baseY + 24)) {
                     if (NavGrid.flagsAt(level, x, y, z) != 0) continue;   // ni agua, ni escalera, ni puerta
-                    consider.accept(new BlockPos(x, y, z), 0.0);
+                    BlockPos p = new BlockPos(x, y, z);
+                    if (com.ale.warbandcraft.village.InsideWalls.onPalisade(level, p)) continue;
+                    if (village != null && !com.ale.warbandcraft.village.InsideWalls.insideOrOnWall(level, village, p)) continue;
+                    consider.accept(p, 0.0);
                 }
             }
         }
@@ -435,8 +441,9 @@ public final class SiegeDefenders {
         if (r != null && r.active()) return;
         if (!(r != null && r.failed) && !takePath()) return;
         NavPath.Bounds b = NavPath.Bounds.around(center, w.radius() + 24);
-        // Primero arriba del muro; si no se llega, al pie de adentro
-        if (r != null && r.failed || !Mover.go(s, top, 1.5, caps, b, BY) || !reaches(Mover.run(s), top, 2.5)) {
+        // Primero arriba del muro (de piedra: por la empalizada no se camina, pedido de Ale); si no se llega, al pie de adentro
+        boolean palisade = com.ale.warbandcraft.village.InsideWalls.onPalisade(level, l.wallTop());
+        if (palisade || r != null && r.failed || !Mover.go(s, top, 1.5, caps, b, BY) || !reaches(Mover.run(s), top, 2.5)) {
             BlockPos foot = NavGrid.nearestNode(level, l.inside().atY(l.base().getY()), 2);
             if (foot == null || !Mover.go(s, Vec3.atBottomCenterOf(foot), 1.0, caps, b, BY) || !reaches(Mover.run(s), in, PUSH_REACH + 1)) {
                 Mover.stop(s);

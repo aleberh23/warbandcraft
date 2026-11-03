@@ -35,8 +35,10 @@ import java.util.UUID;
  * caminando de un punto al azar del territorio a otro; con el dueño lejos se guardan como fichas en
  * {@link BarracksData.Barracks#quarters} (comen del almacén como el barracón) y vuelven a salir cuando él vuelve.
  * Los arqueros/ballesteros van a los puestos de las torres (las de la mejora Torres; en un castillo, sus partes más altas)
- * y los demás patrullan. No los manejás vos: si les das otra orden, a los 2 s vuelven a lo suyo. Solo con una invasión
- * peleándose en la aldea quedan libres para tus órdenes; al terminar, vuelven solos a sus torres y patrullas.
+ * y los demás patrullan, siempre adentro de las murallas (pedido de Ale: esperan al enemigo, no salen a buscarlo; nadie
+ * camina por la empalizada). Los arqueros van caminando de verdad a su torre (sin teletransportes): si no llegan, prueban
+ * otra. Una orden tuya (seguir, mover, Batalla...) se respeta: ese soldado queda a tus órdenes hasta que se guarde (te
+ * alejás de la aldea) y vuelve a salir al cuartel. En una invasión los mueve la defensa; al terminar, vuelven a lo suyo.
  */
 public final class Quarters {
     /** En el soldado: de qué aldea es su cuartel (centro como long). */
@@ -46,7 +48,12 @@ public final class Quarters {
             TAG_WAIT = "warbandcraft:quarters_wait";
     /** En el soldado: está en un puesto de torre (no patrulla). */
     private static final String TAG_TOWER = "warbandcraft:quarters_tower";
-    private static final String[] TAGS = {TAG_QUARTERS, TAG_POINT, TAG_SINCE, TAG_WAIT, TAG_TOWER};
+    /** En el soldado: le diste una orden (queda a tus órdenes); está peleando por el cuartel; salió de una invasión. */
+    public static final String TAG_ORDERED = "warbandcraft:quarters_ordered";
+    private static final String TAG_FIGHT = "warbandcraft:quarters_fight", TAG_RESET = "warbandcraft:quarters_reset";
+    private static final String[] TAGS = {TAG_QUARTERS, TAG_POINT, TAG_SINCE, TAG_WAIT, TAG_TOWER, TAG_ORDERED, TAG_FIGHT, TAG_RESET};
+    /** Las marcas de trabajo (no la de la aldea): se borran al volver a salir del cuartel guardado. */
+    private static final String[] DUTY_TAGS = {TAG_POINT, TAG_SINCE, TAG_WAIT, TAG_TOWER, TAG_ORDERED, TAG_FIGHT, TAG_RESET};
 
     /** Lugar en el cuartel: aldea / castillo, el doble con la mejora Cuartel (H12). */
     public static int VILLAGE_CAPACITY = 10, CASTLE_CAPACITY = 15, BARRACKS_MULTIPLIER = 2;
@@ -57,8 +64,10 @@ public final class Quarters {
     /** Al llegar a un punto se queda parado entre 5 y 15 s; si en 60 s no llegó, va a otro. */
     public static int WAIT_MIN = 100, WAIT_EXTRA = 200, GIVE_UP = 20 * 60;
     public static double ARRIVE = 2.5;
-    /** Arquero de torre: a esta distancia (horizontal) de su puesto sube por la escalera (H17; sin camino, se lo pone arriba). */
-    public static double CLIMB_DISTANCE = 8;
+    /** Arquero de torre: a esta distancia (horizontal) de su puesto va por la malla de H17 (escaleras incluidas), caminando. */
+    public static double NAV_DISTANCE = 40;
+    /** Arquero que no llega a su puesto en tanto (ticks), o sin camino: prueba otro y ese no lo vuelve a probar por un rato. */
+    public static long TOWER_GIVE_UP = 20 * 90, UNREACHABLE_TICKS = 20 * 60 * 5;
     /** Arquero a menos de esto (horizontal) de su puesto y a su altura: queda clavado ahí (no lo corre Recruits al tirar). */
     public static double PIN_DISTANCE = 1.2;
     /** Cuántos arqueros entran arriba de cada torre. */
@@ -78,6 +87,7 @@ public final class Quarters {
 
     /** Estados de órdenes de Recruits (seguir) y de agresión (0 = neutral: se defiende y ataca bichos). */
     private static final int WANDER = 0, HOLD = 2, BACK_TO_POS = 3, NEUTRAL = 0;
+    private static final String BY = "quarters";
 
     private Quarters() {}
 
@@ -276,21 +286,47 @@ public final class Quarters {
             }
             if (mine.isEmpty()) continue;
             if (underInvasion(level, center)) {   // invasión: los mueve la defensa (SiegeDefenders), sueltos
-                for (AbstractRecruitEntity s : mine) pin(s, false);
+                for (AbstractRecruitEntity s : mine) {
+                    pin(s, false);
+                    s.getPersistentData().putBoolean(TAG_RESET, true);   // al terminar, cada uno vuelve a lo suyo
+                }
                 continue;
             }
-            assignTowers(level, mine, posts(level, v), now);
-            List<LivingEntity> enemies = enemiesIn(level, v);
+            List<AbstractRecruitEntity> managed = new ArrayList<>();
             for (AbstractRecruitEntity s : mine) {
-                s.getPersistentData().remove(com.ale.warbandcraft.battle.BattleGeneral.TAG_BATTLE);   // no van a tus batallas
+                CompoundTag pd = s.getPersistentData();
+                if (pd.getBoolean(TAG_RESET)) {   // terminó una invasión: lo que hizo la defensa no es una orden tuya
+                    pd.remove(TAG_RESET);
+                    pd.remove(TAG_ORDERED);
+                    pd.remove(TAG_FIGHT);
+                    pd.remove(TAG_WAIT);
+                    if (pd.getBoolean(TAG_TOWER) && pd.contains(TAG_POINT)) goTo(level, s, Vec3.atBottomCenterOf(BlockPos.of(pd.getLong(TAG_POINT))), now);
+                    else pd.remove(TAG_POINT);
+                }
+                if (!pd.getBoolean(TAG_ORDERED) && playerOrdered(s)) {
+                    pd.putBoolean(TAG_ORDERED, true);   // pedido de Ale: le diste una orden, se respeta
+                    pd.remove(TAG_FIGHT);
+                    com.ale.warbandcraft.nav.Mover.Run run = com.ale.warbandcraft.nav.Mover.run(s);
+                    if (run != null && BY.equals(run.by)) com.ale.warbandcraft.nav.Mover.stop(s);
+                }
+                if (pd.getBoolean(TAG_ORDERED)) {
+                    pin(s, false);
+                    continue;
+                }
+                managed.add(s);
+            }
+            assignTowers(level, managed, posts(level, v), now);
+            List<LivingEntity> enemies = enemiesIn(level, v);
+            for (AbstractRecruitEntity s : managed) {
                 boolean tower = s.getPersistentData().getBoolean(TAG_TOWER);
-                // Prioridades: 1) enemigos adentro de la aldea, 2) bichos cerca, 3) patrullar / su torre. Tu orden, nunca.
-                if (fight(level, s, enemies, tower, now)) {
+                // Prioridades: 1) enemigos adentro de la muralla, 2) bichos cerca (adentro), 3) patrullar / su torre.
+                // Los arqueros tiran desde donde están (no salen a pelear de cerca).
+                if (fight(level, v, s, enemies, tower, now)) {
                     if (tower) guardTower(level, s, now);   // tira desde arriba, sin bajarse
                     continue;
                 }
                 if (tower) guardTower(level, s, now);
-                else patrol(level, s, center, now);
+                else patrol(level, v, s, now);
             }
         }
     }
@@ -298,40 +334,74 @@ public final class Quarters {
     // ------------------------------------------------------------------ pelear
 
     /**
-     * Elige a quién pegarle: un enemigo adentro de la aldea primero (el más cercano; el arquero de torre, solo a tiro), y
-     * si no hay, un bicho cerca. Devuelve true si está peleando. Los de a pie salen a buscarlo (estado 0, como la
-     * Batalla); el arquero de torre se queda arriba.
+     * Elige a quién pegarle y devuelve true si está peleando. Los de a pie: solo enemigos y bichos adentro de las murallas
+     * (salen a buscarlo, estado 0; si se va afuera lo dejan y vuelven a lo suyo). Los arqueros (de torre o no): lo que
+     * tengan a tiro y a la vista, adentro o afuera, desde donde están, sin moverse (pedido de Ale: los ballesteros salían
+     * a pelear de cerca y los mataban).
      */
-    private static boolean fight(ServerLevel level, AbstractRecruitEntity s, List<LivingEntity> enemies, boolean tower, long now) {
-        if (s.getState() != NEUTRAL) s.setAggroState(NEUTRAL);   // pasivo o agresivo por orden tuya: no
+    private static boolean fight(ServerLevel level, VillageData.Village v, AbstractRecruitEntity s, List<LivingEntity> enemies, boolean tower, long now) {
+        if (s.getState() != NEUTRAL) s.setAggroState(NEUTRAL);   // pasivo o agresivo: no
+        CompoundTag pd = s.getPersistentData();
+        boolean archer = tower || isArcher(s);
         LivingEntity current = s.getTarget();
         boolean alive = current != null && current.isAlive();
-        // Lo que no se ataca: creepers, bichos bajo tierra o fuera de alcance, y lo que ya persiguió sin poder llegar
-        java.util.function.Predicate<LivingEntity> ok = e -> worthFighting(level, s, e, now);
+        // Lo que no se ataca: creepers, bichos bajo tierra o fuera de alcance, lo que ya persiguió sin poder llegar, y
+        // (de a pie) lo que está afuera de la muralla
+        java.util.function.Predicate<LivingEntity> ok = archer
+                ? e -> !(e instanceof net.minecraft.world.entity.monster.Creeper) && !ignored(s, e, now)   // el arquero: si lo ve, le tira
+                        && e.distanceToSqr(s) <= TOWER_RANGE * TOWER_RANGE && s.hasLineOfSight(e)
+                : e -> worthFighting(level, s, e, now) && InsideWalls.inside(level, v, e.blockPosition());
         LivingEntity target = null;
-        if (alive && enemies.contains(current) && ok.test(current)) {
+        if (alive && ok.test(current) && (enemies.contains(current) || isEnemy(level, v.owner(), current))) {
             target = current;
         } else {
-            double range = tower ? TOWER_RANGE : Double.MAX_VALUE;
-            target = nearest(s, enemies.stream().filter(ok).toList(), range);
-            if (target == null && alive && current instanceof net.minecraft.world.entity.monster.Enemy && ok.test(current)
-                    && current.distanceToSqr(s) <= (tower ? TOWER_RANGE * TOWER_RANGE : MOB_RANGE * MOB_RANGE * 4)) target = current;
+            target = nearest(s, enemies.stream().filter(ok).toList(), archer ? TOWER_RANGE : Double.MAX_VALUE);
             if (target == null) {
-                double r = tower ? TOWER_RANGE : MOB_RANGE;
-                List<LivingEntity> mobs = new ArrayList<>(level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, s.getBoundingBox().inflate(r, 6, r),
-                        m -> m.isAlive() && m instanceof net.minecraft.world.entity.monster.Enemy && ok.test(m)));
-                target = nearest(s, mobs, r);
+                double r = archer ? TOWER_RANGE : MOB_RANGE;
+                List<LivingEntity> near = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class, s.getBoundingBox().inflate(r, 8, r),
+                        m -> m.isAlive() && m != s && (archer ? isEnemy(level, v.owner(), m) : m instanceof net.minecraft.world.entity.monster.Enemy
+                                && isEnemy(level, v.owner(), m)) && ok.test(m)));
+                target = nearest(s, near, r);
             }
         }
         if (target == null) {
             CHASES.remove(s.getUUID());
-            if (alive) s.setTarget(null);   // un creeper, uno inalcanzable u otra cosa que le marcaste vos: no
+            pd.remove(TAG_FIGHT);
+            if (alive) s.setTarget(null);   // afuera de la muralla, un creeper, uno inalcanzable: no
             return false;
         }
-        if (!tower) track(s, target, now);
+        if (archer) {
+            // El arquero sin torre que patrullaba se para donde está y tira desde ahí (no cambia de orden)
+            if (!tower && !pd.getBoolean(TAG_FIGHT)) goTo(level, s, s.position(), now);
+            pd.putBoolean(TAG_FIGHT, true);
+            if (s.getTarget() != target) s.setTarget(target);
+            return true;
+        }
+        track(s, target, now);
+        pd.putBoolean(TAG_FIGHT, true);
         if (s.getTarget() != target) s.setTarget(target);
-        if (!tower && s.getFollowState() != WANDER) s.setFollowState(WANDER);
+        if (s.getFollowState() != WANDER) s.setFollowState(WANDER);
         return true;
+    }
+
+    /** Arquero o ballestero a pie. */
+    private static boolean isArcher(AbstractRecruitEntity s) {
+        return !s.isPassenger() && com.ale.warbandcraft.battle.BattleGeneral.roleOf(s) == com.ale.warbandcraft.battle.BattleGeneral.Role.RANGED;
+    }
+
+    /**
+     * ¿Le diste otra orden? (seguir, quedarse, mover a otro lado, Batalla, al barracón). Lo que hace el cuartel es estado 3
+     * con el puesto en su punto, o estado 0 mientras pelea por el cuartel.
+     */
+    private static boolean playerOrdered(AbstractRecruitEntity s) {
+        CompoundTag pd = s.getPersistentData();
+        if (pd.getBoolean(com.ale.warbandcraft.battle.BattleGeneral.TAG_BATTLE) || pd.getBoolean(Barracks.TAG_TO_BARRACKS)) return true;
+        int state = s.getFollowState();
+        if (!pd.contains(TAG_POINT)) return state != WANDER && state != BACK_TO_POS;   // el cuartel todavía no le dio nada
+        if (state == WANDER) return !pd.getBoolean(TAG_FIGHT);
+        if (state != BACK_TO_POS) return true;
+        Vec3 hold = s.getHoldPos();
+        return hold == null || hold.distanceToSqr(Vec3.atBottomCenterOf(BlockPos.of(pd.getLong(TAG_POINT)))) > 2.25;
     }
 
     /** Persecución en curso de cada soldado: a quién, la menor distancia lograda y desde cuándo no la mejora. */
@@ -356,19 +426,23 @@ public final class Quarters {
         }
     }
 
+    /** Ya lo persiguió sin poder llegar: lo deja un rato. */
+    private static boolean ignored(AbstractRecruitEntity s, LivingEntity e, long now) {
+        Map<UUID, Long> ignored = IGNORED.get(s.getUUID());
+        if (ignored == null) return false;
+        ignored.values().removeIf(until -> until <= now);
+        return ignored.containsKey(e.getUUID());
+    }
+
     /** ¿Vale la pena ir a pegarle? No a un creeper, ni a algo bajo tierra o muy arriba/abajo, ni a lo que ya dejó. */
     private static boolean worthFighting(ServerLevel level, AbstractRecruitEntity s, LivingEntity e, long now) {
-        if (e instanceof net.minecraft.world.entity.monster.Creeper) return false;
-        Map<UUID, Long> ignored = IGNORED.get(s.getUUID());
-        if (ignored != null) {
-            ignored.values().removeIf(until -> until <= now);
-            if (ignored.containsKey(e.getUUID())) return false;
-        }
+        if (e instanceof net.minecraft.world.entity.monster.Creeper || ignored(s, e, now)) return false;
         if (e instanceof net.minecraft.world.entity.player.Player) return true;
         BlockPos p = e.blockPosition();
         if (!level.isLoaded(p)) return false;
         int surface = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p.getX(), p.getZ());
-        return p.getY() >= surface - UNDERGROUND && Math.abs(e.getY() - s.getY()) <= MAX_HEIGHT_DIFF;
+        boolean cave = p.getY() < surface - UNDERGROUND && e.getY() < s.getY() - UNDERGROUND;   // en una cueva debajo de él
+        return !cave && Math.abs(e.getY() - s.getY()) <= MAX_HEIGHT_DIFF;
     }
 
     @Nullable
@@ -457,31 +531,33 @@ public final class Quarters {
             boolean tower = pd.getBoolean(TAG_TOWER);
             boolean archer = !s.isPassenger() && (tower || com.ale.warbandcraft.battle.BattleGeneral.roleOf(s) == com.ale.warbandcraft.battle.BattleGeneral.Role.RANGED);
             long post = pd.getLong(TAG_POINT);
-            if (archer && tower && groupOf.containsKey(post) && taken.add(post)) {   // sigue en su puesto
+            if (archer && tower && groupOf.containsKey(post) && !unreachable(s, BlockPos.of(post), now) && taken.add(post)) {   // sigue en su puesto
                 used[groupOf.get(post)]++;
                 on.put(post, s);
                 continue;
             }
-            if (tower) {   // su puesto ya no existe (o se subió a un caballo): a patrullar
+            if (tower) {   // su puesto ya no existe, no llega (o se subió a un caballo): a patrullar
                 pd.remove(TAG_TOWER);
                 pd.remove(TAG_POINT);
                 pin(s, false);
+                if (com.ale.warbandcraft.nav.Mover.run(s) != null && BY.equals(com.ale.warbandcraft.nav.Mover.run(s).by)) com.ale.warbandcraft.nav.Mover.stop(s);
             }
             if (archer) waiting.add(s);
         }
         for (AbstractRecruitEntity s : waiting) {
-            BlockPos post = emptiest(groups, used, taken);
-            if (post == null) break;
+            BlockPos post = emptiest(groups, used, taken, p -> !unreachable(s, p, now));
+            if (post == null) continue;
             take(level, s, post, groupOf, used, taken, now);
         }
         // Emparejar: de a uno por vuelta, del lugar más lleno al más vacío con lugar (y que no esté peleando)
         int full = -1;
         for (int g = 0; g < used.length; g++) if (full < 0 || used[g] > used[full]) full = g;
-        BlockPos to = emptiest(groups, used, taken);
-        if (full < 0 || to == null || used[full] - used[groupOf.get(to.asLong())] < 2) return;
+        if (full < 0) return;
         for (BlockPos p : groups.get(full)) {
             AbstractRecruitEntity s = on.get(p.asLong());
             if (s == null || s.getTarget() != null && s.getTarget().isAlive()) continue;
+            BlockPos to = emptiest(groups, used, taken, q -> !unreachable(s, q, now));
+            if (to == null || used[full] - used[groupOf.get(to.asLong())] < 2) return;
             used[full]--;
             taken.remove(p.asLong());
             pin(s, false);
@@ -490,15 +566,15 @@ public final class Quarters {
         }
     }
 
-    /** El primer puesto libre del grupo (torre o punto) con menos arqueros; a igualdad, el que va antes en la lista. */
+    /** El primer puesto libre (y al que llega) del grupo (torre o punto) con menos arqueros; a igualdad, el que va antes. */
     @Nullable
-    private static BlockPos emptiest(List<List<BlockPos>> groups, int[] used, java.util.Set<Long> taken) {
+    private static BlockPos emptiest(List<List<BlockPos>> groups, int[] used, java.util.Set<Long> taken, java.util.function.Predicate<BlockPos> allowed) {
         BlockPos best = null;
         int bestUsed = Integer.MAX_VALUE;
         for (int g = 0; g < groups.size(); g++) {
             if (used[g] >= bestUsed) continue;
             for (BlockPos p : groups.get(g)) {
-                if (taken.contains(p.asLong())) continue;
+                if (taken.contains(p.asLong()) || !allowed.test(p)) continue;
                 best = p;
                 bestUsed = used[g];
                 break;
@@ -513,6 +589,25 @@ public final class Quarters {
         used[groupOf.get(post.asLong())]++;
         s.getPersistentData().putBoolean(TAG_TOWER, true);
         goTo(level, s, Vec3.atBottomCenterOf(post), now);
+    }
+
+    /** Soldado → (puesto → hasta cuándo no lo vuelve a probar): puestos a los que no encontró cómo llegar caminando. */
+    private static final Map<UUID, Map<Long, Long>> UNREACHABLE = new java.util.HashMap<>();
+
+    /** No encontró cómo llegar caminando a ese puesto (o a uno pegado: la misma torre) hace poco. */
+    public static boolean unreachable(LivingEntity s, BlockPos post, long now) {
+        Map<Long, Long> m = UNREACHABLE.get(s.getUUID());
+        if (m == null) return false;
+        m.values().removeIf(until -> until <= now);
+        for (long l : m.keySet()) {
+            BlockPos q = BlockPos.of(l);
+            if (Math.abs(q.getX() - post.getX()) <= 3 && Math.abs(q.getZ() - post.getZ()) <= 3 && Math.abs(q.getY() - post.getY()) <= 2) return true;
+        }
+        return false;
+    }
+
+    public static void markUnreachable(LivingEntity s, BlockPos post, long now) {
+        UNREACHABLE.computeIfAbsent(s.getUUID(), k -> new java.util.HashMap<>()).put(post.asLong(), now + UNREACHABLE_TICKS);
     }
 
     private static final UUID PIN_ID = UUID.fromString("5b0f3c1e-7a42-4d6e-9c8b-2f1a6d4e8b31");
@@ -532,30 +627,58 @@ public final class Quarters {
         }
     }
 
-    /** Arquero de torre: va a su puesto y, al llegar al pie de la torre, sube. Si le diste otra orden, vuelve. */
+    /**
+     * Arquero de torre: va caminando a su puesto. Lejos, lo lleva Recruits; cerca ({@link #NAV_DISTANCE}) y a otra
+     * altura, la malla de H17 (sube por la escalera de la torre). Pedido de Ale: nunca aparece arriba; si no hay camino
+     * o no llega en {@link #TOWER_GIVE_UP}, deja ese puesto (prueba otro, o patrulla).
+     */
     private static void guardTower(ServerLevel level, AbstractRecruitEntity s, long now) {
-        BlockPos post = BlockPos.of(s.getPersistentData().getLong(TAG_POINT));
+        CompoundTag pd = s.getPersistentData();
+        BlockPos post = BlockPos.of(pd.getLong(TAG_POINT));
         Vec3 at = Vec3.atBottomCenterOf(post);
         boolean onPost = horizontalDistSq(s.position(), post) <= PIN_DISTANCE * PIN_DISTANCE && Math.abs(s.getY() - at.y) < 1;
         pin(s, onPost);
+        if (onPost) pd.putLong(TAG_SINCE, now);   // llegó: el plazo corre desde que se va
         if (com.ale.warbandcraft.nav.Mover.moving(s)) return;   // subiendo por la escalera de la torre
-        if (horizontalDistSq(s.position(), post) <= CLIMB_DISTANCE * CLIMB_DISTANCE && Math.abs(s.getY() - at.y) > 1.5) {
+        if (!onPost && now - pd.getLong(TAG_SINCE) > TOWER_GIVE_UP) {
+            giveUpPost(s, post, now);
+            return;
+        }
+        if (!onPost && horizontalDistSq(s.position(), post) <= NAV_DISTANCE * NAV_DISTANCE && Math.abs(s.getY() - at.y) > 1.5) {
             if (s.isPassenger()) s.stopRiding();
-            // H17: sube caminando por la malla (escalera de la torre); si no hay camino, aparece arriba como antes
-            if (!com.ale.warbandcraft.nav.Mover.go(s, at, 0.6, com.ale.warbandcraft.nav.NavCaps.SOLDIER,
-                    com.ale.warbandcraft.nav.NavPath.Bounds.around(post, 24), "quarters")
-                    || !reachesPost(com.ale.warbandcraft.nav.Mover.run(s), at)) {
-                com.ale.warbandcraft.nav.Mover.stop(s);
-                s.teleportTo(at.x, at.y, at.z);
-                s.getNavigation().stop();
-            } else {
+            Long last = CLIMB_TRIED.get(s.getUUID());
+            if (last == null || now - last >= 20 * 10) {   // camino nuevo cada 10 s como mucho (el A* es caro)
+                CLIMB_TRIED.put(s.getUUID(), now);
+                if (!com.ale.warbandcraft.nav.Mover.go(s, at, 0.6, com.ale.warbandcraft.nav.NavCaps.SOLDIER,
+                        com.ale.warbandcraft.nav.NavPath.Bounds.around(post, (int) NAV_DISTANCE + 8), BY)
+                        || !reachesPost(com.ale.warbandcraft.nav.Mover.run(s), at)) {
+                    com.ale.warbandcraft.nav.Mover.stop(s);
+                    giveUpPost(s, post, now);   // no hay cómo subir caminando: otro puesto
+                    return;
+                }
                 return;
             }
         }
         LivingEntity target = s.getTarget();
         if (target != null && target.isAlive()) return;   // tirando
         Vec3 hold = s.getHoldPos();
-        if (s.getFollowState() != BACK_TO_POS || hold == null || hold.distanceToSqr(at) > 2.25) goTo(level, s, at, now);
+        if (s.getFollowState() != BACK_TO_POS || hold == null || hold.distanceToSqr(at) > 2.25) {
+            long since = pd.getLong(TAG_SINCE);
+            goTo(level, s, at, now);
+            pd.putLong(TAG_SINCE, since);   // volver a mandarlo no corre el plazo
+        }
+    }
+
+    /** Última vez que se le buscó camino por la malla a cada arquero de torre (game time). */
+    private static final Map<UUID, Long> CLIMB_TRIED = new java.util.HashMap<>();
+
+    /** No llega a ese puesto: lo anota y queda libre para otro (o patrulla). */
+    private static void giveUpPost(AbstractRecruitEntity s, BlockPos post, long now) {
+        markUnreachable(s, post, now);
+        CompoundTag pd = s.getPersistentData();
+        pd.remove(TAG_TOWER);
+        pd.remove(TAG_POINT);
+        pin(s, false);
     }
 
     /** El camino termina arriba, en el puesto (no al pie de la torre). */
@@ -565,7 +688,10 @@ public final class Quarters {
         return Math.abs(end.y - at.y) <= 1 && end.distanceToSqr(at.x, end.y, at.z) <= 2.25;
     }
 
-    /** Si el dueño está cerca y la aldea cargada, salen los del cuartel que estaban guardados. */
+    /**
+     * Si el dueño está cerca y la aldea cargada, salen los del cuartel que estaban guardados: aparecen en el Campamento de
+     * la aldea (el cuartel) y caminan a su lugar (pedido de Ale: no aparecen en cualquier lado).
+     */
     public static int deployIfNear(ServerLevel level, VillageData.Village v) {
         BlockPos camp = VillageCamps.campOf(level, v);
         if (camp == null || !level.isPositionEntityTicking(camp)) return 0;
@@ -577,25 +703,29 @@ public final class Quarters {
         int out = 0;
         for (BarracksData.Soldier sheet : new ArrayList<>(b.quarters)) {
             b.quarters.remove(sheet);
-            BlockPos point = randomPoint(level, v.center(), level.getRandom());
-            Vec3 at = Barracks.standable(level, point != null ? point : camp, null, camp);
+            Vec3 at = Barracks.standable(level, camp, null, camp);
             AbstractRecruitEntity s = Barracks.create(level, sheet, at, camp, BACK_TO_POS, b.hungryDays);
             if (s == null) continue;
-            s.getPersistentData().putLong(TAG_QUARTERS, v.center().asLong());
-            goTo(level, s, at, level.getGameTime());
+            CompoundTag pd = s.getPersistentData();
+            for (String tag : DUTY_TAGS) pd.remove(tag);   // vuelve a empezar: sin órdenes viejas
+            pd.remove(com.ale.warbandcraft.battle.BattleGeneral.TAG_BATTLE);
+            pd.putLong(TAG_QUARTERS, v.center().asLong());
+            BlockPos point = randomPoint(level, v.center(), level.getRandom());
+            goTo(level, s, point != null ? Vec3.atBottomCenterOf(point) : at, level.getGameTime());
             out++;
         }
         BarracksData.get(level).changed();
         return out;
     }
 
-    /** Un paso de la patrulla de {@code s}. */
-    private static void patrol(ServerLevel level, AbstractRecruitEntity s, BlockPos center, long now) {
+    /** Un paso de la patrulla de {@code s}: de un punto adentro de las murallas a otro. */
+    private static void patrol(ServerLevel level, VillageData.Village v, AbstractRecruitEntity s, long now) {
         LivingEntity target = s.getTarget();
         if (target != null && target.isAlive()) return;   // peleando: sigue su pelea
         CompoundTag pd = s.getPersistentData();
         Vec3 point = pd.contains(TAG_POINT) ? Vec3.atBottomCenterOf(BlockPos.of(pd.getLong(TAG_POINT))) : null;
-        // ¿Le diste otra orden (o terminó una invasión)? Vuelve a lo suyo
+        // Terminó de pelear (o el punto quedó afuera de la muralla / arriba de la empalizada): vuelve a lo suyo
+        if (point != null && (!InsideWalls.inside(level, v, point) || InsideWalls.onPalisade(level, BlockPos.containing(point)))) point = null;
         Vec3 hold = s.getHoldPos();
         if (point != null && (s.getFollowState() != BACK_TO_POS || hold == null || hold.distanceToSqr(point) > 2.25)) {
             goTo(level, s, point, now);
@@ -611,7 +741,7 @@ public final class Quarters {
         } else if (point != null && now - pd.getLong(TAG_SINCE) < GIVE_UP) {
             return;
         }
-        BlockPos next = randomPoint(level, center, level.getRandom());
+        BlockPos next = randomPoint(level, v.center(), level.getRandom());
         if (next != null) goTo(level, s, Vec3.atBottomCenterOf(next), now);
     }
 
@@ -827,18 +957,32 @@ public final class Quarters {
         return out;
     }
 
-    /** Un lugar donde pararse al azar: en un chunk del territorio a ≤ {@link #PATROL_RADIUS} del centro, cargado. */
+    /**
+     * Un lugar donde pararse al azar adentro de la aldea: con muralla, adentro de ella (pedido de Ale); sin muralla, en un
+     * chunk del territorio a ≤ {@link #PATROL_RADIUS} del centro. Nunca arriba de la empalizada ni en el agua.
+     */
     @Nullable
     public static BlockPos randomPoint(ServerLevel level, BlockPos center, RandomSource r) {
+        VillageData.Village v = VillageData.get(level).at(center);
+        boolean walled = v != null && InsideWalls.walled(level, v);
         List<ChunkPos> chunks = new ArrayList<>();
-        double max = (PATROL_RADIUS + 8.0) * (PATROL_RADIUS + 8.0);
-        for (ChunkPos c : Territory.get(level).of(center)) {
-            double dx = c.getMiddleBlockX() - center.getX(), dz = c.getMiddleBlockZ() - center.getZ();
-            if (dx * dx + dz * dz <= max) chunks.add(c);
+        if (!walled) {
+            double max = (PATROL_RADIUS + 8.0) * (PATROL_RADIUS + 8.0);
+            for (ChunkPos c : Territory.get(level).of(center)) {
+                double dx = c.getMiddleBlockX() - center.getX(), dz = c.getMiddleBlockZ() - center.getZ();
+                if (dx * dx + dz * dz <= max) chunks.add(c);
+            }
         }
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 16; i++) {
             int x, z;
-            if (chunks.isEmpty()) {
+            if (walled) {
+                double a = r.nextDouble() * Math.PI * 2;
+                Vec3 dir = new Vec3(center.getX() + 0.5 + Math.cos(a) * 8, center.getY(), center.getZ() + 0.5 + Math.sin(a) * 8);
+                double max = Math.max(2, Math.min(PATROL_RADIUS, InsideWalls.radiusToward(level, v, dir) - 2));
+                double d = Math.sqrt(r.nextDouble()) * max;
+                x = (int) Math.floor(center.getX() + 0.5 + Math.cos(a) * d);
+                z = (int) Math.floor(center.getZ() + 0.5 + Math.sin(a) * d);
+            } else if (chunks.isEmpty()) {
                 x = center.getX() + r.nextInt(2 * PATROL_RADIUS + 1) - PATROL_RADIUS;
                 z = center.getZ() + r.nextInt(2 * PATROL_RADIUS + 1) - PATROL_RADIUS;
             } else {
@@ -848,14 +992,16 @@ public final class Quarters {
             }
             if ((double) (x - center.getX()) * (x - center.getX()) + (double) (z - center.getZ()) * (z - center.getZ())
                     > (double) PATROL_RADIUS * PATROL_RADIUS) continue;
+            if (!level.hasChunk(x >> 4, z >> 4)) continue;
             Integer y = Ground.surfaceY(level, x, z, center.getY(), 24, 24);
             if (y == null) continue;
             BlockPos p = new BlockPos(x, y, z);
-            if (Ground.canStand(level, p)) return p;
+            if (!Ground.canStand(level, p) || InsideWalls.onPalisade(level, p) || !level.getFluidState(p.below()).isEmpty()) continue;
+            if (v != null && !InsideWalls.inside(level, v, p)) continue;
+            return p;
         }
         return null;
     }
-
     private static double horizontalDistSq(Vec3 a, BlockPos b) {
         double dx = a.x - (b.getX() + 0.5), dz = a.z - (b.getZ() + 0.5);
         return dx * dx + dz * dz;

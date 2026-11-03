@@ -282,6 +282,10 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   (vista aérea, Batalla, zapadores, al barracón; el cliente elige también a los de tu equipo), quién es amigo en peleas
   (`Quarters`, `Morale`, `Escort`). Al **sacar** del barracón, **armar** con el Bastón u ordenar **seguir/proteger** (estados
   1/4/5) a un soldado de un compañero, pasa a ser del que lo pidió (`Barracks.handTo`: Recruits sigue siempre a su dueño).
+- **Trabajadores de afuera** (pedido de Ale, 3/11): `event/WorkerSafetyEvents`: un trabajador afuera de la muralla/aldea de su
+  dueño (o sin aldea suya a 256) no puede ser objetivo de ningún `Mob` (bichos, soldados de otras facciones) ni lastimado por uno.
+  **Aldeanos adentro**: `village/VillagersInside` (cada 2 s, aldeas con muralla): el aldeano de vanilla que está afuera recibe un
+  `WALK_TARGET` adentro; si su cama está afuera la suelta.
 - **Zonas de Villager Workers**: Workers no deja tocar contenedores/bloques a ≤8 de una zona suya (`VillagerEvents.disableInteractionInPermissionArea`,
   también en el cliente: ahí el click ni llega al servidor) salvo dueño o `teamAccess` + mismo equipo. `WorkerZone.share` abre al equipo
   del dueño toda zona que creamos; `CommonEvents` lo hace con las de un compañero antes de cada click (HIGHEST) y cada 5 s a ≤48 de cada
@@ -472,7 +476,7 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   estado 3, espera 5-15 s, a los 60 s sin llegar cambia. Arqueros/ballesteros a pie (`BattleGeneral.roleOf` RANGED) →
   puestos de torre (`Quarters.posts`, cache 1 min): aldea con mejora Torres = `towerPosts` (escalera más alta de cada
   columna en el anillo ±4; techo = escalera.relative(FACING).above sobre ladrillos; 4 por torre); castillo =
-  `BattleGeneral.wallPosts`. A ≤8 del puesto se los teletransporta arriba (no trepan escaleras). Sin puesto, patrullan.
+  `BattleGeneral.wallPosts`. Suben caminando por la malla de H17 (nunca aparecen arriba). Sin puesto, patrullan.
   Pedido de Ale (a probar): también puntos altos arriba de la muralla **de piedra con almenas** (`wallTopPosts` +
   `behindBattlement`: de la empalizada se caían; dibujada o anillo, uno cada
   `WALL_POST_SPACING`); `spread` ordena los puestos intercalando torres/puntos (grupos lo más separados) y `assignTowers`
@@ -488,11 +492,21 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   `Enemy`, invasores/`ai_attack`, facción en guerra con el dueño, quien ataque al dueño/sus soldados/aldeanos, jugador que
   les pegó hace <10 s), 2) bichos `Enemy` a ≤16 (arquero de torre: todo a ≤32, sin bajarse), 3) patrulla/torre, 4) tu
   orden nunca. Pelear = `setTarget` + estado 0 (de a pie); agresión forzada a 0 (neutral) con `setAggroState`.
-  **Creepers nunca** (ni siquiera si Recruits los elige: se les saca el objetivo). `worthFighting`: nada >4 bajo el piso
-  (heightmap, cuevas) ni a >12 de altura del soldado; si en 15 s no se acercó 1 bloque lo deja 1 min (`CHASES/IGNORED`).
+  **Creepers nunca** (ni siquiera si Recruits los elige: se les saca el objetivo). `worthFighting`: nada en una cueva (>4 bajo el piso
+  y >4 debajo del soldado) ni a >12 de altura (los arqueros: lo que ven); si en 15 s no se acercó 1 bloque lo deja 1 min (`CHASES/IGNORED`).
   Antes de esto se quedaban persiguiendo bichos de cueva que Recruits elegía y no patrullaban.
-  **No los maneja el jugador**: otra orden (estado ≠ 3 o puesto distinto) se deshace al tick siguiente y se les saca
-  `TAG_BATTLE`; solo con una invasión FIGHTING en la aldea (`underInvasion`) no se los toca, y al terminar vuelven solos.
+  **Tus órdenes se respetan** (pedido de Ale, 3/11, reemplaza "no los maneja el jugador"): otra orden (estado ≠ 0/3, puesto
+  distinto, estado 0 sin `quarters_fight`, Batalla, al barracón) → marca `warbandcraft:quarters_ordered` y el cuartel no lo toca
+  hasta que se guarda (dueño lejos) y vuelve a salir (`deployIfNear` borra las marcas de trabajo). Con una invasión FIGHTING
+  (`underInvasion`) lo mueve la defensa y queda `quarters_reset`: al terminar vuelve a lo suyo sin contar como orden.
+  **Adentro de la muralla** (pedido de Ale, 3/11): `village/InsideWalls` (72 tajadas de ángulo con la distancia a la muralla
+  dibujada / anillo / castillo; huecos y portones toman la de las vecinas; sin muralla = territorio o `PATROL_RADIUS`+8). Los de
+  a pie solo pelean con lo que está adentro (si se va afuera lo dejan); los arqueros (de torre o no) tiran a ≤`TOWER_RANGE` con
+  vista sin cambiar de orden (el que patrullaba se para donde está). Puntos de patrulla adentro y nunca sobre troncos/cercos/
+  almenas (`InsideWalls.onPalisade`). **Sin teletransportes**: a la torre caminando (Recruits lejos, la malla de H17 a ≤
+  `NAV_DISTANCE`); sin camino o sin llegar en `TOWER_GIVE_UP` deja la torre (`markUnreachable`, toda la torre, `UNREACHABLE_TICKS`).
+  `Unstuck` a los del cuartel solo los hace saltar. Salen del cuartel guardado en el Campamento de la aldea y caminan.
+  Prueba: `KeepInsideGameTests`.
   Aldea perdida = deja el cuartel quieto (estado 2). Gestión → pestaña Tropas: filas por clase con →1 →T ←1 ←T
   (`ManageActionMessage.TO_QUARTERS/TO_BARRACKS`, text = fila o "*"); al barracón se les borra la marca en la ficha.
 
@@ -597,7 +611,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   la conquista un jugador → `RecruitsClaimBridge.claimVillage` se queda con ese claim (le saca admin y los permisos) y
   `Territory.ensure` lo adopta entero; si no se pudo, `release` lo saca. Prueba: `ClaimGameTests`.
 - `village/GarrisonLife` (cada 2 s, aldeas/castillos de facción cargados y en paz: sin raid ni batalla entre facciones):
-  arqueros a las torres / muros del castillo (`Quarters.posts`, aparecen arriba a ≤6), `GATE_GUARDS` por portón del anillo
+  arqueros a las torres / muros del castillo (`Quarters.posts`; suben caminando por la malla, sin camino otra torre; tiran
+  desde su lugar sin moverse), todos adentro de la muralla (`InsideWalls`: patrulla, y los de a pie no persiguen afuera), `GATE_GUARDS` por portón del anillo
   (`gates`: huecos de la empalizada sobre caminos), `MARKET_GUARDS` (2, pedido de Ale) rondan a ≤`MARKET_RADIUS` del puesto del
   Mercader (`Market.workplace`), `PLAZA_SHARE` en la campana, el resto patrulla con paradas; con un
   objetivo cerca pelean (estado 0) y vuelven; creepers o persecuciones lejos se dejan. Puestos en memoria (`DUTIES`).
@@ -612,7 +627,7 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   Con un ataque tuyo (FIGHTING) o una batalla entre facciones salen `WAVE` (2) cada 3 s del cuartel (o la campana), hasta
   `BattleSize.MAX_PER_SIDE`, marca `warbandcraft:reserve`. Mientras quede reserva la aldea no cae (`RaidManager.tick`,
   `AiWars.battleTick`); cuenta en la barra y en la autoresolución (`AiWars.defense`). Sin pelea 60 s, los que salieron vuelven
-  adentro (se borran y vuelven a la cuenta). Guardado: `Town.npcReserveUsed`; se repone `DAILY_REFILL` (3) por día. Tick en `InvasionEvents`.
+  caminando al cuartel (marca `reserve_returning`) y recién ahí se borran (o si nadie los ve a `UNSEEN_RANGE`). Guardado: `Town.npcReserveUsed`; se repone `DAILY_REFILL` (3) por día. Tick en `InvasionEvents`.
 - **Mercado de facción** (pedido de Ale, a probar): `market/FactionMarket`. Aldea de facción con mercado → tantos Mercaderes
   (`MerchantEntity` sin dueño, marca `warbandcraft:faction_market` = centro, cada 5 s) como el nivel, en `Market.workplace`.
   Click = tienda de vanilla: unas cosas te venden y otras te compran (cada ítem en un solo sentido; compran a `BUY_FACTOR` 0,6),
@@ -748,7 +763,7 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   `growthMinutes/leaveMinutes`, `hungry`). Cada minuto (`TavernEvents`, no en GameTestServer; solo aldea cargada: descargada
   queda quieta) suma los factores (`factors`: raciones, variedad de comida del almacén, impuestos, camas libres de
   `Housing`, guardias por 10 habitantes, empalizada/muralla, invasión en marcha, taberna con tabernero, mercado).
-  ≥ 50 + cama libre + debajo del tope (12/24/48 por aldea/pueblo/ciudad) → llega uno cada 5/3/2 min al borde del territorio
+  ≥ 50 + cama que sobra (`Housing.Data.spareBeds`: libres − sin cama − chicos; pedido de Ale: sin camas no llega nadie) + debajo del tope (12/24/48 por aldea/pueblo/ciudad) → llega uno cada 5/3/2 min al borde del territorio
   (`spawnSettler`, marca `warbandcraft:settler`, sin oficio; `keepSettlersFree` les saca el oficio de vanilla si lo toman sin
   comerciar). < 50 → se va uno cada 5 min (< 25: 2): primero recién llegados libres, después libres, después trabajadores sin zona.
 - Raciones: cada día (`VillageEconomy.checkNewDay`) los habitantes comen `rationPoints` del almacén; si no alcanza, `hungry`

@@ -55,6 +55,11 @@ public final class Housing {
             return Math.max(0, homeless + babies - freeBeds);
         }
 
+        /** Camas libres que sobran después de darles una a los que no tienen (y a los chicos): lugar para que llegue gente. */
+        public int spareBeds() {
+            return Math.max(0, freeBeds - homeless - babies);
+        }
+
         public void write(FriendlyByteBuf b) {
             b.writeVarInt(adults);
             b.writeVarInt(babies);

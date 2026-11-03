@@ -284,7 +284,9 @@ public final class Popularity {
         // Para seguir en papel si se descarga
         t.lastDelta = delta;
         t.paperPop = pop;
-        t.paperBeds = Housing.of(level, v.center()).freeBeds();
+        // Pedido de Ale: sin camas no llega nadie. Cuentan las que sobran (los que ya están sin cama, primero)
+        int spare = Housing.of(level, v.center()).spareBeds();
+        t.paperBeds = spare;
         if (t.autoAssign) {
             AbstractWorkerEntity w = WorkZones.autoAssign(level, v);
             if (w != null) {
@@ -294,7 +296,7 @@ public final class Popularity {
         }
         if (t.popularity >= THRESHOLD) {
             t.leaveMinutes = 0;
-            if (pop >= cap(t) || Housing.of(level, v.center()).freeBeds() == 0) {
+            if (pop >= cap(t) || spare <= 0) {
                 t.growthMinutes = 0;
                 return 0;
             }

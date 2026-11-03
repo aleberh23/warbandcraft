@@ -211,7 +211,8 @@ public final class SiegeDefense {
             s.getPersistentData().remove(TAG_REINFORCEMENT);
             s.getPersistentData().remove(Quarters.TAG_QUARTERS);
             s.setTarget(null);
-            if (Barracks.store(level, s, camp, true) != Barracks.StoreResult.OK) s.setFollowState(WANDER);
+            // Pedido de Ale: no desaparecen; vuelven caminando al barracón y entran al llegar
+            if (!Barracks.sendHome(level, s, null) && Barracks.store(level, s, camp, true) != Barracks.StoreResult.OK) s.setFollowState(WANDER);
         }
     }
 }

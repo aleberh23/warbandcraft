@@ -81,6 +81,7 @@ public class WarbandCraft {
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.kit.WeaponRules());   // H26: peso de la armadura
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.ShutdownGuard());   // servidor dedicado: que el proceso termine al apagar
         MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.LoginPositionEvents());
+        MinecraftForge.EVENT_BUS.register(new com.ale.warbandcraft.event.WorkerSafetyEvents());   // trabajadores de afuera: nadie los ataca
         // Compañeros de facción: lo de la facción es de todos sus miembros (faction/Allies)
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerAboutToStartEvent e) -> com.ale.warbandcraft.faction.Allies.setServer(e.getServer()));
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.ale.warbandcraft.faction.Allies.setServer(null));   // login con contraseña: volver a donde estabas

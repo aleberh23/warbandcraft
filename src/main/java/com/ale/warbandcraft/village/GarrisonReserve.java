@@ -2,6 +2,7 @@ package com.ale.warbandcraft.village;
 
 import com.ale.warbandcraft.WarbandCraft;
 import com.ale.warbandcraft.battle.BattleSize;
+import com.ale.warbandcraft.battle.SiegeLanes;
 import com.ale.warbandcraft.faction.Faction;
 import com.ale.warbandcraft.faction.FactionManager;
 import com.ale.warbandcraft.faction.Troop;
@@ -15,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +36,10 @@ import java.util.Map;
 public final class GarrisonReserve {
     /** Marca de los soldados que salieron de la reserva (centro de la aldea). */
     public static final String TAG = "warbandcraft:reserve";
+    /** Marca del que vuelve caminando al cuartel después de la pelea (se borra al llegar, no delante tuyo). */
+    public static final String TAG_RETURNING = "warbandcraft:reserve_returning";
+    /** Vuelve adentro al llegar a tanto del cuartel, o si no hay nadie a {@link #UNSEEN_RANGE} que lo vea. */
+    public static double HOME_REACH = 3, UNSEEN_RANGE = 48;
 
     /** Reserva según el tamaño: aldea / pueblo / ciudad. */
     public static int RESERVE_VILLAGE = 4, RESERVE_TOWN = 10, RESERVE_CITY = 18;
@@ -102,6 +108,7 @@ public final class GarrisonReserve {
             boolean fight = (raid != null && raid.state == RaidManager.State.FIGHTING) || InvasionData.get(level).battleAt(c) != null;
             if (fight) {
                 LAST_FIGHT.put(key, now);
+                stopReturning(level, v);
                 TownData.Town t = towns.at(c);
                 if (t == null || remaining(level, v) <= 0) continue;
                 if (now - LAST_WAVE.getOrDefault(key, 0L) < WAVE_TICKS) continue;
@@ -154,11 +161,35 @@ public final class GarrisonReserve {
                         && VillageManager.isGarrison(e) && v.faction().toString().equals(e.getPersistentData().getString(VillageManager.TAG_FACTION)));
         if (out.isEmpty()) return;
         TownData.Town t = towns.at(v.center());
+        Vec3 home = Vec3.atBottomCenterOf(t == null ? v.center() : musterPoint(t, v));
+        boolean changed = false;
         for (AbstractRecruitEntity s : out) {
+            // Pedido de Ale: no desaparecen delante tuyo. Caminan al cuartel y entran al llegar (o si nadie los ve).
+            boolean seen = level.getNearestPlayer(s, UNSEEN_RANGE) != null;
+            if (seen && SiegeLanes.horizontal(s.position(), home) > HOME_REACH) {
+                s.getPersistentData().putBoolean(TAG_RETURNING, true);
+                s.setTarget(null);
+                Vec3 h = s.getHoldPos();
+                if (s.getFollowState() != 3 || h == null || h.distanceToSqr(home) > 1) {
+                    s.setHoldPos(home);
+                    s.setFollowState(3);
+                }
+                continue;
+            }
             if (s.getVehicle() != null) s.getVehicle().discard();
             s.discard();
             if (t != null && t.npcReserveUsed > 0) t.npcReserveUsed--;
+            changed = true;
         }
-        towns.changed();
+        if (changed) towns.changed();
+    }
+
+    /** Empezó otra pelea: los que iban volviendo, a defender. */
+    private static void stopReturning(ServerLevel level, VillageData.Village v) {
+        long key = v.center().asLong();
+        for (AbstractRecruitEntity s : level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(v.center()).inflate(128, 64, 128),
+                e -> e.getPersistentData().getBoolean(TAG_RETURNING) && e.getPersistentData().getLong(TAG) == key)) {
+            s.getPersistentData().remove(TAG_RETURNING);
+        }
     }
 }

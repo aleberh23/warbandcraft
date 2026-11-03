@@ -154,6 +154,7 @@ public final class RaidManager {
         com.ale.warbandcraft.invasion.AiWars.clearSieges();
         com.ale.warbandcraft.battle.SiegePush.clear();
         com.ale.warbandcraft.village.GarrisonLife.clear();
+        com.ale.warbandcraft.village.InsideWalls.clear();
         com.ale.warbandcraft.village.GarrisonReserve.clear();
         com.ale.warbandcraft.market.FactionMarket.clear();
         com.ale.warbandcraft.battle.BattleBar.clear();
