@@ -1,7 +1,7 @@
 titulo: Cuartel y entrenamiento
 cartel: Cuartel y|entrenamiento
 ## El cuartel
-Además del barracón, cada aldea y castillo tuyo tiene un cuartel: soldados que patrullan solos adentro del territorio. Los arqueros y ballesteros se reparten parejo entre las torres y arriba de la muralla. Si atacan la aldea, van a los lugares altos del lado por donde vienen más enemigos.
+Además del barracón, cada aldea y castillo tuyo tiene un cuartel: soldados que patrullan solos adentro del territorio. Los arqueros y ballesteros se reparten parejo entre las torres y arriba de la muralla de piedra (entre las almenas; en la empalizada no). Si atacan la aldea, van a los lugares altos del lado por donde vienen más enemigos.
 
 Pelean primero con los enemigos que entran a la aldea y después con los bichos cercanos (nunca con creepers). No obedecen tus órdenes: son la guardia de la aldea.
 ---

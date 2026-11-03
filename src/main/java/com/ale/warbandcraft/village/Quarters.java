@@ -611,10 +611,24 @@ public final class Quarters {
         for (Map.Entry<Long, Integer> e : tops.entrySet()) {
             if (out.size() >= WALL_POSTS_MAX) break;
             BlockPos p = new BlockPos(ChunkPos.getX(e.getKey()), e.getValue() + 1, ChunkPos.getZ(e.getKey()));
-            if (!Ground.canStand(level, p) || near(p, towers, 4) || near(p, out, WALL_POST_SPACING)) continue;
+            if (!Ground.canStand(level, p) || !behindBattlement(level, p) || near(p, towers, 4) || near(p, out, WALL_POST_SPACING)) continue;
             out.add(p);
         }
         return out;
+    }
+
+    /**
+     * Pedido de Ale: solo muralla de piedra con almenas (de la empalizada se caen y los matan). Parado sobre piedra (no
+     * troncos ni encima de una almena) y con una almena pegada al lado.
+     */
+    public static boolean behindBattlement(ServerLevel level, BlockPos p) {
+        net.minecraft.world.level.block.state.BlockState floor = level.getBlockState(p.below());
+        if (floor.is(net.minecraft.tags.BlockTags.LOGS) || floor.is(net.minecraft.tags.BlockTags.WALLS)
+                || floor.is(net.minecraft.tags.BlockTags.PLANKS) || floor.is(net.minecraft.tags.BlockTags.FENCES)) return false;
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            if (level.getBlockState(p.relative(d)).is(net.minecraft.tags.BlockTags.WALLS)) return true;
+        }
+        return false;
     }
 
     private static boolean near(BlockPos p, List<BlockPos> list, double d) {

@@ -468,7 +468,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   puestos de torre (`Quarters.posts`, cache 1 min): aldea con mejora Torres = `towerPosts` (escalera más alta de cada
   columna en el anillo ±4; techo = escalera.relative(FACING).above sobre ladrillos; 4 por torre); castillo =
   `BattleGeneral.wallPosts`. A ≤8 del puesto se los teletransporta arriba (no trepan escaleras). Sin puesto, patrullan.
-  Pedido de Ale (a probar): también puntos altos arriba de la muralla (`wallTopPosts`: dibujada o anillo, uno cada
+  Pedido de Ale (a probar): también puntos altos arriba de la muralla **de piedra con almenas** (`wallTopPosts` +
+  `behindBattlement`: de la empalizada se caían; dibujada o anillo, uno cada
   `WALL_POST_SPACING`); `spread` ordena los puestos intercalando torres/puntos (grupos lo más separados) y `assignTowers`
   usa solo los N primeros (N = arqueros): reparto parejo, el que sobra en una torre cambia a otra. En una invasión
   (`SiegeDefenders.assign`) los arqueros van por carril según cuántos atacan por ahí, y `spots` suma esas torres/puntos

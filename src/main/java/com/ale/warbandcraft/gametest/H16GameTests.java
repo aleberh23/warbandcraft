@@ -230,6 +230,24 @@ public class H16GameTests {
         h.succeed();
     }
 
+    /** Cuartel: arriba de la muralla solo entre almenas de piedra; arriba de la empalizada, no (se caen). */
+    @GameTest(template = TEMPLATE)
+    public static void quartersOnlyStoneBattlements(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int y = 2; y <= 4; y++) {
+            h.setBlock(new BlockPos(2, y, 2), Blocks.STONE_BRICKS);
+            h.setBlock(new BlockPos(3, y, 2), Blocks.STONE_BRICKS);
+            h.setBlock(new BlockPos(2, y, 6), Blocks.SPRUCE_LOG);
+            h.setBlock(new BlockPos(3, y, 6), Blocks.SPRUCE_LOG);
+        }
+        h.setBlock(new BlockPos(3, 5, 2), Blocks.STONE_BRICK_WALL);   // almena al lado del hueco
+        check(Quarters.behindBattlement(level, h.absolutePos(new BlockPos(2, 5, 2))), "entre almenas de piedra no hay puesto");
+        check(!Quarters.behindBattlement(level, h.absolutePos(new BlockPos(2, 5, 6))), "hay puesto arriba de la empalizada");
+        h.setBlock(new BlockPos(3, 5, 2), Blocks.AIR);
+        check(!Quarters.behindBattlement(level, h.absolutePos(new BlockPos(2, 5, 2))), "hay puesto en piedra sin almenas");
+        h.succeed();
+    }
+
     /** Cuartel: un zombi en la aldea es enemigo; una vaca, un cerdo y un creeper, no. */
     @GameTest(template = TEMPLATE)
     public static void quartersSeesEnemies(GameTestHelper h) {
