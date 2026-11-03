@@ -474,6 +474,11 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   usa solo los N primeros (N = arqueros): reparto parejo, el que sobra en una torre cambia a otra. En una invasión
   (`SiegeDefenders.assign`) los arqueros van por carril según cuántos atacan por ahí, y `spots` suma esas torres/puntos
   con `HIGH_POINT_BONUS`. Prueba: `H16GameTests.quartersSpreadsArchers`.
+  Puesto fijo (pedido de Ale: se teletransportaban y salían a patrullar): Recruits les pone la espada de cerca y `roleOf`
+  dejaba de ser RANGED; ahora el de torre sigue siéndolo (salvo a caballo) mientras su puesto exista. Emparejar = de a uno
+  por vuelta, solo con 2 o más de diferencia (`emptiest`). En el puesto (`PIN_DISTANCE`) velocidad 0 (`pin`, modificador
+  transitorio): Recruits no los corre al tirar y no se caen; se saca al irse, en una invasión y en `leave`.
+  Prueba: `quartersArchersKeepPosts`.
   Prioridades (decididas con Ale): 1) enemigos adentro de la aldea (`enemiesIn`: territorio o ≤56 del centro; illagers,
   `Enemy`, invasores/`ai_attack`, facción en guerra con el dueño, quien ataque al dueño/sus soldados/aldeanos, jugador que
   les pegó hace <10 s), 2) bichos `Enemy` a ≤16 (arquero de torre: todo a ≤32, sin bajarse), 3) patrulla/torre, 4) tu

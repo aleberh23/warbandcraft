@@ -59,6 +59,8 @@ public final class Quarters {
     public static double ARRIVE = 2.5;
     /** Arquero de torre: a esta distancia (horizontal) de su puesto sube por la escalera (H17; sin camino, se lo pone arriba). */
     public static double CLIMB_DISTANCE = 8;
+    /** Arquero a menos de esto (horizontal) de su puesto y a su altura: queda clavado ahí (no lo corre Recruits al tirar). */
+    public static double PIN_DISTANCE = 1.2;
     /** Cuántos arqueros entran arriba de cada torre. */
     public static int PER_TOWER = 4;
     /** Puntos altos arriba de la muralla para arqueros: uno cada tanto (bloques), hasta este máximo. */
@@ -272,7 +274,11 @@ public final class Quarters {
                     mine.add(s);
                 }
             }
-            if (mine.isEmpty() || underInvasion(level, center)) continue;   // invasión: los manejás vos
+            if (mine.isEmpty()) continue;
+            if (underInvasion(level, center)) {   // invasión: los mueve la defensa (SiegeDefenders), sueltos
+                for (AbstractRecruitEntity s : mine) pin(s, false);
+                continue;
+            }
             assignTowers(level, mine, posts(level, v), now);
             List<LivingEntity> enemies = enemiesIn(level, v);
             for (AbstractRecruitEntity s : mine) {
@@ -434,31 +440,95 @@ public final class Quarters {
      * Los arqueros (arco o ballesta, a pie) toman los puestos de las torres y puntos altos, repartidos parejo (pedido de
      * Ale): con N arqueros se usan los N primeros de {@link #posts}, que van intercalados de una torre/punto a otro. El
      * que está en un puesto que sobra cambia a uno que falta; el que se queda sin puesto, patrulla.
+     * Pedido de Ale (se teletransportaban y salían a patrullar): el puesto es fijo mientras exista. Un arquero de torre
+     * sigue siéndolo aunque Recruits le ponga la espada en la mano un rato, y para emparejar se cambia de a uno, solo con
+     * una diferencia de 2 o más entre la torre más llena y una con lugar.
      */
-    private static void assignTowers(ServerLevel level, List<AbstractRecruitEntity> soldiers, List<BlockPos> posts, long now) {
-        int archers = 0;
-        for (AbstractRecruitEntity s : soldiers) {
-            if (com.ale.warbandcraft.battle.BattleGeneral.roleOf(s) == com.ale.warbandcraft.battle.BattleGeneral.Role.RANGED) archers++;
-        }
-        java.util.Set<Long> free = new java.util.LinkedHashSet<>();
-        for (int i = 0; i < Math.min(archers, posts.size()); i++) free.add(posts.get(i).asLong());
+    public static void assignTowers(ServerLevel level, List<AbstractRecruitEntity> soldiers, List<BlockPos> posts, long now) {
+        List<List<BlockPos>> groups = groups(posts);
+        Map<Long, Integer> groupOf = new java.util.HashMap<>();
+        for (int g = 0; g < groups.size(); g++) for (BlockPos p : groups.get(g)) groupOf.put(p.asLong(), g);
+        int[] used = new int[groups.size()];
+        java.util.Set<Long> taken = new java.util.HashSet<>();
+        Map<Long, AbstractRecruitEntity> on = new java.util.HashMap<>();
         List<AbstractRecruitEntity> waiting = new ArrayList<>();
         for (AbstractRecruitEntity s : soldiers) {
             CompoundTag pd = s.getPersistentData();
-            boolean archer = com.ale.warbandcraft.battle.BattleGeneral.roleOf(s) == com.ale.warbandcraft.battle.BattleGeneral.Role.RANGED;
-            if (archer && pd.getBoolean(TAG_TOWER) && free.remove(pd.getLong(TAG_POINT))) continue;   // sigue en su puesto
-            if (pd.getBoolean(TAG_TOWER)) {   // su puesto ya no existe (o dejó de ser arquero): a patrullar
+            boolean tower = pd.getBoolean(TAG_TOWER);
+            boolean archer = !s.isPassenger() && (tower || com.ale.warbandcraft.battle.BattleGeneral.roleOf(s) == com.ale.warbandcraft.battle.BattleGeneral.Role.RANGED);
+            long post = pd.getLong(TAG_POINT);
+            if (archer && tower && groupOf.containsKey(post) && taken.add(post)) {   // sigue en su puesto
+                used[groupOf.get(post)]++;
+                on.put(post, s);
+                continue;
+            }
+            if (tower) {   // su puesto ya no existe (o se subió a un caballo): a patrullar
                 pd.remove(TAG_TOWER);
                 pd.remove(TAG_POINT);
+                pin(s, false);
             }
             if (archer) waiting.add(s);
         }
         for (AbstractRecruitEntity s : waiting) {
-            if (free.isEmpty()) break;
-            long post = free.iterator().next();
-            free.remove(post);
-            s.getPersistentData().putBoolean(TAG_TOWER, true);
-            goTo(level, s, Vec3.atBottomCenterOf(BlockPos.of(post)), now);
+            BlockPos post = emptiest(groups, used, taken);
+            if (post == null) break;
+            take(level, s, post, groupOf, used, taken, now);
+        }
+        // Emparejar: de a uno por vuelta, del lugar más lleno al más vacío con lugar (y que no esté peleando)
+        int full = -1;
+        for (int g = 0; g < used.length; g++) if (full < 0 || used[g] > used[full]) full = g;
+        BlockPos to = emptiest(groups, used, taken);
+        if (full < 0 || to == null || used[full] - used[groupOf.get(to.asLong())] < 2) return;
+        for (BlockPos p : groups.get(full)) {
+            AbstractRecruitEntity s = on.get(p.asLong());
+            if (s == null || s.getTarget() != null && s.getTarget().isAlive()) continue;
+            used[full]--;
+            taken.remove(p.asLong());
+            pin(s, false);
+            take(level, s, to, groupOf, used, taken, now);
+            return;
+        }
+    }
+
+    /** El primer puesto libre del grupo (torre o punto) con menos arqueros; a igualdad, el que va antes en la lista. */
+    @Nullable
+    private static BlockPos emptiest(List<List<BlockPos>> groups, int[] used, java.util.Set<Long> taken) {
+        BlockPos best = null;
+        int bestUsed = Integer.MAX_VALUE;
+        for (int g = 0; g < groups.size(); g++) {
+            if (used[g] >= bestUsed) continue;
+            for (BlockPos p : groups.get(g)) {
+                if (taken.contains(p.asLong())) continue;
+                best = p;
+                bestUsed = used[g];
+                break;
+            }
+        }
+        return best;
+    }
+
+    private static void take(ServerLevel level, AbstractRecruitEntity s, BlockPos post, Map<Long, Integer> groupOf, int[] used,
+                             java.util.Set<Long> taken, long now) {
+        taken.add(post.asLong());
+        used[groupOf.get(post.asLong())]++;
+        s.getPersistentData().putBoolean(TAG_TOWER, true);
+        goTo(level, s, Vec3.atBottomCenterOf(post), now);
+    }
+
+    private static final UUID PIN_ID = UUID.fromString("5b0f3c1e-7a42-4d6e-9c8b-2f1a6d4e8b31");
+
+    /**
+     * Arquero en su puesto: velocidad 0 (modificador transitorio, como el Tabernero) para que Recruits no lo corra al
+     * tirar y se caiga de la torre o la muralla. Sigue tirando.
+     */
+    static void pin(AbstractRecruitEntity s, boolean on) {
+        net.minecraft.world.entity.ai.attributes.AttributeInstance speed = s.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        if (speed == null || (speed.getModifier(PIN_ID) != null) == on) return;
+        if (on) {
+            speed.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(PIN_ID, "warbandcraft tower post",
+                    -1.0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL));
+        } else {
+            speed.removeModifier(PIN_ID);
         }
     }
 
@@ -466,6 +536,8 @@ public final class Quarters {
     private static void guardTower(ServerLevel level, AbstractRecruitEntity s, long now) {
         BlockPos post = BlockPos.of(s.getPersistentData().getLong(TAG_POINT));
         Vec3 at = Vec3.atBottomCenterOf(post);
+        boolean onPost = horizontalDistSq(s.position(), post) <= PIN_DISTANCE * PIN_DISTANCE && Math.abs(s.getY() - at.y) < 1;
+        pin(s, onPost);
         if (com.ale.warbandcraft.nav.Mover.moving(s)) return;   // subiendo por la escalera de la torre
         if (horizontalDistSq(s.position(), post) <= CLIMB_DISTANCE * CLIMB_DISTANCE && Math.abs(s.getY() - at.y) > 1.5) {
             if (s.isPassenger()) s.stopRiding();
@@ -558,6 +630,7 @@ public final class Quarters {
     private static void leave(AbstractRecruitEntity s) {
         CompoundTag pd = s.getPersistentData();
         for (String tag : TAGS) pd.remove(tag);
+        pin(s, false);
     }
 
     private record CachedPosts(long at, List<BlockPos> posts) {}
@@ -642,6 +715,16 @@ public final class Quarters {
      * N primeros quedan repartidos entre todas las torres y puntos altos.
      */
     public static List<BlockPos> spread(List<BlockPos> posts) {
+        List<List<BlockPos>> ordered = groups(posts);
+        List<BlockPos> out = new ArrayList<>();
+        for (int round = 0; out.size() < posts.size(); round++) {
+            for (List<BlockPos> g : ordered) if (round < g.size()) out.add(g.get(round));
+        }
+        return out;
+    }
+
+    /** Los puestos juntados por torre/punto (pegados = el mismo), los grupos ordenados lo más separados posible. */
+    static List<List<BlockPos>> groups(List<BlockPos> posts) {
         List<List<BlockPos>> groups = new ArrayList<>();
         boolean[] used = new boolean[posts.size()];
         for (int i = 0; i < posts.size(); i++) {
@@ -677,11 +760,7 @@ public final class Quarters {
             }
             ordered.add(groups.remove(best));
         }
-        List<BlockPos> out = new ArrayList<>();
-        for (int round = 0; out.size() < posts.size(); round++) {
-            for (List<BlockPos> g : ordered) if (round < g.size()) out.add(g.get(round));
-        }
-        return out;
+        return ordered;
     }
 
     /** H22c: arriba de cada torre suelta (centro con y = piso; el techo está 8 más arriba): {@link #PER_TOWER} puestos. */

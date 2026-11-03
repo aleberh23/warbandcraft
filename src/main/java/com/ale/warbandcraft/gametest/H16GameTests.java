@@ -230,6 +230,58 @@ public class H16GameTests {
         h.succeed();
     }
 
+    /**
+     * Cuartel: 4 arqueros en 2 torres quedan 2 y 2; el que saca la espada no pierde su puesto; si están todos en una,
+     * se pasan de a uno hasta quedar parejos y después nadie se mueve.
+     */
+    @GameTest(template = TEMPLATE)
+    public static void quartersArchersKeepPosts(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("recruits", "bowman"));
+        check(type != null, "Recruits no está cargado");
+        List<com.talhanation.recruits.entities.AbstractRecruitEntity> archers = new java.util.ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            if (!(h.spawn(type, new BlockPos(2 + i, 2, 2)) instanceof com.talhanation.recruits.entities.AbstractRecruitEntity s)) {
+                throw new GameTestAssertException("recruits:bowman no es un AbstractRecruitEntity");
+            }
+            s.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOW));
+            archers.add(s);
+        }
+        BlockPos a = h.absolutePos(new BlockPos(1, 6, 1)), b = h.absolutePos(new BlockPos(7, 6, 7));
+        List<BlockPos> posts = Quarters.spread(List.of(a, a.east(), a.south(), a.east().south(), b, b.east(), b.south(), b.east().south()));
+        Quarters.assignTowers(level, archers, posts, level.getGameTime());
+        check(onEach(archers, a, b).equals("2/2"), "no quedaron 2 y 2: " + onEach(archers, a, b));
+
+        // Recruits le pone la espada: sigue en su puesto
+        long before = archers.get(0).getPersistentData().getLong("warbandcraft:quarters_point");
+        archers.get(0).setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+        Quarters.assignTowers(level, archers, posts, level.getGameTime());
+        check(archers.get(0).getPersistentData().getBoolean("warbandcraft:quarters_tower")
+                && archers.get(0).getPersistentData().getLong("warbandcraft:quarters_point") == before, "con la espada perdió el puesto");
+
+        // Todos en la torre A: se pasan de a uno hasta 2 y 2
+        BlockPos[] onA = {a, a.east(), a.south(), a.east().south()};
+        for (int i = 0; i < 4; i++) archers.get(i).getPersistentData().putLong("warbandcraft:quarters_point", onA[i].asLong());
+        Quarters.assignTowers(level, archers, posts, level.getGameTime());
+        check(onEach(archers, a, b).equals("3/1"), "no se pasó uno solo: " + onEach(archers, a, b));
+        Quarters.assignTowers(level, archers, posts, level.getGameTime());
+        check(onEach(archers, a, b).equals("2/2"), "no quedaron parejos: " + onEach(archers, a, b));
+        Quarters.assignTowers(level, archers, posts, level.getGameTime());
+        check(onEach(archers, a, b).equals("2/2"), "se movieron estando parejos: " + onEach(archers, a, b));
+        archers.forEach(net.minecraft.world.entity.Entity::discard);
+        h.succeed();
+    }
+
+    private static String onEach(List<com.talhanation.recruits.entities.AbstractRecruitEntity> archers, BlockPos a, BlockPos b) {
+        int na = 0, nb = 0;
+        for (var s : archers) {
+            BlockPos p = BlockPos.of(s.getPersistentData().getLong("warbandcraft:quarters_point"));
+            if (p.distManhattan(a) <= 2) na++;
+            else if (p.distManhattan(b) <= 2) nb++;
+        }
+        return na + "/" + nb;
+    }
+
     /** Cuartel: arriba de la muralla solo entre almenas de piedra; arriba de la empalizada, no (se caen). */
     @GameTest(template = TEMPLATE)
     public static void quartersOnlyStoneBattlements(GameTestHelper h) {
