@@ -39,10 +39,20 @@ public final class WorkerZone {
      * todo su equipo (sin facción, como estaban).
      */
     public static void share(AbstractWorkAreaEntity area) {
+        ensureName(area);
         String team = com.ale.warbandcraft.faction.Allies.factionOf(area.getPlayerUUID());
         if (team == null) return;
         if (!area.getTeamAccess()) area.setTeamAccess(true);
         if (!team.equals(area.getTeamStringID())) area.setTeamStringID(team);
+    }
+
+    /**
+     * Pedido de Ale ("me tira del juego al abrir los menús de las zonas"): las pantallas de zona de Workers usan el nombre de la
+     * zona como título y sin nombre el juego se cae al narrarlo (NullPointerException "Narrating screen"). Workers les pone ""
+     * al crearlas; las nuestras no tenían. Se llama al crear (vía {@link #share}) y al cargarse una zona vieja.
+     */
+    public static void ensureName(AbstractWorkAreaEntity area) {
+        if (area.getCustomName() == null) area.setCustomName(Component.literal(""));
     }
 
     /**

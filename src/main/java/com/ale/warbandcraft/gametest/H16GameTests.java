@@ -425,6 +425,8 @@ public class H16GameTests {
                     && miner.getCurrentWorkArea() == null, "aceptó una mina de 41 de lado");
             WorkZones.mark(player, v, miner.getUUID(), o.getX(), o.getZ(), o.getX() + 7, o.getZ() + 2);   // escalera de 8×3
             check(miner.getCurrentWorkArea() instanceof com.talhanation.workers.entities.workarea.MiningArea, "no se creó la mina enganchada al minero");
+            // Pedido de Ale ("me tira del juego al abrir el menú de la zona"): sin nombre, la pantalla de Workers se cae al narrar el título
+            check(miner.getCurrentWorkArea().getCustomName() != null, "la mina no tiene nombre: su pantalla tira el juego");
             AABB mineBox = miner.getCurrentWorkArea().getArea();
             check(mineBox.minX <= o.getX() && mineBox.maxX >= o.getX() + 8 && mineBox.minZ <= o.getZ() && mineBox.maxZ >= o.getZ() + 3,
                     "la mina no cubre los 8×3 marcados: " + mineBox);
@@ -500,6 +502,7 @@ public class H16GameTests {
             BlockPos o = h.absolutePos(new BlockPos(1, 2, 11));   // lejos del almacén (su zona de almacén ocupa el centro)
             var farm = WorkZones.mark(player, v, farmer.getUUID(), o.getX(), o.getZ(), o.getX() + 6, o.getZ() + 3);   // rectángulo: antes no entraba nunca
             check(farmer.getCurrentWorkArea() instanceof com.talhanation.workers.entities.workarea.CropArea, "no se creó la huerta: " + farm.getString());
+            check(farmer.getCurrentWorkArea().getCustomName() != null, "la huerta no tiene nombre: su pantalla tira el juego");
             // Pedido de Ale ("ara infinitamente, nunca pone agua"): la huerta queda al nivel del piso y el agua la ponemos nosotros
             var ca = (com.talhanation.workers.entities.workarea.CropArea) farmer.getCurrentWorkArea();
             BlockPos on = ca.getOnPos();

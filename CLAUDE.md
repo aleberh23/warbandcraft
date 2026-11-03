@@ -286,6 +286,9 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   también en el cliente: ahí el click ni llega al servidor) salvo dueño o `teamAccess` + mismo equipo. `WorkerZone.share` abre al equipo
   del dueño toda zona que creamos; `CommonEvents` lo hace con las de un compañero antes de cada click (HIGHEST) y cada 5 s a ≤48 de cada
   jugador (zonas viejas, o de alguien que entró después a la facción). Era el "mi compañero no puede ni abrir el Campamento".
+- **Toda zona de Workers necesita nombre** (`WorkerZone.ensureName`, en `share` y al cargarse en `CommonEvents.onWorkAreaJoin`):
+  sus pantallas usan el nombre como título y sin él el juego del cliente se cae ("Narrating screen", NullPointerException; el
+  server solo ve "lost connection: Disconnected"). Workers les pone `""`; las que creábamos nosotros no tenían (bug de Juampi, 2/11).
 - No compartido: kits y doctrinas (cada jugador tiene los suyos), datos internos del Mercado (`MarketData.owner`), qué aldea elige
   la IA para invadir, la Hueste (es contra un dueño, aunque el aviso y el mapa los ven todos), `VillageData` al cambiar de dueño
   (cambiar entre compañeros también vacía el almacén de números).

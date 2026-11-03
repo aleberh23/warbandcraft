@@ -51,6 +51,14 @@ public class CommonEvents {
         }
     }
 
+    /** Zonas de Workers de antes sin nombre: su pantalla tira el juego (ver {@code WorkerZone.ensureName}). */
+    @SubscribeEvent
+    public void onWorkAreaJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide() && event.getEntity() instanceof com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity area) {
+            com.ale.warbandcraft.camp.WorkerZone.ensureName(area);
+        }
+    }
+
     /** Hasta dónde de cada jugador se abren al equipo las zonas de Workers de sus compañeros. */
     private static final int SHARE_RADIUS = 48;
 
