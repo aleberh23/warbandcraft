@@ -207,6 +207,29 @@ public class H16GameTests {
         h.succeed();
     }
 
+    /** Cuartel: con 3 torres de 4 puestos y un punto de muralla, los 4 primeros puestos caen uno en cada lugar. */
+    @GameTest(template = TEMPLATE)
+    public static void quartersSpreadsArchers(GameTestHelper h) {
+        List<BlockPos> posts = new java.util.ArrayList<>();
+        int[][] towers = {{0, 0}, {40, 0}, {0, 40}};
+        for (int[] t : towers) {
+            posts.add(new BlockPos(t[0], 70, t[1]));
+            posts.add(new BlockPos(t[0] + 1, 70, t[1]));
+            posts.add(new BlockPos(t[0], 70, t[1] + 1));
+            posts.add(new BlockPos(t[0] + 1, 70, t[1] + 1));
+        }
+        posts.add(new BlockPos(40, 66, 40));   // arriba de la muralla
+        List<BlockPos> spread = Quarters.spread(posts);
+        check(spread.size() == posts.size(), "se perdieron puestos: " + spread.size());
+        java.util.Set<Long> places = new java.util.HashSet<>();
+        for (int i = 0; i < 4; i++) places.add(net.minecraft.world.level.ChunkPos.asLong(spread.get(i).getX() / 20, spread.get(i).getZ() / 20));
+        check(places.size() == 4, "los 4 primeros no quedaron uno por lugar: " + spread.subList(0, 4));
+        java.util.Map<Long, Integer> count = new java.util.HashMap<>();
+        for (int i = 0; i < 7; i++) count.merge(net.minecraft.world.level.ChunkPos.asLong(spread.get(i).getX() / 20, spread.get(i).getZ() / 20), 1, Integer::sum);
+        check(count.values().stream().allMatch(n -> n <= 2), "con 7 arqueros una torre tiene más de 2: " + count);
+        h.succeed();
+    }
+
     /** Cuartel: un zombi en la aldea es enemigo; una vaca, un cerdo y un creeper, no. */
     @GameTest(template = TEMPLATE)
     public static void quartersSeesEnemies(GameTestHelper h) {

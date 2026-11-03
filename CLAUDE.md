@@ -468,6 +468,11 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   puestos de torre (`Quarters.posts`, cache 1 min): aldea con mejora Torres = `towerPosts` (escalera más alta de cada
   columna en el anillo ±4; techo = escalera.relative(FACING).above sobre ladrillos; 4 por torre); castillo =
   `BattleGeneral.wallPosts`. A ≤8 del puesto se los teletransporta arriba (no trepan escaleras). Sin puesto, patrullan.
+  Pedido de Ale (a probar): también puntos altos arriba de la muralla (`wallTopPosts`: dibujada o anillo, uno cada
+  `WALL_POST_SPACING`); `spread` ordena los puestos intercalando torres/puntos (grupos lo más separados) y `assignTowers`
+  usa solo los N primeros (N = arqueros): reparto parejo, el que sobra en una torre cambia a otra. En una invasión
+  (`SiegeDefenders.assign`) los arqueros van por carril según cuántos atacan por ahí, y `spots` suma esas torres/puntos
+  con `HIGH_POINT_BONUS`. Prueba: `H16GameTests.quartersSpreadsArchers`.
   Prioridades (decididas con Ale): 1) enemigos adentro de la aldea (`enemiesIn`: territorio o ≤56 del centro; illagers,
   `Enemy`, invasores/`ai_attack`, facción en guerra con el dueño, quien ataque al dueño/sus soldados/aldeanos, jugador que
   les pegó hace <10 s), 2) bichos `Enemy` a ≤16 (arquero de torre: todo a ≤32, sin bajarse), 3) patrulla/torre, 4) tu

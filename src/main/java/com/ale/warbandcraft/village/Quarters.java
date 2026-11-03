@@ -61,6 +61,8 @@ public final class Quarters {
     public static double CLIMB_DISTANCE = 8;
     /** Cuántos arqueros entran arriba de cada torre. */
     public static int PER_TOWER = 4;
+    /** Puntos altos arriba de la muralla para arqueros: uno cada tanto (bloques), hasta este máximo. */
+    public static int WALL_POST_SPACING = 8, WALL_POSTS_MAX = 24;
     /** Cada cuánto se vuelven a buscar las torres de una aldea (ticks). */
     private static long POSTS_REFRESH = 20 * 60;
 
@@ -428,10 +430,18 @@ public final class Quarters {
         return inv != null && inv.state == com.ale.warbandcraft.invasion.InvasionData.State.FIGHTING;
     }
 
-    /** Los arqueros (arco o ballesta, a pie) toman los puestos libres de las torres; el que se queda sin puesto, patrulla. */
+    /**
+     * Los arqueros (arco o ballesta, a pie) toman los puestos de las torres y puntos altos, repartidos parejo (pedido de
+     * Ale): con N arqueros se usan los N primeros de {@link #posts}, que van intercalados de una torre/punto a otro. El
+     * que está en un puesto que sobra cambia a uno que falta; el que se queda sin puesto, patrulla.
+     */
     private static void assignTowers(ServerLevel level, List<AbstractRecruitEntity> soldiers, List<BlockPos> posts, long now) {
+        int archers = 0;
+        for (AbstractRecruitEntity s : soldiers) {
+            if (com.ale.warbandcraft.battle.BattleGeneral.roleOf(s) == com.ale.warbandcraft.battle.BattleGeneral.Role.RANGED) archers++;
+        }
         java.util.Set<Long> free = new java.util.LinkedHashSet<>();
-        for (BlockPos p : posts) free.add(p.asLong());
+        for (int i = 0; i < Math.min(archers, posts.size()); i++) free.add(posts.get(i).asLong());
         List<AbstractRecruitEntity> waiting = new ArrayList<>();
         for (AbstractRecruitEntity s : soldiers) {
             CompoundTag pd = s.getPersistentData();
@@ -570,8 +580,93 @@ public final class Quarters {
             TownData.Town t = TownData.get(level).at(v.center());
             if (t != null && !t.towers.isEmpty()) out = drawnTowerPosts(level, t);   // H22c: torres sueltas
             else if (t != null && t.has(Upgrade.TOWERS) && t.ringRadius > 0) out = towerPosts(level, v.center(), t.ringRadius);
+            if (t != null) out.addAll(wallTopPosts(level, v.center(), t, out));
         }
+        out = spread(out);
         POSTS.put(key, new CachedPosts(now, out));
+        return out;
+    }
+
+    /**
+     * Puntos altos arriba de la muralla (dibujada, o el anillo de H12), uno cada {@link #WALL_POST_SPACING}, sin pisar las
+     * torres: también son puestos de arqueros.
+     */
+    public static List<BlockPos> wallTopPosts(ServerLevel level, BlockPos center, TownData.Town t, List<BlockPos> towers) {
+        Map<Long, Integer> tops = new LinkedHashMap<>();   // columna → y del bloque más alto
+        if (!t.defense.isEmpty()) {
+            for (long l : t.defense.keySet()) {
+                BlockPos p = BlockPos.of(l);
+                tops.merge(ChunkPos.asLong(p.getX(), p.getZ()), p.getY(), Math::max);
+            }
+        } else if (t.ringWalls && t.ringRadius > 0) {
+            for (int[] c : com.ale.warbandcraft.upgrade.Blueprints.ringColumns(center, t.ringRadius)) {
+                if (!level.hasChunk(c[0] >> 4, c[1] >> 4)) continue;
+                int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c[0], c[1]) - 1;
+                net.minecraft.world.level.block.state.BlockState s = level.getBlockState(new BlockPos(c[0], y, c[1]));
+                if (s.is(net.minecraft.tags.BlockTags.LOGS) || s.is(net.minecraft.world.level.block.Blocks.STONE_BRICKS)
+                        || s.is(net.minecraft.tags.BlockTags.WALLS)) tops.put(ChunkPos.asLong(c[0], c[1]), y);
+            }
+        }
+        List<BlockPos> out = new ArrayList<>();
+        for (Map.Entry<Long, Integer> e : tops.entrySet()) {
+            if (out.size() >= WALL_POSTS_MAX) break;
+            BlockPos p = new BlockPos(ChunkPos.getX(e.getKey()), e.getValue() + 1, ChunkPos.getZ(e.getKey()));
+            if (!Ground.canStand(level, p) || near(p, towers, 4) || near(p, out, WALL_POST_SPACING)) continue;
+            out.add(p);
+        }
+        return out;
+    }
+
+    private static boolean near(BlockPos p, List<BlockPos> list, double d) {
+        for (BlockPos q : list) if (horizontalDistSq(Vec3.atBottomCenterOf(q), p) < d * d) return true;
+        return false;
+    }
+
+    /**
+     * Ordena los puestos para repartir parejo: los junta por torre/punto (pegados = el mismo), elige los grupos lo más
+     * separados posible (el primero, después el más lejos de los elegidos...) y va de a uno por grupo en ronda. Así los
+     * N primeros quedan repartidos entre todas las torres y puntos altos.
+     */
+    public static List<BlockPos> spread(List<BlockPos> posts) {
+        List<List<BlockPos>> groups = new ArrayList<>();
+        boolean[] used = new boolean[posts.size()];
+        for (int i = 0; i < posts.size(); i++) {
+            if (used[i]) continue;
+            List<BlockPos> g = new ArrayList<>();
+            java.util.ArrayDeque<Integer> open = new java.util.ArrayDeque<>();
+            open.add(i);
+            used[i] = true;
+            while (!open.isEmpty()) {
+                BlockPos p = posts.get(open.poll());
+                g.add(p);
+                for (int j = 0; j < posts.size(); j++) {
+                    BlockPos q = posts.get(j);
+                    if (!used[j] && Math.abs(p.getX() - q.getX()) <= 2 && Math.abs(p.getZ() - q.getZ()) <= 2 && Math.abs(p.getY() - q.getY()) <= 2) {
+                        used[j] = true;
+                        open.add(j);
+                    }
+                }
+            }
+            groups.add(g);
+        }
+        List<List<BlockPos>> ordered = new ArrayList<>();
+        while (!groups.isEmpty()) {
+            int best = 0;
+            double bestD = -1;
+            for (int i = 0; i < groups.size() && !ordered.isEmpty(); i++) {
+                double d = Double.MAX_VALUE;
+                for (List<BlockPos> o : ordered) d = Math.min(d, groups.get(i).get(0).distSqr(o.get(0)));
+                if (d > bestD) {
+                    bestD = d;
+                    best = i;
+                }
+            }
+            ordered.add(groups.remove(best));
+        }
+        List<BlockPos> out = new ArrayList<>();
+        for (int round = 0; out.size() < posts.size(); round++) {
+            for (List<BlockPos> g : ordered) if (round < g.size()) out.add(g.get(round));
+        }
         return out;
     }
 

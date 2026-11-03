@@ -61,6 +61,8 @@ public final class SiegeDefenders {
     /** Arqueros: dónde buscan lugar alrededor del cruce, a qué distancia les gusta, separación entre ellos. */
     public static int SPOT_SEARCH = 18;
     public static double SPOT_BEST_DISTANCE = 14, SPOT_SPACING = 2.0, RANGED_REACH = 48;
+    /** Puntaje de más para una torre o punto alto de la muralla de la aldea (con vista al carril). */
+    public static double HIGH_POINT_BONUS = 10;
     /** Cada cuánto se vuelven a buscar los lugares de los arqueros (ticks). */
     public static int SPOT_REFRESH = 20 * 10;
     /**
@@ -119,7 +121,7 @@ public final class SiegeDefenders {
         lanes.removeIf(l -> l.attackers() == 0);
         if (lanes.isEmpty()) return;
         m.jobs.keySet().removeIf(id -> defenders.stream().noneMatch(d -> d.getUUID().equals(id)));
-        assign(level, m, defenders, lanes, now);
+        assign(level, m, defenders, lanes, center, now);
 
         for (AbstractRecruitEntity s : defenders) {
             if (s.getState() != NEUTRAL) s.setAggroState(NEUTRAL);
@@ -147,7 +149,7 @@ public final class SiegeDefenders {
      * Arqueros a los mejores lugares de cada carril; a pie: a cada escalera {@link #PUSHERS_PER_LADDER} para tumbarla,
      * el resto a esperar adentro, repartidos según cuántos atacan por cada carril.
      */
-    private static void assign(ServerLevel level, Memory m, List<AbstractRecruitEntity> defenders, List<SiegeLanes.LaneInfo> lanes, long now) {
+    private static void assign(ServerLevel level, Memory m, List<AbstractRecruitEntity> defenders, List<SiegeLanes.LaneInfo> lanes, BlockPos center, long now) {
         int total = 0;
         for (SiegeLanes.LaneInfo l : lanes) total += l.attackers();
         Map<Integer, Integer> want = new HashMap<>(), have = new HashMap<>();
@@ -176,12 +178,22 @@ public final class SiegeDefenders {
 
         List<SiegeLanes.LaneInfo> byThreat = new ArrayList<>(lanes);
         byThreat.sort(Comparator.comparingInt(l -> -l.attackers()));
-        int li = 0;
+        // Arqueros: según cuántos atacan por cada lado (pedido de Ale), al lugar más alto con vista que quede libre
+        Map<Integer, Integer> wantR = new HashMap<>(), haveR = new HashMap<>();
+        for (SiegeLanes.LaneInfo l : lanes) wantR.put(l.index(), (int) Math.round(ranged.size() * (double) l.attackers() / Math.max(1, total)));
+        for (Assignment a : m.jobs.values()) if (a.job() == Job.ARCHER) haveR.merge(a.lane(), 1, Integer::sum);
+        List<BlockPos> high = highPoints(level, center);
         for (AbstractRecruitEntity s : ranged) {
             if (m.jobs.containsKey(s.getUUID())) continue;
-            SiegeLanes.LaneInfo lane = byThreat.get(li++ % byThreat.size());
-            BlockPos spot = freeSpot(level, m, lane, now);
-            if (spot != null) m.jobs.put(s.getUUID(), new Assignment(Job.ARCHER, lane.index(), spot, null));
+            List<SiegeLanes.LaneInfo> order = new ArrayList<>(byThreat);
+            order.sort(Comparator.comparingInt(l -> haveR.getOrDefault(l.index(), 0) - wantR.getOrDefault(l.index(), 0)));
+            for (SiegeLanes.LaneInfo lane : order) {   // el que más le falta primero; sin lugar ahí, el siguiente
+                BlockPos spot = freeSpot(level, m, lane, high, now);
+                if (spot == null) continue;
+                m.jobs.put(s.getUUID(), new Assignment(Job.ARCHER, lane.index(), spot, null));
+                haveR.merge(lane.index(), 1, Integer::sum);
+                break;
+            }
         }
         for (AbstractRecruitEntity s : foot) {
             if (m.jobs.containsKey(s.getUUID())) continue;
@@ -256,11 +268,17 @@ public final class SiegeDefenders {
         aim(s, enemies);
     }
 
+    /** Las torres y puntos altos de la muralla de la aldea/castillo de {@code center} (los del cuartel), o nada. */
+    private static List<BlockPos> highPoints(ServerLevel level, BlockPos center) {
+        com.ale.warbandcraft.village.VillageData.Village v = com.ale.warbandcraft.village.VillageData.get(level).at(center);
+        return v == null ? List.of() : com.ale.warbandcraft.village.Quarters.posts(level, v);
+    }
+
     @Nullable
-    private static BlockPos freeSpot(ServerLevel level, Memory m, SiegeLanes.LaneInfo lane, long now) {
+    private static BlockPos freeSpot(ServerLevel level, Memory m, SiegeLanes.LaneInfo lane, List<BlockPos> high, long now) {
         Long at = m.spotsAt.get(lane.index());
         if (at == null || now - at > SPOT_REFRESH) {
-            m.spots.put(lane.index(), spots(level, lane));
+            m.spots.put(lane.index(), spots(level, lane, high));
             m.spotsAt.put(lane.index(), now);
         }
         Set<Long> taken = new HashSet<>();
@@ -276,9 +294,14 @@ public final class SiegeDefenders {
 
     /**
      * Lugares para tirar cerca del cruce del carril, del mejor al peor: alto, con vista a por donde vienen (el pie del
-     * muro, su lado de afuera y el medio) y a buena distancia. Nada de agua.
+     * muro, su lado de afuera y el medio) y a buena distancia. Nada de agua. Las torres y puntos altos de la muralla
+     * ({@code high}) que tienen vista también entran, con {@link #HIGH_POINT_BONUS} de más.
      */
     public static List<BlockPos> spots(ServerLevel level, SiegeLanes.LaneInfo lane) {
+        return spots(level, lane, List.of());
+    }
+
+    public static List<BlockPos> spots(ServerLevel level, SiegeLanes.LaneInfo lane, List<BlockPos> high) {
         BlockPos cross = lane.inside() != null ? lane.inside() : lane.outside();
         if (cross == null) return List.of();
         Vec3 out = lane.outside() != null ? Vec3.atBottomCenterOf(lane.outside()) : lane.approach();
@@ -286,22 +309,27 @@ public final class SiegeDefenders {
         int baseY = cross.getY();
         record Scored(BlockPos p, double score) {}
         List<Scored> all = new ArrayList<>();
+        Set<Long> tried = new HashSet<>();
+        java.util.function.BiConsumer<BlockPos, Double> consider = (p, bonus) -> {
+            if (!tried.add(p.asLong())) return;
+            if (lane.outside() != null && p.distSqr(lane.outside()) < 9) return;
+            Vec3 eye = Vec3.atBottomCenterOf(p).add(0, 1.6, 0);
+            double d = eye.distanceTo(out);
+            if (d > RANGED_REACH - 6) return;
+            int seen = 0;
+            for (Vec3 l : look) {
+                if (level.clip(new ClipContext(eye, l, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null)).getType() == HitResult.Type.MISS) seen++;
+            }
+            if (seen == 0) return;
+            all.add(new Scored(p, 2.0 * (p.getY() - baseY) + 6 * seen - 0.4 * Math.abs(d - SPOT_BEST_DISTANCE) + bonus));
+        };
+        for (BlockPos p : high) consider.accept(p, HIGH_POINT_BONUS);   // primero: así no los pisa la grilla sin el extra
         for (int dx = -SPOT_SEARCH; dx <= SPOT_SEARCH; dx += 2) {
             for (int dz = -SPOT_SEARCH; dz <= SPOT_SEARCH; dz += 2) {
                 int x = cross.getX() + dx, z = cross.getZ() + dz;
                 for (int y : NavGrid.standable(level, x, z, baseY - 3, baseY + 24)) {
                     if (NavGrid.flagsAt(level, x, y, z) != 0) continue;   // ni agua, ni escalera, ni puerta
-                    BlockPos p = new BlockPos(x, y, z);
-                    if (lane.outside() != null && p.distSqr(lane.outside()) < 9) continue;
-                    Vec3 eye = Vec3.atBottomCenterOf(p).add(0, 1.6, 0);
-                    int seen = 0;
-                    for (Vec3 l : look) {
-                        if (level.clip(new ClipContext(eye, l, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null)).getType() == HitResult.Type.MISS) seen++;
-                    }
-                    if (seen == 0) continue;
-                    double d = eye.distanceTo(out);
-                    if (d > RANGED_REACH - 6) continue;
-                    all.add(new Scored(p, 2.0 * (y - baseY) + 6 * seen - 0.4 * Math.abs(d - SPOT_BEST_DISTANCE)));
+                    consider.accept(new BlockPos(x, y, z), 0.0);
                 }
             }
         }
