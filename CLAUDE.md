@@ -1159,6 +1159,9 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   **Hueco falso** (pedido de Ale, 3/11: se quedaban contra una muralla lisa con el carril en "hueco abierto"): si un carril
   OPEN no acerca a nadie 1,5 bloques en `STALL_LOG_TICKS` (30 s), los lugares por donde cruzaba (`Lane.crossCells`) se cierran
   en la malla `FALSE_GAP_TICKS` (5 min, `NavGrid.block`) y se replanea: escaleras o romper. El log dice "cruza por ..." con los bloques.
+  **Afuera no pelean con los de adentro** (3/11, la causa de verdad): un atacante del lado de afuera solo toma de objetivo a
+  enemigos que también están afuera (`dist ≥ w.inside()`) o a ≤`CONTACT` (3); al de adentro le saca el objetivo y sigue el carril.
+  Antes, con un defensor a ≤8 del otro lado, Recruits lo perseguía en línea recta y se quedaba contra la muralla.
 - Tus soldados a ≤64 de la aldea invadida que no son del cuartel, no te siguen (estado 1/5) ni están en Batalla se suman
   a `SiegeDefenders` (`SiegeDefense.helpers`, marca `warbandcraft:defense_helper` con su orden) y al terminar la recuperan.
 - **Barra de quién va ganando** (`battle/BattleBar`, estilo Total War): una barra que se llena con la parte de soldados

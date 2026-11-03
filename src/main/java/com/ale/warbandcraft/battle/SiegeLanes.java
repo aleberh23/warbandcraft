@@ -282,6 +282,10 @@ public final class SiegeLanes {
         // Infantería: adentro (o con un enemigo encima) pelea; afuera, en grupos por la malla
         List<AbstractRecruitEntity> outside = new ArrayList<>();
         BlockPos objective = enemies.isEmpty() ? host.objective() : center;
+        // Pedido de Ale (se quedaban contra la muralla): afuera solo se pelea con lo que está afuera (o pegado); al de
+        // adentro no se llega caminando derecho: se sigue por el carril
+        List<LivingEntity> reachable = new ArrayList<>();
+        for (LivingEntity e : enemies) if (!w.walled() || dist(e, center) >= w.inside()) reachable.add(e);
         for (AbstractRecruitEntity s : foot) {
             boolean in = st.inside.contains(s.getUUID()) || dist(s, center) < w.inside();
             if (in && w.walled()) st.inside.add(s.getUUID());
@@ -290,10 +294,12 @@ public final class SiegeLanes {
                 // Adentro (pedido de Ale): enemigos cerca, después aldeanos cerca, después el centro; ahí, a buscar al enemigo
                 if (!SiegePush.hunting(s)) Mover.stop(s);
                 SiegePush.inside(level, s, enemies, host.objective(), host.villagers());
-            } else if (!busy && (nearestDistance(s, enemies) <= ENGAGE || isFighting(s))) {
+            } else if (!busy && (nearestDistance(s, reachable) <= ENGAGE || nearestDistance(s, enemies) <= CONTACT || isFighting(s, reachable))) {
                 Mover.stop(s);
-                engageOrCenter(s, enemies, objective);
+                engageOrCenter(s, reachable.isEmpty() ? enemies : reachable, objective);
             } else {
+                LivingEntity t = s.getTarget();
+                if (t != null && w.walled() && dist(t, center) < w.inside() && s.distanceTo(t) > CONTACT) s.setTarget(null);
                 outside.add(s);
             }
         }
@@ -918,8 +924,12 @@ public final class SiegeLanes {
         return false;
     }
 
-    private static boolean isFighting(AbstractRecruitEntity s) {
+    /** Un enemigo de adentro tan cerca del de afuera que se pegan igual (arriba de una escalera, en el hueco). */
+    public static double CONTACT = 3;
+
+    private static boolean isFighting(AbstractRecruitEntity s, List<LivingEntity> reachable) {
         LivingEntity t = s.getTarget();
+        if (t != null && !reachable.contains(t) && s.distanceTo(t) > CONTACT) return false;
         return t != null && t.isAlive() && !Surrender.is(t) && s.distanceTo(t) <= KEEP_FIGHTING && s.getFollowState() == WANDER;
     }
 
