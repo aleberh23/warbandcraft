@@ -305,6 +305,42 @@ public class H22GameTests {
         h.succeed();
     }
 
+    /** Pedido de Ale: la muralla dibujada cruza el agua (no muy honda) desde el fondo, sin dejar hueco para pasar nadando. */
+    @GameTest(template = TEMPLATE)
+    public static void drawnWallCrossesWater(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        openSky(h);
+        VillageData.Village v = village(h);
+        TownData data = TownData.get(level);
+        try {
+            TownData.Town town = data.getOrCreate(v.center());
+            town.built.add(Upgrade.BUILDER_1);
+            FakePlayer player = player(h);
+            fill(player);
+            // Un charco de 3 en z=6, encerrado en piedra (el piso de piedra está en y=1)
+            for (int x = 2; x <= 6; x++) {
+                h.setBlock(new BlockPos(x, 2, 5), Blocks.STONE);
+                h.setBlock(new BlockPos(x, 2, 7), Blocks.STONE);
+            }
+            h.setBlock(new BlockPos(2, 2, 6), Blocks.STONE);
+            h.setBlock(new BlockPos(6, 2, 6), Blocks.STONE);
+            for (int x = 3; x <= 5; x++) h.setBlock(new BlockPos(x, 2, 6), Blocks.WATER);
+            BlockPos a = h.absolutePos(new BlockPos(1, 1, 6)), b = h.absolutePos(new BlockPos(7, 1, 6));
+            Component msg = Upgrades.orderWork(player, v.center(), "wall:1:" + a.getX() + "," + a.getZ() + ";" + b.getX() + "," + b.getZ());
+            check(town.job != null && town.job.upgrade == Upgrade.WALL_1, "no empezó la empalizada: " + msg.getString());
+            finishJob(level, town);
+            for (int x = 3; x <= 5; x++) {
+                for (int y = 2; y <= 5; y++) {
+                    check(h.getBlockState(new BlockPos(x, y, 6)).is(Blocks.SPRUCE_LOG),
+                            "en el agua falta muralla en x=" + x + " y=" + y + ": " + h.getBlockState(new BlockPos(x, y, 6)));
+                }
+            }
+        } finally {
+            cleanup(h, v);
+        }
+        h.succeed();
+    }
+
     /** Torre de madera suelta: queda anotada (arriba van los arqueros) y demolerla la saca. */
     @GameTest(template = TEMPLATE)
     public static void towerAndDemolish(GameTestHelper h) {

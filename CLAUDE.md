@@ -810,6 +810,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   rellenar>:x0,z0,x1,z1,y" (pedido de Ale: allanar saca TODO hasta `LEVEL_CLEAR_UP` 24 arriba —casas, antorchas, árboles, agua; lo
   colgado primero; cofres al almacén—, menos campana, Campamento e irrompibles, y el piso queda de tierra / arena en desierto
   (`Tags.Biomes.IS_DESERT`) con huecos rellenos hasta `LEVEL_FILL_DOWN`; rellenar solo sube), "demolish:<clave de terreno | tower:pos>" (saca también block entities: su contenido al almacén).
+  Muralla en el agua (pedido de Ale: que no entren nadando a una aldea con costa): cada columna usa `Blueprints.post`, como el
+  anillo: hasta `RING_WATER_DEPTH` (12) de hondo sube desde el fondo y asoma `height` arriba del agua; más hondo, hueco.
   Al terminar (`Works.finish`): bloques de defensa en `Town.defense` (los usa `WallRepair`), `Town.gates`, `Town.towers`
   (`Quarters.drawnTowerPosts`), flags PALISADE/WALL/TOWERS. `Town.ringWalls` = el anillo viejo de H12 (las pruebas que lo
   simulan lo prenden). En aldeas, PALISADE/WALL/TOWERS no salen en `Upgrades.status`. Portones: `Works.tickGates` cada 10

@@ -155,18 +155,21 @@ public final class Blueprints {
 
     /** Cuánto se corre el muro hacia afuera (y si no, hacia adentro) para rodear una casa en vez de dejar un hueco. */
     public static int RING_DETOUR_OUT = 10, RING_DETOUR_IN = 5;
-    /** Agua más honda que esto: el muro no la cruza (queda hueco). Menos honda: pilotes desde el fondo. */
+    /**
+     * Agua más honda que esto: el muro no la cruza (queda hueco). Menos honda: pilotes desde el fondo. Vale para el anillo
+     * y para la muralla dibujada en Gestión (pedido de Ale: que no se pueda entrar nadando a una aldea con costa).
+     */
     public static int RING_WATER_DEPTH = 12;
 
     /** Una columna de muro: bloques de {@code bottom + 1} a {@code top} (en el agua, desde el fondo hasta arriba del agua). */
-    private record Post(int x, int z, int bottom, int top) {}
+    record Post(int x, int z, int bottom, int top) {}
 
     /**
      * Dónde va el muro en esa columna, o null si no se puede (casa, block entity, agua muy honda, sin cargar). En el
      * agua (o al lado) el muro sube desde el fondo hasta {@code height} arriba de la superficie, como pilotes.
      */
     @Nullable
-    private static Post post(ServerLevel level, int x, int z, int height, int extra, int hintY) {
+    static Post post(ServerLevel level, int x, int z, int height, int extra, int hintY) {
         Integer g = groundY(level, x, z, hintY);
         if (g == null) return null;
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos(x, g, z);

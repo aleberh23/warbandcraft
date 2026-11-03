@@ -172,17 +172,19 @@ public final class Works {
         }
         boolean along = paths * 2 > n;   // una muralla que va por el camino: sin portones raros
         Blueprints.Plan plan = new Blueprints.Plan();
-        int gaps = 0, gates = 0;
+        int gaps = 0, gates = 0, inWater = 0;
         for (int i = 0; i < n; i++) {
             if (gate[i]) continue;
             int x = cols.get(i)[0], z = cols.get(i)[1];
-            Integer g = Blueprints.wallBase(level, x, z, stone ? height + 1 : height, hint);
-            if (g == null) {   // agua o casa
+            // En el agua (hasta Blueprints.RING_WATER_DEPTH) sube desde el fondo y asoma arriba, como el anillo
+            Blueprints.Post post = Blueprints.post(level, x, z, height, stone ? 1 : 0, hint);
+            if (post == null) {   // agua muy honda o casa
                 gaps++;
                 continue;
             }
-            for (int dy = 1; dy <= height; dy++) plan.put(new BlockPos(x, g + dy, z), body);
-            if (stone && i % 2 == 0) plan.put(new BlockPos(x, g + height + 1, z), Blocks.STONE_BRICK_WALL.defaultBlockState());
+            if (post.top() - post.bottom() > height) inWater++;
+            for (int y = post.bottom() + 1; y <= post.top(); y++) plan.put(new BlockPos(x, y, z), body);
+            if (stone && i % 2 == 0) plan.put(new BlockPos(x, post.top() + 1, z), Blocks.STONE_BRICK_WALL.defaultBlockState());
         }
         if (!along) {
             for (int i = 0; i < n; i++) {
@@ -198,7 +200,8 @@ public final class Works {
         int emeralds = Math.max(WALL_MIN_EMERALDS, (n + per - 1) / per);
         String note = n + " bloques de largo" + (gates > 0 ? " · " + gates + " portón(es) en los caminos" : "")
                 + (along && paths > 0 ? " · va por el camino: queda abierta ahí" : "")
-                + (gaps > 0 ? " · " + gaps + " huecos (agua o casas)" : "");
+                + (inWater > 0 ? " · " + inWater + " en el agua (desde el fondo)" : "")
+                + (gaps > 0 ? " · " + gaps + " huecos (agua de más de " + Blueprints.RING_WATER_DEPTH + " o casas)" : "");
         return new Spec(u, plan, null, emeralds, "", note);
     }
 
