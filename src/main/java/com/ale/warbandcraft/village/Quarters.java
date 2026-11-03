@@ -89,7 +89,7 @@ public final class Quarters {
     private static int UNDERGROUND = 4, MAX_HEIGHT_DIFF = 12;
 
     /** Estados de órdenes de Recruits (seguir) y de agresión (0 = neutral: se defiende y ataca bichos). */
-    private static final int WANDER = 0, HOLD = 2, BACK_TO_POS = 3, NEUTRAL = 0;
+    private static final int WANDER = 0, FOLLOW = 1, HOLD = 2, BACK_TO_POS = 3, PROTECT_OWNER = 4, PROTECT = 5, NEUTRAL = 0;
     private static final String BY = "quarters";
 
     private Quarters() {}
@@ -119,6 +119,24 @@ public final class Quarters {
     /** El dueño está lejos de la aldea (o desconectado / en otro mundo: {@code ownerPos} null). */
     public static boolean ownerAway(@Nullable Vec3 ownerPos, BlockPos center) {
         return ownerPos == null || horizontalDistSq(ownerPos, center) > (double) STORE_DISTANCE * STORE_DISTANCE;
+    }
+
+    /**
+     * El cuartel se guarda solo si no queda nadie de la facción del dueño cerca de la aldea (antes miraba solo al dueño
+     * del soldado: con soldados de un compañero que no estaba, salían con vos cerca y a los 10 s se guardaban, sin parar).
+     */
+    public static boolean factionAway(ServerLevel level, @Nullable UUID owner, BlockPos center) {
+        return !factionNear(level, owner, center, STORE_DISTANCE);
+    }
+
+    /** Hay un jugador del dueño (o de su facción) a menos de {@code dist} (horizontal) de {@code center}. */
+    public static boolean factionNear(ServerLevel level, @Nullable UUID owner, BlockPos center, double dist) {
+        if (owner == null) return false;
+        for (ServerPlayer p : level.players()) {
+            if (p.isSpectator() || !com.ale.warbandcraft.faction.Allies.same(p.getUUID(), owner)) continue;
+            if (horizontalDistSq(p.position(), center) <= dist * dist) return true;
+        }
+        return false;
     }
 
     /** Los del cuartel que andan sueltos (cargados). */
@@ -396,16 +414,22 @@ public final class Quarters {
      * ¿Le diste otra orden? (seguir, quedarse, mover a otro lado, Batalla, al barracón). Lo que hace el cuartel es estado 3
      * con el puesto en su punto, o estado 0 mientras pelea por el cuartel.
      */
-    private static boolean playerOrdered(AbstractRecruitEntity s) {
+    static boolean playerOrdered(AbstractRecruitEntity s) {
         CompoundTag pd = s.getPersistentData();
         if (pd.getBoolean(com.ale.warbandcraft.battle.BattleGeneral.TAG_BATTLE) || pd.getBoolean(Barracks.TAG_TO_BARRACKS)) return true;
         int state = s.getFollowState();
-        if (!pd.contains(TAG_POINT)) return state != WANDER && state != BACK_TO_POS;   // el cuartel todavía no le dio nada
-        if (state == WANDER) return !pd.getBoolean(TAG_FIGHT);
-        if (state != BACK_TO_POS) return true;
+        if (state == FOLLOW || state == PROTECT_OWNER || state == PROTECT) return true;   // seguirte / protegerte
+        // Estado 0 o "quieto acá" (2 con el puesto donde está) lo pone Recruits solo: al terminar una pelea, al descansar
+        // herido (RestGoal: 0 y después 2) o al elegir un objetivo. Eso no es una orden tuya (antes los dejaba sin patrullar).
+        if (state != HOLD && state != BACK_TO_POS) return false;
         Vec3 hold = s.getHoldPos();
-        return hold == null || hold.distanceToSqr(Vec3.atBottomCenterOf(BlockPos.of(pd.getLong(TAG_POINT)))) > 2.25;
+        if (hold == null) return false;
+        if (pd.contains(TAG_POINT) && hold.distanceToSqr(Vec3.atBottomCenterOf(BlockPos.of(pd.getLong(TAG_POINT)))) <= 2.25) return false;
+        return hold.distanceToSqr(s.position()) > ORDER_MOVE * ORDER_MOVE;   // lo mandaste a otro lado
     }
+
+    /** Un puesto a más de esto del soldado (y que no es el del cuartel) es una orden tuya de ir a otro lado. */
+    public static double ORDER_MOVE = 4;
 
     /** Persecución en curso de cada soldado: a quién, la menor distancia lograda y desde cuándo no la mejora. */
     private record Chase(UUID target, double best, long since) {}
@@ -683,9 +707,7 @@ public final class Quarters {
         if (camp == null || !level.isPositionEntityTicking(camp)) return 0;
         BarracksData.Barracks b = BarracksData.get(level).at(camp);
         if (b == null || b.quarters.isEmpty()) return 0;
-        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(v.owner());
-        if (owner == null || owner.level() != level
-                || horizontalDistSq(owner.position(), v.center()) > (double) DEPLOY_DISTANCE * DEPLOY_DISTANCE) return 0;
+        if (!factionNear(level, v.owner(), v.center(), DEPLOY_DISTANCE)) return 0;   // vos o alguien de tu facción cerca
         int out = 0;
         for (BarracksData.Soldier sheet : new ArrayList<>(b.quarters)) {
             b.quarters.remove(sheet);

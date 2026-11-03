@@ -502,7 +502,8 @@ public final class Barracks {
         if (soldier.isPassenger() && !(soldier.getVehicle() instanceof AbstractHorse)) return null;
         BlockPos quarters = com.ale.warbandcraft.village.Quarters.villageOf(soldier);
         if (quarters != null) {   // del cuartel: se guarda cuando el dueño se aleja de la aldea, no del soldado
-            if (!com.ale.warbandcraft.village.Quarters.ownerAway(ownerPos, quarters)) return null;
+            com.ale.warbandcraft.village.VillageData.Village qv = com.ale.warbandcraft.village.VillageData.get(level).at(quarters);
+            if (!com.ale.warbandcraft.village.Quarters.factionAway(level, qv != null ? qv.owner() : soldier.getOwnerUUID(), quarters)) return null;
         } else if (ownerPos != null && ownerPos.distanceToSqr(soldier.position()) <= (double) AUTO_STORE_DISTANCE * AUTO_STORE_DISTANCE) return null;
         BlockPos camp = campOf(level, soldier);
         if (camp == null) return null;

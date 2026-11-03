@@ -107,9 +107,25 @@ public class KeepInsideGameTests {
             check(melee.getFollowState() == 0, "el de a pie no salió a pelear adentro");
             check(archer.getFollowState() == 3, "el arquero se movió de su lugar");
 
-            // Una orden tuya: seguirte. El cuartel no la deshace
             in.discard();
             outside.discard();
+            // Recruits lo pone a descansar (estado 0 y después 2 donde está): no es una orden tuya, sigue patrullando
+            melee.setTarget(null);
+            melee.setFollowState(0);
+            Quarters.tick(level);
+            check(!melee.getPersistentData().getBoolean(Quarters.TAG_ORDERED), "descansar (estado 0) contó como orden tuya");
+            check(melee.getFollowState() == 3, "después de pelear no volvió a patrullar: estado " + melee.getFollowState());
+            melee.setFollowState(2);
+            Quarters.tick(level);
+            check(!melee.getPersistentData().getBoolean(Quarters.TAG_ORDERED), "quedarse quieto solo (estado 2) contó como orden tuya");
+            check(melee.getFollowState() == 3, "quieto solo no volvió a patrullar: estado " + melee.getFollowState());
+            // Mandarlo a otro lado sí es una orden
+            melee.setFollowState(3);
+            melee.setHoldPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(14, 1, 14))));
+            Quarters.tick(level);
+            check(melee.getPersistentData().getBoolean(Quarters.TAG_ORDERED), "mandarlo a otro lado no contó como orden");
+
+            // Una orden tuya: seguirte. El cuartel no la deshace
             archer.setFollowState(1);
             Quarters.tick(level);
             Quarters.tick(level);

@@ -495,8 +495,12 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   **Creepers nunca** (ni siquiera si Recruits los elige: se les saca el objetivo). `worthFighting`: nada en una cueva (>4 bajo el piso
   y >4 debajo del soldado) ni a >12 de altura (los arqueros: lo que ven); si en 15 s no se acercó 1 bloque lo deja 1 min (`CHASES/IGNORED`).
   Antes de esto se quedaban persiguiendo bichos de cueva que Recruits elegía y no patrullaban.
-  **Tus órdenes se respetan** (pedido de Ale, 3/11, reemplaza "no los maneja el jugador"): otra orden (estado ≠ 0/3, puesto
-  distinto, estado 0 sin `quarters_fight`, Batalla, al barracón) → marca `warbandcraft:quarters_ordered` y el cuartel no lo toca
+  **Tus órdenes se respetan** (pedido de Ale, 3/11, reemplaza "no los maneja el jugador"): orden = seguir/proteger (1/4/5), Batalla,
+  al barracón, o estado 2/3 con el puesto a >`ORDER_MOVE` (4) del soldado y lejos del punto del cuartel (`playerOrdered`). Estado 0 o
+  "quieto donde está" NO: los pone Recruits solo (`RestGoal`: herido sin objetivo en estado 0 → 0 y al terminar 2; o al elegir
+  objetivo) y antes dejaban de patrullar para siempre. Salir/guardarse mira a cualquiera de la facción del dueño de la aldea
+  (`factionNear`/`factionAway`; antes se guardaba mirando al dueño del soldado: los de un compañero ausente salían y se guardaban
+  sin parar). Otra orden → marca `warbandcraft:quarters_ordered` y el cuartel no lo toca
   hasta que se guarda (dueño lejos) y vuelve a salir (`deployIfNear` borra las marcas de trabajo). Con una invasión FIGHTING
   (`underInvasion`) lo mueve la defensa y queda `quarters_reset`: al terminar vuelve a lo suyo sin contar como orden.
   **Adentro de la muralla** (pedido de Ale, 3/11): `village/InsideWalls` (72 tajadas de ángulo con la distancia a la muralla
