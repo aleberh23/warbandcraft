@@ -17,6 +17,18 @@ public class BarracksEvents {
     private static int CHECK_INTERVAL = 20 * 10;
     private static int QUARTERS_INTERVAL = 40;
 
+    /** Diagnóstico (pedido de Ale: los del cuartel desaparecen): cada vez que uno del cuartel deja el mundo, al log. */
+    @SubscribeEvent
+    public void onLeave(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof com.talhanation.recruits.entities.AbstractRecruitEntity s)) return;
+        if (!s.getPersistentData().contains(com.ale.warbandcraft.village.Quarters.TAG_QUARTERS)) return;
+        net.minecraft.world.entity.Entity.RemovalReason why = s.getRemovalReason();
+        if (why == net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK) return;
+        com.ale.warbandcraft.WarbandCraft.LOGGER.info("Cuartel: {} deja el mundo en {} ({}), estado {}, vida {}, marcas {}",
+                s.getName().getString(), s.blockPosition().toShortString(), why, s.getFollowState(), s.getHealth(),
+                com.ale.warbandcraft.village.Quarters.debugTags(s));
+    }
+
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;

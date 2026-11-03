@@ -143,6 +143,11 @@ public final class Barracks {
         BarracksData data = BarracksData.get(level);
         // Del cuartel de una aldea: vuelve a su lista (no ocupa lugar del barracón, ni es guardia con puesto)
         boolean quarters = com.ale.warbandcraft.village.Quarters.belongsTo(level, soldier, camp);
+        if (soldier.getPersistentData().contains(com.ale.warbandcraft.village.Quarters.TAG_QUARTERS)) {   // diagnóstico
+            String by = StackWalker.getInstance().walk(f -> f.skip(1).limit(3).map(x -> x.getClassName().replaceAll("^.*[.]", "") + "." + x.getMethodName())
+                    .collect(java.util.stream.Collectors.joining(" < ")));
+            WarbandCraft.LOGGER.info("Cuartel: se guarda {} en {} (al cuartel: {}), por {}", soldier.getName().getString(), camp.toShortString(), quarters, by);
+        }
         if (quarters) notGuard = true;
         else if (data.count(camp) >= capacity(level, camp)) return StoreResult.FULL;
 

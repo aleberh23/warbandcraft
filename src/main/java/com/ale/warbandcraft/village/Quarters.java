@@ -325,6 +325,8 @@ public final class Quarters {
                     else pd.remove(TAG_POINT);
                 }
                 if (!pd.getBoolean(TAG_ORDERED) && playerOrdered(s)) {
+                    com.ale.warbandcraft.WarbandCraft.LOGGER.info("Cuartel: {} queda a tus órdenes (estado {}, puesto {}, punto {})", s.getName().getString(),
+                            s.getFollowState(), s.getHoldPos(), pd.contains(TAG_POINT) ? BlockPos.of(pd.getLong(TAG_POINT)).toShortString() : "-");
                     pd.putBoolean(TAG_ORDERED, true);   // pedido de Ale: le diste una orden, se respeta
                     pd.remove(TAG_FIGHT);
                     com.ale.warbandcraft.nav.Mover.Run run = com.ale.warbandcraft.nav.Mover.run(s);
@@ -723,7 +725,15 @@ public final class Quarters {
             out++;
         }
         BarracksData.get(level).changed();
+        if (out > 0) com.ale.warbandcraft.WarbandCraft.LOGGER.info("Cuartel de {}: salen {} del Campamento {}", v.center().toShortString(), out, camp.toShortString());
         return out;
+    }
+
+    /** Diagnóstico: las marcas del cuartel que tiene. */
+    public static String debugTags(AbstractRecruitEntity s) {
+        StringBuilder b = new StringBuilder();
+        for (String t : TAGS) if (s.getPersistentData().contains(t)) b.append(t.replace("warbandcraft:", "")).append(' ');
+        return b.toString().trim();
     }
 
     /** Un paso de la patrulla de {@code s}: de un punto adentro de las murallas a otro. */
