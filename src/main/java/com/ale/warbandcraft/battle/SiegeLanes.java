@@ -135,6 +135,9 @@ public final class SiegeLanes {
         /** Un guía que no encontró el camino que el carril cree abierto: el próximo plan sale de ahí. */
         @Nullable BlockPos planFrom;
         int attackers;
+        /** Diagnóstico: lo más cerca del centro que llegó alguien del carril y cuándo (para avisar si no avanzan). */
+        double bestDist = Double.MAX_VALUE;
+        long bestTick = Long.MIN_VALUE;
 
         Lane(int index, double angle, BlockPos stage) {
             this.index = index;
@@ -294,6 +297,66 @@ public final class SiegeLanes {
         }
         Vec3 goal = groundCenter(level, center);
         for (List<AbstractRecruitEntity> squad : squads(outside)) squad(level, lane, squad, goal, w, center, now);
+        watchProgress(level, host, lane, outside, center, now);
+    }
+
+    /** Diagnóstico (pedido de Ale: se quedaban contra una muralla lisa): un carril que no avanza en 30 s va al log. */
+    public static int STALL_LOG_TICKS = 20 * 30;
+
+    private static void watchProgress(ServerLevel level, Host host, Lane lane, List<AbstractRecruitEntity> outside, BlockPos center, long now) {
+        if (outside.isEmpty()) return;
+        double best = Double.MAX_VALUE;
+        AbstractRecruitEntity lead = null;
+        for (AbstractRecruitEntity s : outside) {
+            double d = dist(s, center);
+            if (d < best) {
+                best = d;
+                lead = s;
+            }
+        }
+        if (best < lane.bestDist - 1.5 || lane.bestTick == Long.MIN_VALUE) {
+            lane.bestDist = best;
+            lane.bestTick = now;
+            return;
+        }
+        if (now - lane.bestTick < STALL_LOG_TICKS) return;
+        lane.bestTick = now;   // de nuevo en 30 s si sigue igual
+        Mover.Run r = Mover.run(lead);
+        String run = r == null ? "sin camino" : r.done ? "llegó" : r.failed ? "falló" : r.paused ? "esperando al grupo"
+                : "paso " + r.i + "/" + r.path.size() + (r.i < r.path.size() ? " -> " + r.path.get(r.i).kind() + " " + blocksAt(level, r.path.get(r.i).blockPos()) : "");
+        log(host, lane, "no avanzan hace " + STALL_LOG_TICKS / 20 + " s (" + outside.size() + " afuera, entrada " + lane.entry + "); el más adelantado en "
+                + lead.blockPosition().toShortString() + " a " + Math.round(best) + " del centro, " + run
+                + ", estado " + lead.getFollowState() + ", objetivo " + (lead.getTarget() == null ? "-" : lead.getTarget().getName().getString()));
+    }
+
+    /** Diagnóstico: los pasos del camino alrededor del muro, con qué bloque hay en los pies, la cabeza y abajo. */
+    private static String describeCrossing(ServerLevel level, List<Step> path, BlockPos center, Breach.Walls w) {
+        int first = -1, last = -1;
+        double outer = (w.walled() ? w.bandMax() : w.radius()) + 3, inner = w.inside() - 1;
+        for (int i = 0; i < path.size(); i++) {
+            double d = Math.sqrt(horizontalSq(path.get(i).blockPos(), center));
+            if (first < 0 && d <= outer) first = i;
+            if (d <= inner) {
+                last = i;
+                break;
+            }
+        }
+        if (first < 0) return "? (el camino no se acerca al muro)";
+        if (last < 0) last = path.size() - 1;
+        StringBuilder b = new StringBuilder();
+        for (int i = first; i <= last && i - first < 10; i++) {
+            Step s = path.get(i);
+            b.append(s.blockPos().toShortString()).append(' ').append(s.kind()).append(' ').append(blocksAt(level, s.blockPos())).append(" | ");
+        }
+        return b.toString();
+    }
+
+    private static String blocksAt(ServerLevel level, BlockPos p) {
+        return "[" + id(level, p.below()) + " / " + id(level, p) + " / " + id(level, p.above()) + "]";
+    }
+
+    private static String id(ServerLevel level, BlockPos p) {
+        return net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(level.getBlockState(p).getBlock()).getPath();
     }
 
     /** Antes del asalto: el carril forma frente a su lado, infantería adelante y arqueros atrás. */
@@ -374,7 +437,8 @@ public final class SiegeLanes {
         crossing(lane, path, center, w, k);
         if (k < 0) {
             if (before != Entry.OPEN) {
-                log(host, lane, lane.ladders.isEmpty() ? "entra por un hueco abierto" : "entra por un hueco o sus escaleras");
+                log(host, lane, (lane.ladders.isEmpty() ? "entra por un hueco abierto" : "entra por un hueco o sus escaleras")
+                        + " — cruza por " + describeCrossing(level, path, center, w));
                 discardCannon(level, lane);
             }
             lane.entry = Entry.OPEN;

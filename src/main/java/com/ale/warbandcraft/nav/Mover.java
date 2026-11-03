@@ -328,6 +328,9 @@ public final class Mover {
         } else if (stuck >= TELEPORT_AFTER) {
             if (++r.teleports > MAX_TELEPORTS) {
                 r.failed = true;
+                com.ale.warbandcraft.WarbandCraft.LOGGER.info("Malla: {} ({}) se rinde trabado en {} yendo a {} ({} {}), paso {}/{}",
+                        s.getName().getString(), r.by, s.blockPosition().toShortString(), BlockPos.containing(np).toShortString(),
+                        r.path.get(Math.min(r.i, r.path.size() - 1)).kind(), level.getBlockState(BlockPos.containing(np)).getBlock(), r.i, r.path.size());
                 return;
             }
             Entity body = s.getVehicle() != null ? s.getVehicle() : s;
