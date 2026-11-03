@@ -61,6 +61,15 @@ public final class SiegeDefenders {
     /** Arqueros: dónde buscan lugar alrededor del cruce, a qué distancia les gusta, separación entre ellos. */
     public static int SPOT_SEARCH = 18;
     public static double SPOT_BEST_DISTANCE = 14, SPOT_SPACING = 2.0, RANGED_REACH = 48;
+    /**
+     * Pedido de Ale: con los defensores en esta parte o menos de los que llegó a haber en la pelea, los arqueros que llevan
+     * una espada en la mochila bajan a pelear de cerca (los que no tienen, siguen tirando). Siguen así hasta que termina.
+     */
+    public static double MELEE_SHARE = 0.35;
+    /** En el soldado: bajó a pelear de cerca en un asedio (game time de la última vuelta en que siguió así). */
+    public static final String TAG_MELEE = "warbandcraft:siege_melee";
+    /** Sin vueltas de la defensa por tanto (ticks), la pelea terminó: vuelve a tirar con el arco. */
+    public static int MELEE_RELEASE_TICKS = 20 * 10;
     /** Puntaje de más para una torre o punto alto de la muralla de la aldea (con vista al carril). */
     public static double HIGH_POINT_BONUS = 10;
     /** Cada cuánto se vuelven a buscar los lugares de los arqueros (ticks). */
@@ -95,6 +104,9 @@ public final class SiegeDefenders {
         final Map<Integer, Long> spotsAt = new HashMap<>();
         final Set<Long> badSpots = new HashSet<>();
         final Set<UUID> cantPush = new HashSet<>();
+        /** Arqueros que bajaron a pelear de cerca, y los más defensores que hubo a la vez. */
+        final Set<UUID> melee = new HashSet<>();
+        int peak;
     }
 
     private static final Map<String, Memory> MEMORY = new HashMap<>();
@@ -117,6 +129,7 @@ public final class SiegeDefenders {
         Memory m = MEMORY.computeIfAbsent(key, k -> new Memory());
         long now = level.getGameTime();
         pathBudget = PATHS_PER_TICK;
+        toMelee(m, defenders, now);
         List<SiegeLanes.LaneInfo> lanes = new ArrayList<>(allLanes);
         lanes.removeIf(l -> l.attackers() == 0);
         if (lanes.isEmpty()) return;
@@ -143,6 +156,64 @@ public final class SiegeDefenders {
         }
     }
 
+    // ------------------------------------------------------------------ arqueros a cuerpo a cuerpo
+
+    /**
+     * Van perdiendo ({@link #MELEE_SHARE}): los arqueros con espada en la mochila dejan su lugar y pasan a defender de a
+     * pie. Se usa el "a distancia / cuerpo a cuerpo" de Recruits ({@code setShouldRanged}): con eso apagado, su IA saca la
+     * espada sola. Una vez abajo, siguen así toda la pelea.
+     */
+    private static void toMelee(Memory m, List<AbstractRecruitEntity> defenders, long now) {
+        m.peak = Math.max(m.peak, defenders.size());
+        boolean losing = defenders.size() <= m.peak * MELEE_SHARE;
+        for (AbstractRecruitEntity s : defenders) {
+            if (m.melee.contains(s.getUUID())) {
+                s.getPersistentData().putLong(TAG_MELEE, now);
+                if (s.getShouldRanged()) s.setShouldRanged(false);
+                continue;
+            }
+            if (!losing || BattleGeneral.roleOf(s) != BattleGeneral.Role.RANGED || !hasSword(s)) continue;
+            m.melee.add(s.getUUID());
+            m.jobs.remove(s.getUUID());
+            Mover.stop(s);
+            s.getPersistentData().putLong(TAG_MELEE, now);
+            s.setShouldRanged(false);
+        }
+    }
+
+    /** Solo la parte de bajar a cuerpo a cuerpo de una vuelta (para las pruebas). */
+    public static void meleeCheck(String key, List<AbstractRecruitEntity> defenders, long now) {
+        toMelee(MEMORY.computeIfAbsent(key, k -> new Memory()), defenders, now);
+    }
+
+    /** Lleva una espada (en la mano o en la mochila). */
+    public static boolean hasSword(AbstractRecruitEntity s) {
+        if (s.getMainHandItem().getItem() instanceof net.minecraft.world.item.SwordItem) return true;
+        net.minecraft.world.Container inv = s.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            if (inv.getItem(i).getItem() instanceof net.minecraft.world.item.SwordItem) return true;
+        }
+        return false;
+    }
+
+    /** Arquero que tira desde un lugar alto (no uno que bajó a pelear de cerca). */
+    private static boolean ranged(Memory m, AbstractRecruitEntity s) {
+        return BattleGeneral.roleOf(s) == BattleGeneral.Role.RANGED && !m.melee.contains(s.getUUID());
+    }
+
+    /** Los que bajaron a pelear de cerca y ya no tienen asedio (terminó, o se guardaron): vuelven al arco. Cada 5 s. */
+    public static void releaseMelee(ServerLevel level) {
+        long now = level.getGameTime();
+        for (AbstractRecruitEntity s : level.getEntities(net.minecraft.world.level.entity.EntityTypeTest.forClass(AbstractRecruitEntity.class),
+                r -> r.isAlive() && r.getPersistentData().contains(TAG_MELEE))) {
+            long last = s.getPersistentData().getLong(TAG_MELEE);
+            if (now - last > MELEE_RELEASE_TICKS || now < last) {
+                s.getPersistentData().remove(TAG_MELEE);
+                s.setShouldRanged(true);
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ repartir
 
     /**
@@ -154,7 +225,7 @@ public final class SiegeDefenders {
         for (SiegeLanes.LaneInfo l : lanes) total += l.attackers();
         Map<Integer, Integer> want = new HashMap<>(), have = new HashMap<>();
         List<AbstractRecruitEntity> foot = new ArrayList<>(), ranged = new ArrayList<>();
-        for (AbstractRecruitEntity s : defenders) (BattleGeneral.roleOf(s) == BattleGeneral.Role.RANGED ? ranged : foot).add(s);
+        for (AbstractRecruitEntity s : defenders) (ranged(m, s) ? ranged : foot).add(s);
         for (SiegeLanes.LaneInfo l : lanes) want.put(l.index(), Math.max(1, (int) Math.round(foot.size() * (double) l.attackers() / Math.max(1, total))));
 
         // Los que ya tienen un trabajo válido lo siguen haciendo
@@ -164,9 +235,9 @@ public final class SiegeDefenders {
             if (a == null) continue;
             SiegeLanes.LaneInfo lane = laneOf(lanes, a.lane());
             boolean ok = lane != null && switch (a.job()) {
-                case ARCHER -> BattleGeneral.roleOf(s) == BattleGeneral.Role.RANGED && a.spot() != null && !m.badSpots.contains(a.spot().asLong());
+                case ARCHER -> ranged(m, s) && a.spot() != null && !m.badSpots.contains(a.spot().asLong());
                 case PUSHER -> a.ladder() != null && lane.ladders().contains(a.ladder()) && !m.cantPush.contains(s.getUUID());
-                case HOLD -> BattleGeneral.roleOf(s) != BattleGeneral.Role.RANGED;
+                case HOLD -> !ranged(m, s);
             };
             if (!ok) {
                 m.jobs.remove(s.getUUID());

@@ -23,6 +23,10 @@ public class SoldierEvents {
         if (server instanceof GameTestServer) return;
         // Escolta: defenderte, teletransporte, nado y botes (cada tick)
         for (ServerLevel level : server.getAllLevels()) com.ale.warbandcraft.ai.Escort.tick(level);
+        // Arqueros que bajaron a pelear de cerca en un asedio que ya terminó: vuelven al arco
+        if (server.getTickCount() % 100 == 0) {
+            for (ServerLevel level : server.getAllLevels()) com.ale.warbandcraft.battle.SiegeDefenders.releaseMelee(level);
+        }
         if (server.getTickCount() % Unstuck.INTERVAL != 0) return;
         for (ServerLevel level : server.getAllLevels()) Unstuck.tick(level);
     }

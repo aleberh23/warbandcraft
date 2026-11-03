@@ -272,6 +272,44 @@ public class H16GameTests {
         h.succeed();
     }
 
+    /**
+     * Asedio: con 10 defensores no baja nadie; al quedar 3 (≤35%), los 2 arqueros con espada en la mochila pasan a cuerpo
+     * a cuerpo y el que no tiene sigue tirando. Terminada la pelea, vuelven al arco.
+     */
+    @GameTest(template = TEMPLATE)
+    public static void siegeArchersGoMeleeWhenLosing(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("recruits", "bowman"));
+        check(type != null, "Recruits no está cargado");
+        List<com.talhanation.recruits.entities.AbstractRecruitEntity> all = new java.util.ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            if (!(h.spawn(type, new BlockPos(1 + i % 7, 2, 1 + i / 7)) instanceof com.talhanation.recruits.entities.AbstractRecruitEntity s)) {
+                throw new GameTestAssertException("recruits:bowman no es un AbstractRecruitEntity");
+            }
+            s.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOW));
+            s.setShouldRanged(true);
+            if (i < 2) s.getInventory().setItem(8, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+            all.add(s);
+        }
+        String key = "test:melee:" + h.absolutePos(BlockPos.ZERO).asLong();
+        long now = level.getGameTime();
+        com.ale.warbandcraft.battle.SiegeDefenders.meleeCheck(key, all, now);
+        check(all.stream().allMatch(s -> s.getShouldRanged()), "bajaron a cuerpo a cuerpo sin ir perdiendo");
+        List<com.talhanation.recruits.entities.AbstractRecruitEntity> left = List.of(all.get(0), all.get(1), all.get(2));
+        com.ale.warbandcraft.battle.SiegeDefenders.meleeCheck(key, left, now);
+        check(!all.get(0).getShouldRanged() && !all.get(1).getShouldRanged(), "los arqueros con espada no bajaron al quedar el 30%");
+        check(all.get(2).getShouldRanged(), "bajó un arquero sin espada");
+        // La pelea terminó hace rato: vuelven al arco
+        for (var s : left) if (s.getPersistentData().contains(com.ale.warbandcraft.battle.SiegeDefenders.TAG_MELEE)) {
+            s.getPersistentData().putLong(com.ale.warbandcraft.battle.SiegeDefenders.TAG_MELEE, now - com.ale.warbandcraft.battle.SiegeDefenders.MELEE_RELEASE_TICKS - 1);
+        }
+        com.ale.warbandcraft.battle.SiegeDefenders.releaseMelee(level);
+        check(left.stream().allMatch(s -> s.getShouldRanged()), "no volvieron al arco al terminar");
+        com.ale.warbandcraft.battle.SiegeDefenders.end(key, List.of());
+        all.forEach(net.minecraft.world.entity.Entity::discard);
+        h.succeed();
+    }
+
     private static String onEach(List<com.talhanation.recruits.entities.AbstractRecruitEntity> archers, BlockPos a, BlockPos b) {
         int na = 0, nb = 0;
         for (var s : archers) {
