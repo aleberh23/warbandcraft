@@ -726,6 +726,50 @@ public final class Works {
         if (level.getBlockState(g.above()).getBlock() instanceof FenceGateBlock) level.destroyBlock(g.above(), false);
     }
 
+    /** Último tick en que se sumó un golpe a cada portón suelto, y cuántos golpearon en ese tick (en memoria). */
+    private static final Map<String, long[]> LOOSE_HITS = new java.util.HashMap<>();
+
+    /**
+     * Un soldado que va por la malla (asedio) está pegado a un portón cerrado ({@code p} = el lugar de la puerta). Si el
+     * portón es de una aldea, lo rompe {@link #tickGates}; si no está anotado en ninguna (empalizada vieja, uno puesto a
+     * mano), lo rompe esto (antes se quedaban golpeándolo para siempre contra la muralla). Llamar cada 10 ticks.
+     */
+    public static void bashFromPath(ServerLevel level, BlockPos p, AbstractRecruitEntity by) {
+        BlockPos g = level.getBlockState(p).getBlock() instanceof FenceGateBlock ? p : p.above();
+        if (!(level.getBlockState(g).getBlock() instanceof FenceGateBlock)) return;
+        if (level.getBlockState(g.below()).getBlock() instanceof FenceGateBlock) g = g.below();
+        for (TownData.Town t : TownData.get(level).all()) {
+            if (t.center.distSqr(g) < 200 * 200 && (t.gates.contains(g) || t.gates.contains(g.below()))) return;   // lo maneja tickGates
+        }
+        String key = level.dimension().location() + "@" + g.asLong();
+        long now = level.getGameTime();
+        long[] hit = LOOSE_HITS.computeIfAbsent(key, k -> new long[]{-1, 0});
+        if (hit[0] == now) {
+            if (hit[1] >= GATE_MAX_BASHERS) return;
+            hit[1]++;
+        } else {
+            hit[0] = now;
+            hit[1] = 1;
+        }
+        BlockState s = level.getBlockState(g);
+        int need = s.is(Blocks.DARK_OAK_FENCE_GATE) ? GATE_BASH_TICKS * 2 : GATE_BASH_TICKS;
+        int done = BASH.getOrDefault(key, 0) + 10;
+        int id = (int) (g.asLong() ^ (g.asLong() >>> 32)) | 0x40000000;
+        by.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (hit[1] == 1) level.playSound(null, g, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.BLOCKS, 0.5F, 0.9F + level.random.nextFloat() * 0.2F);
+        if (done < need) {
+            BASH.put(key, done);
+            level.destroyBlockProgress(id, g, Math.min(9, done * 10 / need));
+            return;
+        }
+        BASH.remove(key);
+        LOOSE_HITS.remove(key);
+        level.destroyBlockProgress(id, g, -1);
+        com.ale.warbandcraft.WarbandCraft.LOGGER.info("Asedio: rompieron un portón suelto (sin anotar en la aldea) en {}", g.toShortString());
+        level.destroyBlock(g, false);
+        if (level.getBlockState(g.above()).getBlock() instanceof FenceGateBlock) level.destroyBlock(g.above(), false);
+    }
+
     /** ¿Ese jugador no puede abrir a mano el portón de {@code pos}? (enemigo de la aldea, o una tuya que no es de tu facción) */
     public static boolean gateLocked(ServerLevel level, BlockPos pos, Player player) {
         if (player.isCreative() || player.isSpectator()) return false;

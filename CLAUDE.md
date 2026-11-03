@@ -1233,7 +1233,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   abre a mano (`UpgradeEvents.onUseGate` → `Works.gateLocked`). Soldado enemigo pegado a un portón cerrado lo golpea:
   `GATE_BASH_TICKS` (600, ×2 si es de muralla; hasta `GATE_MAX_BASHERS` suman) y se rompe. Asedios: `NavCaps.bashGates`
   (INVADER y `siege`) deja pasar por un portón cerrado con costo `GATE_BASH_COST` (12, menos que escalera o TNT) y `Mover` no
-  lo abre: se queda golpeándolo (sin teletransporte). Pruebas: `H12GameTests.ringClosesWithGates`,
+  lo abre: se queda golpeándolo (sin teletransporte). Portón cerrado que no está en ningún `Town.gates` (empalizada vieja, puesto a mano): lo rompe
+  `Works.bashFromPath` (desde `Mover`, cada 10 ticks pegado a él; antes se quedaban para siempre contra la muralla, invasión del 3/11). Pruebas: `H12GameTests.ringClosesWithGates`,
   `H22GameTests.factionGateOpensAndGetsBashed`.
   Edificios: terreno 9×9 con desnivel ≤2 sin caminos ni casas, adentro del anillo o si no afuera; castillos a 27-52.
 - GameTests: el área viene con techo de barreras; la prueba del anillo lo saca.

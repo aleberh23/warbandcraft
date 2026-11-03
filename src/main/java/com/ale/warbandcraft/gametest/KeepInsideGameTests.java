@@ -175,6 +175,26 @@ public class KeepInsideGameTests {
         h.succeed();
     }
 
+    /** Un portón cerrado que no es de ninguna aldea (empalizada vieja, puesto a mano): el que lo golpea lo rompe. */
+    @GameTest(template = BIG, timeoutTicks = 100)
+    public static void looseGateGetsBashed(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos gate = new BlockPos(8, 1, 8);
+        h.setBlock(gate, Blocks.SPRUCE_FENCE_GATE);
+        AbstractRecruitEntity s = (AbstractRecruitEntity) h.spawn(EntityType.byString("recruits:recruit").orElseThrow(), new BlockPos(8, 1, 7));
+        s.setNoAi(true);
+        int before = com.ale.warbandcraft.upgrade.Works.GATE_BASH_TICKS;
+        com.ale.warbandcraft.upgrade.Works.GATE_BASH_TICKS = 30;
+        try {
+            for (int i = 0; i < 3; i++) com.ale.warbandcraft.upgrade.Works.bashFromPath(level, h.absolutePos(gate), s);
+        } finally {
+            com.ale.warbandcraft.upgrade.Works.GATE_BASH_TICKS = before;
+        }
+        check(!h.getBlockState(gate).is(Blocks.SPRUCE_FENCE_GATE), "el portón suelto no se rompió");
+        s.discard();
+        h.succeed();
+    }
+
     /** Un leñador afuera de la aldea: un zombi no lo puede elegir ni lastimar. */
     @GameTest(template = BIG, timeoutTicks = 100)
     public static void workersOutsideAreSafe(GameTestHelper h) {

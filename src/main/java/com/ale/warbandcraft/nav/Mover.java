@@ -178,7 +178,7 @@ public final class Mover {
             if (r.caps.openDoors()) openDoor(level, next.blockPos());
             else if (closedGate(level, next.blockPos())) {   // no lo abre: lo golpea hasta romperlo (Works.tickGates)
                 walk(s, np);
-                if (now % 20 == 0) s.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (now % 10 == 0 && s.position().distanceTo(np) < 2.2) com.ale.warbandcraft.upgrade.Works.bashFromPath(level, next.blockPos(), s);
                 r.bestTick = now;
                 return;
             }
