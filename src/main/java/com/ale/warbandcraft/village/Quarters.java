@@ -769,7 +769,7 @@ public final class Quarters {
             TownData.Town t = TownData.get(level).at(v.center());
             if (t != null && !t.towers.isEmpty()) out = drawnTowerPosts(level, t);   // H22c: torres sueltas
             else if (t != null && t.has(Upgrade.TOWERS) && t.ringRadius > 0) out = towerPosts(level, v.center(), t.ringRadius);
-            if (t != null) out.addAll(wallTopPosts(level, v.center(), t, out));
+            // Pedido de Ale: arriba de la muralla no va nadie, solo a las torres
         }
         out = spread(out);
         POSTS.put(key, new CachedPosts(now, out));

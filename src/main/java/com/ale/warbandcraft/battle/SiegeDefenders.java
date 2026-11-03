@@ -395,7 +395,7 @@ public final class SiegeDefenders {
             all.add(new Scored(p, 2.0 * (p.getY() - baseY) + 6 * seen - 0.4 * Math.abs(d - SPOT_BEST_DISTANCE) + bonus));
         };
         for (BlockPos p : high) consider.accept(p, HIGH_POINT_BONUS);   // primero: así no los pisa la grilla sin el extra
-        // Pedido de Ale: los arqueros tiran desde adentro (o arriba de la muralla de piedra), nunca desde afuera ni arriba de la empalizada
+        // Pedido de Ale: los arqueros tiran desde adentro o desde las torres, nunca desde afuera ni arriba de la muralla o la empalizada
         com.ale.warbandcraft.village.VillageData.Village village = center == null ? null
                 : com.ale.warbandcraft.village.VillageData.get(level).at(center);
         for (int dx = -SPOT_SEARCH; dx <= SPOT_SEARCH; dx += 2) {
@@ -405,7 +405,7 @@ public final class SiegeDefenders {
                     if (NavGrid.flagsAt(level, x, y, z) != 0) continue;   // ni agua, ni escalera, ni puerta
                     BlockPos p = new BlockPos(x, y, z);
                     if (com.ale.warbandcraft.village.InsideWalls.onPalisade(level, p)) continue;
-                    if (village != null && !com.ale.warbandcraft.village.InsideWalls.insideOrOnWall(level, village, p)) continue;
+                    if (village != null && !com.ale.warbandcraft.village.InsideWalls.inside(level, village, p)) continue;
                     consider.accept(p, 0.0);
                 }
             }
@@ -441,9 +441,8 @@ public final class SiegeDefenders {
         if (r != null && r.active()) return;
         if (!(r != null && r.failed) && !takePath()) return;
         NavPath.Bounds b = NavPath.Bounds.around(center, w.radius() + 24);
-        // Primero arriba del muro (de piedra: por la empalizada no se camina, pedido de Ale); si no se llega, al pie de adentro
-        boolean palisade = com.ale.warbandcraft.village.InsideWalls.onPalisade(level, l.wallTop());
-        if (palisade || r != null && r.failed || !Mover.go(s, top, 1.5, caps, b, BY) || !reaches(Mover.run(s), top, 2.5)) {
+        // Al pie de adentro (pedido de Ale: arriba de la muralla no va nadie)
+        {
             BlockPos foot = NavGrid.nearestNode(level, l.inside().atY(l.base().getY()), 2);
             if (foot == null || !Mover.go(s, Vec3.atBottomCenterOf(foot), 1.0, caps, b, BY) || !reaches(Mover.run(s), in, PUSH_REACH + 1)) {
                 Mover.stop(s);
