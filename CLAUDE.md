@@ -289,6 +289,11 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
 - **Toda zona de Workers necesita nombre** (`WorkerZone.ensureName`, en `share` y al cargarse en `CommonEvents.onWorkAreaJoin`):
   sus pantallas usan el nombre como título y sin él el juego del cliente se cae ("Narrating screen", NullPointerException; el
   server solo ve "lost connection: Disconnected"). Workers les pone `""`; las que creábamos nosotros no tenían (bug de Juampi, 2/11).
+- **Nunca entre ellos** (pedido de Ale: al terminar una pelea contra Valdren se mataban entre ellos): `Soldiers.friendly` (soldado o
+  jugador del dueño o de su facción; sin dueño, nunca). `BattleEvents.onChangeTarget` cancela que un soldado tome de objetivo a
+  uno de su bando y `onAttack` (LivingAttackEvent, HIGH) que lo lastime. Recruits deja pasar el daño entre dueños distintos del
+  mismo equipo (fuego amigo del equipo prendido) y manda a todos los del equipo sin objetivo a 32 bloques contra el que pegó,
+  aunque sea del equipo. Prueba: `H16GameTests.soldiersNeverTargetTheirOwnSide`.
 - No compartido: kits y doctrinas (cada jugador tiene los suyos), datos internos del Mercado (`MarketData.owner`), qué aldea elige
   la IA para invadir, la Hueste (es contra un dueño, aunque el aviso y el mapa los ven todos), `VillageData` al cambiar de dueño
   (cambiar entre compañeros también vacía el almacén de números).

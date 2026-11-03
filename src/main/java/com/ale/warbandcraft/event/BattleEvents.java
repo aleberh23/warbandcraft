@@ -34,10 +34,22 @@ public class BattleEvents {
         if (Surrender.tryOnLethalHit(level, soldier, event.getAmount())) event.setCanceled(true);
     }
 
-    /** Nadie elige como objetivo a un rendido. */
+    /**
+     * Nadie elige como objetivo a un rendido. Y un soldado nunca va contra uno de su bando (pedido de Ale: después de
+     * pelear se mataban entre ellos; Recruits manda a los de un equipo contra el que le pegó a uno, aunque sea del equipo).
+     */
     @SubscribeEvent
     public void onChangeTarget(LivingChangeTargetEvent event) {
         if (event.getNewTarget() != null && Surrender.is(event.getNewTarget())) event.setCanceled(true);
+        else if (event.getEntity() instanceof AbstractRecruitEntity s && !s.level().isClientSide()
+                && Soldiers.friendly(s, event.getNewTarget())) event.setCanceled(true);
+    }
+
+    /** Un soldado no lastima a otro de su bando: golpe, flecha o cañonazo (Recruits lo deja pasar entre dueños distintos). */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (event.getEntity().level().isClientSide() || !(event.getSource().getEntity() instanceof AbstractRecruitEntity attacker)) return;
+        if (event.getEntity() instanceof AbstractRecruitEntity && Soldiers.friendly(attacker, event.getEntity())) event.setCanceled(true);
     }
 
     /** Un rendido que se vuelve a cargar sigue quieto (el modificador de velocidad no se guarda). */

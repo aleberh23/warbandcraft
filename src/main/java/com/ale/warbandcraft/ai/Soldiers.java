@@ -22,6 +22,20 @@ public final class Soldiers {
         return id != null && WORKERS_MOD.equals(id.getNamespace());
     }
 
+    /**
+     * Del mismo bando que {@code soldier} (con dueño): un soldado o un jugador de su dueño o de su facción de Recruits
+     * (pedido de Ale: después de una pelea se mataban entre ellos). Sin dueño (guarniciones de la IA), nunca.
+     */
+    public static boolean friendly(com.talhanation.recruits.entities.AbstractRecruitEntity soldier, @org.jetbrains.annotations.Nullable Entity other) {
+        java.util.UUID owner = soldier.getOwnerUUID();
+        if (owner == null || other == null || other == soldier) return false;
+        if (other instanceof net.minecraft.world.entity.player.Player p) return com.ale.warbandcraft.faction.Allies.same(owner, p.getUUID());
+        if (other instanceof com.talhanation.recruits.entities.AbstractRecruitEntity r) {
+            return r.getOwnerUUID() != null && com.ale.warbandcraft.faction.Allies.same(owner, r.getOwnerUUID());
+        }
+        return false;
+    }
+
     /** Lo contrario: un soldado de verdad (cualquier entidad que no sea un trabajador). */
     public static boolean isSoldier(Entity entity) {
         return !isWorker(entity);

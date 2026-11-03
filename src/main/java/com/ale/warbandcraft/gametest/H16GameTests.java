@@ -310,6 +310,32 @@ public class H16GameTests {
         h.succeed();
     }
 
+    /** Un soldado no toma como objetivo a otro del mismo dueño (ni lo lastima); a uno de otro dueño sin facción, sí. */
+    @GameTest(template = TEMPLATE)
+    public static void soldiersNeverTargetTheirOwnSide(GameTestHelper h) {
+        EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("recruits", "recruit"));
+        check(type != null, "Recruits no está cargado");
+        UUID me = UUID.randomUUID(), other = UUID.randomUUID();
+        com.talhanation.recruits.entities.AbstractRecruitEntity[] s = new com.talhanation.recruits.entities.AbstractRecruitEntity[3];
+        for (int i = 0; i < 3; i++) {
+            if (!(h.spawn(type, new BlockPos(2 + 2 * i, 2, 4)) instanceof com.talhanation.recruits.entities.AbstractRecruitEntity r)) {
+                throw new GameTestAssertException("recruits:recruit no es un AbstractRecruitEntity");
+            }
+            r.setOwnerUUID(java.util.Optional.of(i < 2 ? me : other));
+            r.setIsOwned(true);
+            s[i] = r;
+        }
+        s[0].setTarget(s[1]);
+        check(s[0].getTarget() == null, "un soldado le apuntó a otro del mismo dueño");
+        s[0].setTarget(s[2]);
+        check(s[0].getTarget() == s[2], "no le apunta a uno de otro dueño");
+        float before = s[1].getHealth();
+        s[1].hurt(h.getLevel().damageSources().mobAttack(s[0]), 4);
+        check(s[1].getHealth() == before, "un soldado lastimó a otro del mismo dueño");
+        for (var r : s) r.discard();
+        h.succeed();
+    }
+
     private static String onEach(List<com.talhanation.recruits.entities.AbstractRecruitEntity> archers, BlockPos a, BlockPos b) {
         int na = 0, nb = 0;
         for (var s : archers) {
