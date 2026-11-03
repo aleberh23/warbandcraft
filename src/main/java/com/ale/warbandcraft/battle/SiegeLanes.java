@@ -138,6 +138,8 @@ public final class SiegeLanes {
         /** Diagnóstico: lo más cerca del centro que llegó alguien del carril y cuándo (para avisar si no avanzan). */
         double bestDist = Double.MAX_VALUE;
         long bestTick = Long.MIN_VALUE;
+        /** Los lugares por donde el plan cruza el muro cuando cree que hay hueco (si no pasan, se cierran en la malla). */
+        List<BlockPos> crossCells = List.of();
 
         Lane(int index, double angle, BlockPos stage) {
             this.index = index;
@@ -304,7 +306,11 @@ public final class SiegeLanes {
     public static int STALL_LOG_TICKS = 20 * 30;
 
     private static void watchProgress(ServerLevel level, Host host, Lane lane, List<AbstractRecruitEntity> outside, BlockPos center, long now) {
-        if (outside.isEmpty()) return;
+        if (outside.isEmpty()) {   // todos peleando o adentro: eso es avanzar
+            lane.bestDist = Double.MAX_VALUE;
+            lane.bestTick = now;
+            return;
+        }
         double best = Double.MAX_VALUE;
         AbstractRecruitEntity lead = null;
         for (AbstractRecruitEntity s : outside) {
@@ -327,6 +333,30 @@ public final class SiegeLanes {
         log(host, lane, "no avanzan hace " + STALL_LOG_TICKS / 20 + " s (" + outside.size() + " afuera, entrada " + lane.entry + "); el más adelantado en "
                 + lead.blockPosition().toShortString() + " a " + Math.round(best) + " del centro, " + run
                 + ", estado " + lead.getFollowState() + ", objetivo " + (lead.getTarget() == null ? "-" : lead.getTarget().getName().getString()));
+        // Pedido de Ale (se quedaban contra una muralla lisa): el hueco que ve la malla no sirve. Se cierra un rato y se
+        // vuelve a planear: escaleras, o romper con el zapador.
+        if (lane.entry == Entry.OPEN && !lane.crossCells.isEmpty()) {
+            com.ale.warbandcraft.nav.NavGrid.block(level, lane.crossCells, FALSE_GAP_TICKS);
+            log(host, lane, "por ese hueco no pasan: se cierra " + FALSE_GAP_TICKS / 20 + " s y se busca otra entrada");
+            lane.crossCells = List.of();
+            lane.planned = Long.MIN_VALUE / 2;
+            for (AbstractRecruitEntity s : outside) Mover.stop(s);
+        }
+    }
+
+    /** Un hueco por el que el carril no pudo pasar queda cerrado en la malla tanto tiempo (ticks). */
+    public static int FALSE_GAP_TICKS = 20 * 60 * 5;
+
+    /** Los lugares del camino del lado de afuera del muro hasta el de adentro (lo que se cierra si no pasan). */
+    private static List<BlockPos> crossingCells(List<Step> path, BlockPos center, Breach.Walls w) {
+        double outer = (w.walled() ? w.bandMax() : w.radius()) + 1, inner = w.inside() - 1;
+        List<BlockPos> out = new ArrayList<>();
+        for (Step s : path) {
+            double d = Math.sqrt(horizontalSq(s.blockPos(), center));
+            if (d <= inner) break;
+            if (d <= outer && s.kind() != Step.Kind.LADDER && s.kind() != Step.Kind.DOOR) out.add(s.blockPos());
+        }
+        return out;
     }
 
     /** Diagnóstico: los pasos del camino alrededor del muro, con qué bloque hay en los pies, la cabeza y abajo. */
@@ -436,6 +466,7 @@ public final class SiegeLanes {
         int k = climb < 0 ? brk : brk < 0 ? climb : Math.min(climb, brk);
         crossing(lane, path, center, w, k);
         if (k < 0) {
+            lane.crossCells = crossingCells(path, center, w);
             if (before != Entry.OPEN) {
                 log(host, lane, (lane.ladders.isEmpty() ? "entra por un hueco abierto" : "entra por un hueco o sus escaleras")
                         + " — cruza por " + describeCrossing(level, path, center, w));

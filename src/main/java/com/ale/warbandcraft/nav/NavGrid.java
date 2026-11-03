@@ -69,6 +69,25 @@ public final class NavGrid {
 
     public static void clear() {
         CACHE.clear();
+        BLOCKED.clear();
+    }
+
+    /** Lugares que la malla cree pasables pero por donde en la práctica no se pasó (asedios trabados): lugar → hasta cuándo. */
+    private static final Map<Long, Long> BLOCKED = new HashMap<>();
+
+    /** Durante {@code ticks}, nadie planea pasar por esos lugares. */
+    public static void block(Level level, java.util.Collection<BlockPos> cells, long ticks) {
+        long until = level.getGameTime() + ticks;
+        for (BlockPos p : cells) BLOCKED.put(p.asLong(), until);
+    }
+
+    private static boolean blocked(ServerLevel level, int x, int y, int z) {
+        if (BLOCKED.isEmpty()) return false;
+        Long until = BLOCKED.get(BlockPos.asLong(x, y, z));
+        if (until == null) return false;
+        if (level.getGameTime() < until) return true;
+        BLOCKED.remove(BlockPos.asLong(x, y, z));
+        return false;
     }
 
     /** Algo cambió en {@code pos}: esa franja de esa columna (y las de al lado) se vuelve a medir. */
@@ -279,6 +298,7 @@ public final class NavGrid {
         if (best < 0) return;
         int ny = c.ys()[best];
         byte f = c.flags()[best];
+        if (blocked(level, nx, ny, nz)) return;
         // Subir: lugar para la cabeza al saltar. Bajar: el aire de la columna de al lado hasta donde se cae.
         if (ny == y + 1 && !free(level, x, y + 2, z)) return;
         if (ny < y) for (int yy = ny + 2; yy <= y + 1; yy++) if (!free(level, nx, yy, nz)) return;

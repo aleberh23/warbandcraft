@@ -1156,6 +1156,9 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   1 de ancho × 2 de alto atravesando todo el muro): sin cráter, abre solo eso si explota a ≤4,5 (`MyFactionEvents.onSiegeBlast`,
   pedido de Ale). El carril no cambia de punto hasta abrirlo (`committed`). Túnel: sube hasta 16 (`Breach.TUNNEL_RISE`).
   Guía sin camino directo a un hueco lejano: primero va por afuera hasta `lane.outside` y de ahí adentro.
+  **Hueco falso** (pedido de Ale, 3/11: se quedaban contra una muralla lisa con el carril en "hueco abierto"): si un carril
+  OPEN no acerca a nadie 1,5 bloques en `STALL_LOG_TICKS` (30 s), los lugares por donde cruzaba (`Lane.crossCells`) se cierran
+  en la malla `FALSE_GAP_TICKS` (5 min, `NavGrid.block`) y se replanea: escaleras o romper. El log dice "cruza por ..." con los bloques.
 - Tus soldados a ≤64 de la aldea invadida que no son del cuartel, no te siguen (estado 1/5) ni están en Batalla se suman
   a `SiegeDefenders` (`SiegeDefense.helpers`, marca `warbandcraft:defense_helper` con su orden) y al terminar la recuperan.
 - **Barra de quién va ganando** (`battle/BattleBar`, estilo Total War): una barra que se llena con la parte de soldados
