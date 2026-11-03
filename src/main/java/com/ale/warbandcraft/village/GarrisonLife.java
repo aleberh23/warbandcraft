@@ -5,8 +5,6 @@ import com.ale.warbandcraft.battle.SiegeLanes;
 import com.ale.warbandcraft.invasion.AiWars;
 import com.ale.warbandcraft.invasion.InvasionData;
 import com.ale.warbandcraft.nav.Mover;
-import com.ale.warbandcraft.nav.NavCaps;
-import com.ale.warbandcraft.nav.NavPath;
 import com.ale.warbandcraft.raid.RaidManager;
 import com.ale.warbandcraft.upgrade.Blueprints;
 import com.ale.warbandcraft.upgrade.TownData;
@@ -43,16 +41,15 @@ public final class GarrisonLife {
     /** Patrulla: cuánto espera en cada punto (ticks, mínimo + al azar) y cuánto le da para llegar. */
     public static int WAIT_MIN = 20 * 6, WAIT_EXTRA = 20 * 12, GIVE_UP = 20 * 45;
     /**
-     * Arquero a tanto de su torre y a otra altura: sube caminando por la malla de H17 (escaleras de mano). Pedido de Ale:
-     * nunca aparece arriba; si no hay camino o no llega en {@link #TOWER_GIVE_UP}, deja esa torre.
+     * Arquero a tanto (horizontal) de su puesto y a otra altura, o sea al pie de su torre: aparece arriba (pedido de Ale:
+     * no saben trepar; hasta el pie van caminando). Si no llega al pie en {@link #TOWER_GIVE_UP}, deja esa torre.
      */
-    public static double NAV_DISTANCE = 40;
+    public static double FOOT_DISTANCE = 6;
     public static long TOWER_GIVE_UP = 20 * 90;
     /** Una pelea más lejos que esto del centro (más el radio de patrulla) se deja: vuelven a la aldea (sin muralla). */
     public static int CHASE_MARGIN = 16;
     /** El arquero tira hasta esta distancia (desde su lugar, sin moverse). */
     public static double ARCHER_RANGE = 32;
-    private static final String BY = "garrison";
 
     private enum Kind { TOWER, GATE, MARKET, PLAZA, PATROL, CAPTAIN }
 
@@ -61,7 +58,6 @@ public final class GarrisonLife {
         Vec3 at;
         BlockPos around;   // MARKET: el medio de la ronda
         Vec3 fightAt;   // arquero sin torre peleando: dónde se paró
-        long climbTried = Long.MIN_VALUE / 2;
         long since, waitUntil;
     }
 
@@ -216,16 +212,12 @@ public final class GarrisonLife {
                     DUTIES.remove(s.getUUID());
                     return;
                 }
-                if (!onPost && dx * dx + dz * dz <= NAV_DISTANCE * NAV_DISTANCE && Math.abs(s.getY() - d.at.y) > 1.5
-                        && now - d.climbTried >= 20 * 10) {
-                    if (s.isPassenger()) s.stopRiding();
-                    d.climbTried = now;
-                    if (!Mover.go(s, d.at, 0.6, NavCaps.SOLDIER, NavPath.Bounds.around(post, (int) NAV_DISTANCE + 8), BY) || !reaches(Mover.run(s), d.at)) {
-                        Mover.stop(s);
-                        Quarters.markUnreachable(s, post, now);
-                        DUTIES.remove(s.getUUID());
-                    }
-                    return;
+                if (!onPost && dx * dx + dz * dz <= FOOT_DISTANCE * FOOT_DISTANCE && Math.abs(s.getY() - d.at.y) > 1.5) {
+                    if (s.isPassenger()) s.stopRiding();   // al pie de la torre: aparece arriba
+                    Mover.stop(s);
+                    s.teleportTo(d.at.x, d.at.y, d.at.z);
+                    s.getNavigation().stop();
+                    d.since = now;
                 }
                 hold(s, d.at);
             }
@@ -233,13 +225,6 @@ public final class GarrisonLife {
             case PATROL -> patrol(level, v, v.center(), s, d, radius - 4, now);
             case MARKET -> patrol(level, v, d.around, s, d, MARKET_RADIUS, now);
         }
-    }
-
-    /** El camino termina en el puesto (arriba de la torre, no al pie). */
-    private static boolean reaches(@Nullable Mover.Run r, Vec3 at) {
-        if (r == null || r.path.isEmpty()) return false;
-        Vec3 end = r.path.get(r.path.size() - 1).center();
-        return Math.abs(end.y - at.y) <= 1 && end.distanceToSqr(at.x, end.y, at.z) <= 2.25;
     }
 
     private static void patrol(ServerLevel level, VillageData.Village v, BlockPos around, AbstractRecruitEntity s, Duty d, int radius, long now) {

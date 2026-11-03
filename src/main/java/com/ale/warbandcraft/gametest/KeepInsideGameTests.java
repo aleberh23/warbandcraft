@@ -123,9 +123,9 @@ public class KeepInsideGameTests {
         h.succeed();
     }
 
-    /** Torre sin escalera: el arquero no aparece arriba; deja ese puesto y no lo vuelve a probar enseguida. */
+    /** Arquero de torre: lejos camina (no aparece arriba); al pie de la torre aparece arriba. */
     @GameTest(template = BIG, timeoutTicks = 200)
-    public static void towerWithoutPathNoTeleport(GameTestHelper h) {
+    public static void towerArcherWalksToFootThenGoesUp(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         openSky(h);
         VillageData.Village v = village(h);
@@ -141,14 +141,18 @@ public class KeepInsideGameTests {
             data.changed();
             List<BlockPos> posts = Quarters.posts(level, v);
             check(!posts.isEmpty(), "la torre no tiene puestos");
-            AbstractRecruitEntity archer = soldier(h, "recruits:bowman", new BlockPos(10, 1, 10), Items.BOW, v);
-            double y0 = archer.getY();
+            // Lejos de la torre: no aparece arriba (camina hasta el pie)
+            AbstractRecruitEntity far = soldier(h, "recruits:bowman", new BlockPos(14, 1, 14), Items.BOW, v);
+            double y0 = far.getY();
             Quarters.tick(level);
             Quarters.tick(level);
-            check(archer.getY() < y0 + 2, "el arquero apareció arriba de la torre");
-            check(!archer.getPersistentData().getBoolean("warbandcraft:quarters_tower"), "sigue con un puesto al que no puede llegar");
-            check(Quarters.unreachable(archer, posts.get(0), level.getGameTime()), "no se anotó que no llega");
-            archer.discard();
+            check(far.getPersistentData().getBoolean("warbandcraft:quarters_tower"), "el arquero no tomó la torre");
+            check(far.getY() < y0 + 2, "el arquero lejos apareció arriba de la torre");
+            // Ya al pie de la torre: sube (aparece arriba)
+            far.teleportTo(h.absolutePos(new BlockPos(5, 1, 3)).getX() + 0.5, y0, h.absolutePos(new BlockPos(5, 1, 3)).getZ() + 0.5);
+            Quarters.tick(level);
+            check(far.getY() >= y0 + 8, "el arquero al pie de la torre no subió (y " + (far.getY() - y0) + ")");
+            far.discard();
         } finally {
             cleanup(h, v);
         }

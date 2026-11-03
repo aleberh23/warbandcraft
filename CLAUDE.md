@@ -476,7 +476,7 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   estado 3, espera 5-15 s, a los 60 s sin llegar cambia. Arqueros/ballesteros a pie (`BattleGeneral.roleOf` RANGED) →
   puestos de torre (`Quarters.posts`, cache 1 min): aldea con mejora Torres = `towerPosts` (escalera más alta de cada
   columna en el anillo ±4; techo = escalera.relative(FACING).above sobre ladrillos; 4 por torre); castillo =
-  `BattleGeneral.wallPosts`. Suben caminando por la malla de H17 (nunca aparecen arriba). Sin puesto, patrullan.
+  `BattleGeneral.wallPosts`. Caminan hasta el pie de la torre y ahí aparecen arriba (`FOOT_DISTANCE`; pedido de Ale: no trepan escaleras). Sin puesto, patrullan.
   Pedido de Ale (a probar): también puntos altos arriba de la muralla **de piedra con almenas** (`wallTopPosts` +
   `behindBattlement`: de la empalizada se caían; dibujada o anillo, uno cada
   `WALL_POST_SPACING`); `spread` ordena los puestos intercalando torres/puntos (grupos lo más separados) y `assignTowers`
@@ -503,8 +503,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   dibujada / anillo / castillo; huecos y portones toman la de las vecinas; sin muralla = territorio o `PATROL_RADIUS`+8). Los de
   a pie solo pelean con lo que está adentro (si se va afuera lo dejan); los arqueros (de torre o no) tiran a ≤`TOWER_RANGE` con
   vista sin cambiar de orden (el que patrullaba se para donde está). Puntos de patrulla adentro y nunca sobre troncos/cercos/
-  almenas (`InsideWalls.onPalisade`). **Sin teletransportes**: a la torre caminando (Recruits lejos, la malla de H17 a ≤
-  `NAV_DISTANCE`); sin camino o sin llegar en `TOWER_GIVE_UP` deja la torre (`markUnreachable`, toda la torre, `UNREACHABLE_TICKS`).
+  almenas (`InsideWalls.onPalisade`). **Sin teletransportes** salvo subir a la torre: caminan hasta el pie (Recruits) y a ≤`FOOT_DISTANCE`
+  (8, guarnición 6) del puesto aparecen arriba (pedido de Ale: trepar escaleras no saben); sin llegar al pie en `TOWER_GIVE_UP` deja la torre (`markUnreachable`, toda la torre, `UNREACHABLE_TICKS`).
   `Unstuck` a los del cuartel solo los hace saltar. Salen del cuartel guardado en el Campamento de la aldea y caminan.
   Prueba: `KeepInsideGameTests`.
   Aldea perdida = deja el cuartel quieto (estado 2). Gestión → pestaña Tropas: filas por clase con →1 →T ←1 ←T
@@ -611,7 +611,7 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   la conquista un jugador → `RecruitsClaimBridge.claimVillage` se queda con ese claim (le saca admin y los permisos) y
   `Territory.ensure` lo adopta entero; si no se pudo, `release` lo saca. Prueba: `ClaimGameTests`.
 - `village/GarrisonLife` (cada 2 s, aldeas/castillos de facción cargados y en paz: sin raid ni batalla entre facciones):
-  arqueros a las torres / muros del castillo (`Quarters.posts`; suben caminando por la malla, sin camino otra torre; tiran
+  arqueros a las torres / muros del castillo (`Quarters.posts`; caminan al pie y aparecen arriba, sin llegar otra torre; tiran
   desde su lugar sin moverse), todos adentro de la muralla (`InsideWalls`: patrulla, y los de a pie no persiguen afuera), `GATE_GUARDS` por portón del anillo
   (`gates`: huecos de la empalizada sobre caminos), `MARKET_GUARDS` (2, pedido de Ale) rondan a ≤`MARKET_RADIUS` del puesto del
   Mercader (`Market.workplace`), `PLAZA_SHARE` en la campana, el resto patrulla con paradas; con un

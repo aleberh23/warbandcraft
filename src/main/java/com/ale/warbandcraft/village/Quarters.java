@@ -64,9 +64,12 @@ public final class Quarters {
     /** Al llegar a un punto se queda parado entre 5 y 15 s; si en 60 s no llegó, va a otro. */
     public static int WAIT_MIN = 100, WAIT_EXTRA = 200, GIVE_UP = 20 * 60;
     public static double ARRIVE = 2.5;
-    /** Arquero de torre: a esta distancia (horizontal) de su puesto va por la malla de H17 (escaleras incluidas), caminando. */
-    public static double NAV_DISTANCE = 40;
-    /** Arquero que no llega a su puesto en tanto (ticks), o sin camino: prueba otro y ese no lo vuelve a probar por un rato. */
+    /**
+     * Arquero de torre: camina hasta el pie de la torre y, a esta distancia (horizontal) de su puesto, aparece arriba
+     * (pedido de Ale: no saben trepar escaleras; desde adentro de la torre está bien que suban así).
+     */
+    public static double FOOT_DISTANCE = 8;
+    /** Arquero que no llega al pie de su torre en tanto (ticks): prueba otra y esa no la vuelve a probar por un rato. */
     public static long TOWER_GIVE_UP = 20 * 90, UNREACHABLE_TICKS = 20 * 60 * 5;
     /** Arquero a menos de esto (horizontal) de su puesto y a su altura: queda clavado ahí (no lo corre Recruits al tirar). */
     public static double PIN_DISTANCE = 1.2;
@@ -628,9 +631,8 @@ public final class Quarters {
     }
 
     /**
-     * Arquero de torre: va caminando a su puesto. Lejos, lo lleva Recruits; cerca ({@link #NAV_DISTANCE}) y a otra
-     * altura, la malla de H17 (sube por la escalera de la torre). Pedido de Ale: nunca aparece arriba; si no hay camino
-     * o no llega en {@link #TOWER_GIVE_UP}, deja ese puesto (prueba otro, o patrulla).
+     * Arquero de torre: va caminando hasta el pie de su torre (lo lleva Recruits) y, ya ahí ({@link #FOOT_DISTANCE}),
+     * aparece arriba. Si no llega al pie en {@link #TOWER_GIVE_UP}, deja esa torre (prueba otra, o patrulla).
      */
     private static void guardTower(ServerLevel level, AbstractRecruitEntity s, long now) {
         CompoundTag pd = s.getPersistentData();
@@ -644,20 +646,13 @@ public final class Quarters {
             giveUpPost(s, post, now);
             return;
         }
-        if (!onPost && horizontalDistSq(s.position(), post) <= NAV_DISTANCE * NAV_DISTANCE && Math.abs(s.getY() - at.y) > 1.5) {
+        if (!onPost && horizontalDistSq(s.position(), post) <= FOOT_DISTANCE * FOOT_DISTANCE && Math.abs(s.getY() - at.y) > 1.5) {
+            // Al pie de la torre: sube (aparece arriba; las escaleras no las saben trepar)
             if (s.isPassenger()) s.stopRiding();
-            Long last = CLIMB_TRIED.get(s.getUUID());
-            if (last == null || now - last >= 20 * 10) {   // camino nuevo cada 10 s como mucho (el A* es caro)
-                CLIMB_TRIED.put(s.getUUID(), now);
-                if (!com.ale.warbandcraft.nav.Mover.go(s, at, 0.6, com.ale.warbandcraft.nav.NavCaps.SOLDIER,
-                        com.ale.warbandcraft.nav.NavPath.Bounds.around(post, (int) NAV_DISTANCE + 8), BY)
-                        || !reachesPost(com.ale.warbandcraft.nav.Mover.run(s), at)) {
-                    com.ale.warbandcraft.nav.Mover.stop(s);
-                    giveUpPost(s, post, now);   // no hay cómo subir caminando: otro puesto
-                    return;
-                }
-                return;
-            }
+            com.ale.warbandcraft.nav.Mover.stop(s);
+            s.teleportTo(at.x, at.y, at.z);
+            s.getNavigation().stop();
+            pd.putLong(TAG_SINCE, now);
         }
         LivingEntity target = s.getTarget();
         if (target != null && target.isAlive()) return;   // tirando
@@ -669,9 +664,6 @@ public final class Quarters {
         }
     }
 
-    /** Última vez que se le buscó camino por la malla a cada arquero de torre (game time). */
-    private static final Map<UUID, Long> CLIMB_TRIED = new java.util.HashMap<>();
-
     /** No llega a ese puesto: lo anota y queda libre para otro (o patrulla). */
     private static void giveUpPost(AbstractRecruitEntity s, BlockPos post, long now) {
         markUnreachable(s, post, now);
@@ -681,12 +673,6 @@ public final class Quarters {
         pin(s, false);
     }
 
-    /** El camino termina arriba, en el puesto (no al pie de la torre). */
-    private static boolean reachesPost(@Nullable com.ale.warbandcraft.nav.Mover.Run r, Vec3 at) {
-        if (r == null) return false;
-        Vec3 end = r.path.get(r.path.size() - 1).center();
-        return Math.abs(end.y - at.y) <= 1 && end.distanceToSqr(at.x, end.y, at.z) <= 2.25;
-    }
 
     /**
      * Si el dueño está cerca y la aldea cargada, salen los del cuartel que estaban guardados: aparecen en el Campamento de
