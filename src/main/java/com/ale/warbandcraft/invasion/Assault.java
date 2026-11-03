@@ -525,7 +525,7 @@ public final class Assault {
         }
         if (gone < invaders.size()) return false;
         WarReports.record(level, inv, WarReports.Outcome.RETREATED, true, inv.attackers, inv.peakDefenders,
-                Math.max(0, inv.peakDefenders - Invasions.defenders(level, inv)));
+                Math.max(Invasions.fallen(inv.target), inv.peakDefenders - Invasions.defenders(level, inv)));
         end(level, inv);
         InvasionData.get(level).remove(inv.target);
         ServerPlayer p = level.getServer().getPlayerList().getPlayer(inv.owner);

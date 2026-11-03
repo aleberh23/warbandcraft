@@ -23,6 +23,9 @@ public class BarracksEvents {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof com.talhanation.recruits.entities.AbstractRecruitEntity s)) return;
         if (!s.getPersistentData().contains(com.ale.warbandcraft.village.Quarters.TAG_QUARTERS)) return;
         net.minecraft.world.entity.Entity.RemovalReason why = s.getRemovalReason();
+        if (why == net.minecraft.world.entity.Entity.RemovalReason.KILLED && s.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            com.ale.warbandcraft.invasion.Invasions.noteFallen(sl, net.minecraft.core.BlockPos.of(s.getPersistentData().getLong(com.ale.warbandcraft.village.Quarters.TAG_QUARTERS)));
+        }
         if (why == net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK) return;
         com.ale.warbandcraft.WarbandCraft.LOGGER.info("Cuartel: {} deja el mundo en {} ({}), estado {}, vida {}, marcas {}",
                 s.getName().getString(), s.blockPosition().toShortString(), why, s.getFollowState(), s.getHealth(),

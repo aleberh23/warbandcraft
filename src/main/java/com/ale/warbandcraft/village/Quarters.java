@@ -424,6 +424,8 @@ public final class Quarters {
         // Estado 0 o "quieto acá" (2 con el puesto donde está) lo pone Recruits solo: al terminar una pelea, al descansar
         // herido (RestGoal: 0 y después 2) o al elegir un objetivo. Eso no es una orden tuya (antes los dejaba sin patrullar).
         if (state != HOLD && state != BACK_TO_POS) return false;
+        // Sin punto del cuartel (dejó una torre a la que no llegaba, terminó una invasión): el puesto viejo no es orden tuya
+        if (!pd.contains(TAG_POINT)) return false;
         Vec3 hold = s.getHoldPos();
         if (hold == null) return false;
         if (pd.contains(TAG_POINT) && hold.distanceToSqr(Vec3.atBottomCenterOf(BlockPos.of(pd.getLong(TAG_POINT)))) <= 2.25) return false;

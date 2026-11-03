@@ -309,7 +309,7 @@ public final class Invasions {
         }
         if (left.isEmpty() && inv.reserve <= 0) {
             WarReports.record(level, inv, WarReports.Outcome.REPELLED, true, inv.attackers, inv.peakDefenders,
-                    Math.max(0, inv.peakDefenders - defs));
+                    Math.max(fallen(inv.target), inv.peakDefenders - defs));
             Assault.end(level, inv);
             data.remove(inv.target);
             com.ale.warbandcraft.village.Popularity.attacked(level, inv.target);   // H21: la gente se asustó
@@ -371,6 +371,21 @@ public final class Invasions {
     // ------------------------------------------------------------------ autoresolución
 
     /** Resultado de una autoresolución (para las pruebas). */
+    /** Defensores tuyos (cuartel, refuerzos) caídos en cada invasión peleada, en memoria (el parte restaba y con refuerzos daba 0). */
+    private static final java.util.Map<Long, Integer> FALLEN = new java.util.HashMap<>();
+
+    /** Cayó uno del cuartel de la aldea {@code center}: si hay una invasión peleándose ahí, cuenta. */
+    public static void noteFallen(ServerLevel level, BlockPos center) {
+        InvasionData.Invasion inv = InvasionData.get(level).at(center);
+        if (inv != null && inv.state == InvasionData.State.FIGHTING) FALLEN.merge(center.asLong(), 1, Integer::sum);
+    }
+
+    /** Los caídos de esa invasión (y se olvida). */
+    public static int fallen(BlockPos center) {
+        Integer n = FALLEN.remove(center.asLong());
+        return n == null ? 0 : n;
+    }
+
     public record Result(boolean defended, double attack, double defense, int guardsLost) {}
 
     public static Result autoresolve(ServerLevel level, InvasionData.Invasion inv, VillageData.Village v) {
