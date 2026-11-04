@@ -1,0 +1,59 @@
+# Hace operador a un jugador: lo agrega a ops.json por SFTP y reinicia el servidor (la clave del panel no deja mandar
+# comandos de consola). Servidor sin cuenta de Mojang: el UUID es el "offline" del nombre.
+# gh workflow run dar-op.yml -f nombre=alito23
+name: Dar operador
+
+on:
+  workflow_dispatch:
+    inputs:
+      nombre:
+        description: Nombre del jugador
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  SFTP_HOST: gs-04.baires.host
+  SFTP_PORT: "2022"
+  SFTP_USER: jj87kdav.d607d01a
+  PANEL_URL: https://panel.baires.host
+  SERVER_ID: d607d01a-7510-4525-85ee-3eec3e17f2c8
+
+jobs:
+  op:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Agregar a ops.json
+        env:
+          LFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          NOMBRE: ${{ inputs.nombre }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp > /dev/null
+          lftp -c "set sftp:auto-confirm yes; open --env-password -u $SFTP_USER -p $SFTP_PORT sftp://$SFTP_HOST; get -e /ops.json -o ops.json" || true
+          [ -s ops.json ] || echo '[]' > ops.json
+          python3 - <<'PY'
+          import hashlib, json, os, uuid
+          name = os.environ["NOMBRE"]
+          h = bytearray(hashlib.md5(("OfflinePlayer:" + name).encode()).digest())
+          h[6] = h[6] & 0x0f | 0x30; h[8] = h[8] & 0x3f | 0x80
+          u = str(uuid.UUID(bytes=bytes(h)))
+          ops = [o for o in json.load(open("ops.json")) if o.get("uuid") != u and o.get("name") != name]
+          ops.append({"uuid": u, "name": name, "level": 4, "bypassesPlayerLimit": False})
+          json.dump(ops, open("ops.json", "w"), indent=2)
+          print(json.dumps(ops, indent=2))
+          PY
+          lftp -c "set sftp:auto-confirm yes; open --env-password -u $SFTP_USER -p $SFTP_PORT sftp://$SFTP_HOST; put ops.json -o /ops.json"
+
+      - name: Reiniciar el servidor
+        env:
+          PANEL_API_KEY: ${{ secrets.PANEL_API_KEY }}
+        run: |
+          for url in "$PANEL_URL/api/panel/servers/$SERVER_ID/power" "$PANEL_URL/api/client/servers/${SERVER_ID%%-*}/power"; do
+            code=$(curl -sS -o resp.txt -w '%{http_code}' -X POST "$url" \
+              -H "Authorization: Bearer $PANEL_API_KEY" -H "Accept: application/json" -H "Content-Type: application/json" \
+              -H "User-Agent: warbandcraft-deploy/1.0" -d '{"signal":"restart"}' || echo 000)
+            echo "== $url -> HTTP $code"
+            case "$code" in 2*) exit 0;; esac
+          done
+          echo "::warning::No se pudo reiniciar: reinicialo desde el panel"; exit 1
