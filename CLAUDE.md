@@ -1192,6 +1192,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   Recruits, su IA saca la espada sola). Sin espada, siguen tirando. Toda la pelea así; marca `warbandcraft:siege_melee` con la
   última vuelta; `releaseMelee` (cada 5 s, `SoldierEvents`) les devuelve el arco a los `MELEE_RELEASE_TICKS` sin asedio.
   Prueba: `H16GameTests.siegeArchersGoMeleeWhenLosing`.
+- Operadores (pedido de Ale, `command/AdminCommand`): `/warband huestes cancelar` (`Hosts.cancelAll`: todas se van al pozo, sus
+  soldados cargados desaparecen) y `/warband paz forzar <facción>` (`Peace.make` gratis para vos y tu facción).
 - `/warband prueba invasion [incursion|ejercito] [cantidad]`: llega en el acto (también `prueba reconquista`).
   Cada decisión de carril va al log ("Asedio a ...: carril N").
 - Pruebas: `H17GameTests` (asedio) y `NavGameTests` (hueco, muro cerrado → escalera/romper, escalera puesta es camino,

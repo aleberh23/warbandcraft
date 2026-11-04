@@ -80,7 +80,8 @@ public final class WarbandCommand {
                 .then(Commands.literal("paz").executes(ctx -> {   // hacer la paz: pagar o un favor
                     com.ale.warbandcraft.faction.Peace.open(ctx.getSource().getPlayerOrException());
                     return 1;
-                }))
+                }).then(AdminCommand.forcePeace()))   // operadores: la paz gratis
+                .then(AdminCommand.hosts())   // operadores: cancelar todas las huestes
                 .then(WorkerReportCommand.node())   // operadores: lo que aportó cada trabajador
                 .then(Commands.literal("mercado").executes(WarbandCommand::market))
                 .then(Commands.literal("tutorial").executes(WarbandCommand::tutorialWhere)   // salón del tutorial

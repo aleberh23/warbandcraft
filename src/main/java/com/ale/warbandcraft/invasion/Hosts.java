@@ -474,6 +474,25 @@ public final class Hosts {
         end(level, h);
     }
 
+    /**
+     * Pedido de Ale (comando de operador): todas las huestes se van. Las acampadas vuelven al pozo de su facción; las que
+     * peleaban, sus soldados cargados desaparecen. Devuelve cuántas había.
+     */
+    public static int cancelAll(ServerLevel level) {
+        InvasionData data = InvasionData.get(level);
+        List<InvasionData.Host> all = new java.util.ArrayList<>(data.hosts());
+        for (InvasionData.Host h : all) {
+            disband(level, h);
+            com.ale.warbandcraft.WarbandCraft.LOGGER.info("Hueste de {} contra {} cancelada por un operador", h.faction, h.target.toShortString());
+        }
+        List<AbstractRecruitEntity> gone = new ArrayList<>();
+        for (Entity e : level.getAllEntities()) {
+            if (e instanceof AbstractRecruitEntity s && isHostSoldier(s) && !keepSoldier(level, s)) gone.add(s);
+        }
+        gone.forEach(Hosts::leave);
+        return all.size();
+    }
+
     private static void end(ServerLevel level, InvasionData.Host h) {
         com.ale.warbandcraft.battle.tactics.TeamAI.forget(aiKey(h));
         InvasionData.get(level).removeHost(h.id);
