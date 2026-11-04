@@ -1166,6 +1166,11 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   `insideToward/outerToward/isIn`: quién ya entró, contra quién se pelea, qué cuenta como enemigo adentro para los defensores. Con el
   radio medio, del lado donde la muralla está más cerca los de afuera "ya estaban adentro" (iban derecho al centro contra el muro)
   y tus defensores salían a pelearlos. Los defensores de a pie sueltan un objetivo que está afuera (salvo a ≤`CONTACT`).
+  **Varias capas de muralla** (pedido de Ale, 4/11): "adentro" = pasar la de más adentro; el carril replanea desde el más
+  adelantado y pone escaleras (o rompe) en cada capa. El destrabe de `SiegePush` (30 s sin daño → PUSH) ahora solo mueve a los
+  que ya entraron (`Assault`, `AiWars`); los de afuera siguen con su carril (antes iban todos derecho al centro y se quedaban
+  contra la primera muralla sin usar sus escaleras). Prueba: `SiegeLayersGameTests` (dos murallas cerradas a 10 y 17, a 9000 con
+  la plaza allanada: incursión y ejército; tiene que entrar uno que no sea zapador).
   **Anillo + muralla dibujada** (pedido de Ale, 4/11: aldea conquistada con anillo a la que le agregás o cambiás muralla):
   `InsideWalls.measure` junta las dos: en cada tajada manda la muralla más cerca del centro; donde cortaste el anillo
   (`Town.cutColumns`), solo la dibujada. `Breach.walls` usa siempre esa forma (`InsideWalls.radii`) para tus aldeas y las de
@@ -1448,7 +1453,7 @@ Cada hito termina en algo jugable que Ale prueba antes de seguir.
 
 `probar.bat` corre los GameTests sin pantalla y deja todo en `test-log.txt` (busca "required tests passed"). Usan la
 carpeta `run-tests/` (no `run/`), así corren aunque el Minecraft de desarrollo esté abierto. El mundo de pruebas tiene
-semilla al azar: `h4CastilloSueltoConCapitanYGuarnicion` (busca terreno plano) falla de vez en cuando; volver a correr.
+semilla al azar (las pruebas de castillos `castle*` fallan de a una, distinta cada vez): `h4CastilloSueltoConCapitanYGuarnicion` (busca terreno plano) falla de vez en cuando; volver a correr.
 El mundo `run-tests/world` junta datos de corridas anteriores y hace fallar pruebas (rutas, herreros, panel): si fallan
 varias que no tienen que ver, moverlo/borrarlo y volver a correr (25/10/2026: limpio, pasan las 206).
 Desde una sesión de Claude en la nube: el entorno no llega a Maven de Forge, así que se compila con `javac` contra las

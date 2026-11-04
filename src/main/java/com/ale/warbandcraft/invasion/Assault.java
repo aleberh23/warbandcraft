@@ -311,12 +311,17 @@ public final class Assault {
                 return false;
             }
             if (stage == com.ale.warbandcraft.battle.SiegePush.Stage.PUSH) {
+                // Solo los que ya entraron salen a buscar (4/11, prueba de dos murallas: con todos yendo derecho al centro
+                // se apagaban los carriles y los de afuera quedaban contra la muralla, sin usar sus escaleras)
+                List<AbstractRecruitEntity> in = new ArrayList<>(), out = new ArrayList<>();
+                for (AbstractRecruitEntity s : fighting) (w.walled() && !w.isIn(center, s.position()) ? out : in).add(s);
                 if (enemies.isEmpty()) {
-                    for (AbstractRecruitEntity s : fighting) SiegeLanes.moveTo(s, Vec3.atBottomCenterOf(host(level, inv).objective()));
+                    for (AbstractRecruitEntity s : in) SiegeLanes.moveTo(s, Vec3.atBottomCenterOf(host(level, inv).objective()));
                 } else {
-                    com.ale.warbandcraft.battle.SiegePush.huntAll(level, fighting, enemies, center, com.ale.warbandcraft.nav.NavCaps.INVADER);
+                    com.ale.warbandcraft.battle.SiegePush.huntAll(level, in, enemies, center, com.ale.warbandcraft.nav.NavCaps.INVADER);
                 }
-                return false;
+                if (out.isEmpty()) return false;
+                fighting = out;   // los de afuera siguen con su carril
             }
         }
 

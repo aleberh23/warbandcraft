@@ -438,6 +438,7 @@ public final class AiWars {
         }
         // Pedido de Ale: que nunca se queden parados. Sin daño un rato, todos a buscarse; mucho más, se decide con lo que hay.
         SiegePush.Stage stage = SiegePush.watch("march:" + m.id, now, att, def);
+        List<AbstractRecruitEntity> laneAtt = att;
         if (stage == SiegePush.Stage.GIVE_UP) {
             boolean attackersWin = SiegePush.aWins(att, def);
             com.ale.warbandcraft.WarbandCraft.LOGGER.info("Batalla entre facciones en {}: trabada, se decide con lo que queda ({} contra {}): gana {}",
@@ -446,15 +447,21 @@ public final class AiWars {
             return;
         }
         if (stage == SiegePush.Stage.PUSH) {
-            for (AbstractRecruitEntity s : att) SiegeLanes.dismount(s, false);
-            SiegePush.huntAll(level, att, defenders, m.target, com.ale.warbandcraft.nav.NavCaps.INVADER);
-            SiegePush.huntAll(level, def, attackers, m.target, com.ale.warbandcraft.nav.NavCaps.SOLDIER);
-            return;
+            // Solo los atacantes que ya entraron (y los defensores contra ellos): los de afuera siguen con su carril (4/11)
+            List<AbstractRecruitEntity> in = new ArrayList<>(), out = new ArrayList<>();
+            for (AbstractRecruitEntity s : att) (w.walled() && !w.isIn(m.target, s.position()) ? out : in).add(s);
+            List<LivingEntity> inside = new ArrayList<>(in);
+            for (LivingEntity e : attackers) if (!(e instanceof AbstractRecruitEntity) && (!w.walled() || w.isIn(m.target, e.position()))) inside.add(e);
+            for (AbstractRecruitEntity s : in) SiegeLanes.dismount(s, false);
+            SiegePush.huntAll(level, in, defenders, m.target, com.ale.warbandcraft.nav.NavCaps.INVADER);
+            SiegePush.huntAll(level, def, inside, m.target, com.ale.warbandcraft.nav.NavCaps.SOLDIER);
+            if (out.isEmpty()) return;
+            laneAtt = out;
         }
         SiegeLanes.Host host = host(level, m);
         for (SiegeLanes.Lane lane : st.lanes) {
             List<AbstractRecruitEntity> members = new ArrayList<>();
-            for (AbstractRecruitEntity s : att) {
+            for (AbstractRecruitEntity s : laneAtt) {
                 SiegeLanes.dismount(s, false);
                 if (st.lane(s.getPersistentData().getInt(Assault.TAG_GROUP)) == lane) members.add(s);
             }
