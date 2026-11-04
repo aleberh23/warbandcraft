@@ -275,6 +275,24 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   soldados elegidos, o botón Barracón → lista, = `ToBarracksMessage` (null = cada uno al suyo; si no, los ata a ese).
 - En la estructura `empty` de los GameTests el piso de piedra está en y=1 relativo: un puesto en y=1 queda adentro.
 
+## Asedio entre jugadores (pedido de Ale, 4/11, a probar; números sin Ale)
+
+- `raid/PvpSiege`: una aldea/castillo de otro jugador se gana con el asedio de Warband (los de Recruits están apagados, ver
+  `NoClaimSiegeMixin`). Es un `RaidManager.Raid` con `defender` (dueño al empezar; `pvp()`, se guarda en `RaidData`): mismo
+  general (`BattleGeneral`, carriles, escaleras, zapadores), barra, rendidos y abandono. `RaidManager.defenders` = la guarnición o,
+  en PvP, los soldados del lado del dueño (`Allies.same`) a ≤`DEFEND_RADIUS` (64) del centro.
+- Empieza con B / `/warband asediar` parado en la aldea (`BattleChoices.onKey` → `PvpSiege.offer` → kind `pvp_siege`): facciones
+  de Recruits en guerra (ENEMY en su Diplomacia, `atWar`) y alguien de la facción del dueño conectado (`Allies.anyOnline`). Avisa a
+  los defensores. El cuartel sale aunque no haya nadie cerca (`Quarters.deploy(..., true)`), no se guarda (`Barracks.autoStore`) y
+  queda a cargo de la defensa (`Quarters.underInvasion` cuenta el asedio).
+- Se gana (`defeated`) sin soldados ni jugadores de ese lado a `DEFEND_RADIUS` ni cuartel guardado → `win` (rendidos presos) →
+  `PvpSiege.conquer`: sin pantalla de Saquear/Conquistar. La aldea pasa al ganador (`withOwner`), su Campamento también (con todo
+  lo de adentro; `CampRegistry`), el barracón y el cuartel guardado del que pierde se mudan a su Campamento más cercano con lugar
+  (si no hay, se pierden), el claim de Recruits pasa entero (`Territory.handOver` + `RecruitsClaimBridge.claimVillage` +
+  `Territory.ensure`; si no se pudo, el claim viejo se saca). Mejoras, murallas y edificios (`TownData`) quedan.
+- No hecho (a revisar): trabajadores de Villager Workers del que perdió (siguen siendo suyos), reconquista, opinión/tregua entre
+  jugadores, el barracón de la aldea (no del cuartel) no sale a defender. Prueba: `PvpSiegeGameTests`.
+
 ## Compañeros de facción (pedido de Ale, a probar: "todos los campamentos, aldeas y soldados de una facción tienen que ser manejables por todos los miembros por igual")
 
 - `faction/Allies`: misma facción de Recruits = mismo equipo del marcador (por nombre; desconectado: `ProfileCache`). `same(a, b)`
@@ -1423,13 +1441,12 @@ Entidades de Recruits útiles: `recruit`, `recruit_shieldman`, `bowman`, `crossb
   todas las contrataciones (recluta, noble, cambio de dueño).
   `mixin/SafeGateMixin` (crash del 4/11 en un asedio): `RecruitsDoorInteractGoal.useGate` no hace nada si ya no hay un bloque
   con `open` ahí (un portón roto a golpes mientras un soldado de Recruits lo tenía abierto tiraba el servidor).
-  `mixin/NoNpcClaimSiegeMixin` (bug de Ale, 4/11: aldea conquistada que "quedó a nombre de Valdren", sin poder abrir el Campamento
-  ni los portones): Recruits pone ENEMY solo entre equipos que se pegan (`RecruitEvents.setTeamsAsEnemies`) y nuestras facciones
-  están registradas en Recruits (`RecruitsFactionBridge`), así que sus soldados que quedaban en el claim (sin admin desde la
-  conquista) arrancaban **el asedio de Recruits** y lo capturaban (dueño = la facción, permisos de interacción cerrados).
-  `ClaimEvents.classifyEntities` ya no cuenta a los equipos `wb_*` (`FactionManager.isFactionTeam`). Los claims ya robados:
-  `Territory.recoverStolenClaim` (en `ensure`, cada 5 s) devuelve el claim del centro de tu aldea a tu facción de Recruits y corta
-  el asedio. Prueba: `ClaimGameTests.stolenClaimComesBack`. Ojo: `RecruitsFaction.npcs` sube con cada `updateTeam` y
+  `mixin/NoClaimSiegeMixin` (pedido de Ale, 4/11: "el asedio ganado es lo que te da el claim"): **los asedios de claims de
+  Recruits están apagados** (`ClaimEvents.classifyEntities` no hace nada: nadie es atacante ni defensor). Antes, Recruits ponía
+  ENEMY solo entre equipos que se pegan (`RecruitEvents.setTeamsAsEnemies`) y nuestras facciones están registradas en Recruits,
+  así que los soldados de Valdren que quedaban en una aldea recién conquistada la "capturaban" (claim a nombre de Valdren, sin
+  poder abrir el Campamento ni los portones). Los claims ya robados así: `Territory.recoverStolenClaim` (en `ensure`, cada 5 s)
+  los devuelve a la facción del dueño (`FactionManager.isFactionTeam`). Prueba: `ClaimGameTests.stolenClaimComesBack`. Ojo: `RecruitsFaction.npcs` sube con cada `updateTeam` y
   solo baja al morir (lo que se borra con `discard()` queda contado); ya no importa porque no se chequea.
 - Patrullas NPC: `world/RecruitsPatrolSpawn` (base para las facciones NPC de H2).
 - Facciones y diplomacia: `world/RecruitsFactionManager`, `RecruitsDiplomacyManager`.

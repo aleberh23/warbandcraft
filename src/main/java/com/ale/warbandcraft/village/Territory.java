@@ -151,7 +151,7 @@ public class Territory extends SavedData {
     }
 
     /**
-     * Bug de Ale (4/11): antes del arreglo ({@code NoNpcClaimSiegeMixin}) Recruits dejaba que los soldados de una facción
+     * Bug de Ale (4/11): antes del arreglo ({@code NoClaimSiegeMixin}) Recruits dejaba que los soldados de una facción
      * de la IA "capturaran" con su asedio el claim de una aldea tuya: quedaba a nombre de la facción (sin admin) y no
      * podías abrir ni el Campamento ni los portones. Un claim así en el centro de una aldea tuya vuelve a la facción
      * de Recruits del dueño (y se corta el asedio de Recruits si sigue).
@@ -216,6 +216,16 @@ public class Territory extends SavedData {
         t.setDirty();
         t.syncClaim(level, v);
         return Component.translatable("msg.warbandcraft.territory.expanded", set.size(), MAX_CHUNKS, CHUNK_COST).withStyle(ChatFormatting.GREEN);
+    }
+
+    /**
+     * Asedio entre jugadores: se olvida el territorio de la aldea pero su claim de Recruits queda (pasa al ganador, que
+     * lo adopta en {@link #ensure}).
+     */
+    public static void handOver(ServerLevel level, BlockPos center) {
+        Territory t = get(level);
+        UUID id = t.claims.remove(center.asLong());
+        if (t.chunks.remove(center.asLong()) != null || id != null) t.setDirty();
     }
 
     /** La aldea ya no es tuya: sin territorio y sin claim. */

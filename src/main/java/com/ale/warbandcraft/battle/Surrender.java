@@ -78,7 +78,9 @@ public final class Surrender {
         UUID owner = soldier.getOwnerUUID();
         if (owner == null || !soldier.getIsOwned()) return null;
         for (RaidManager.Raid raid : RaidManager.all()) {
-            if (raid.state != RaidManager.State.FIGHTING || raid.dimension != level.dimension() || !raid.attacker.equals(owner)) continue;
+            if (raid.state != RaidManager.State.FIGHTING || raid.dimension != level.dimension()) continue;
+            boolean side = raid.attacker.equals(owner) || (raid.pvp() && com.ale.warbandcraft.faction.Allies.same(owner, raid.defender));
+            if (!side) continue;
             if (VillageData.horizontalDistSq(soldier.blockPosition(), raid.center) <= RaidManager.REINFORCE_RANGE * RaidManager.REINFORCE_RANGE) {
                 return raid;
             }

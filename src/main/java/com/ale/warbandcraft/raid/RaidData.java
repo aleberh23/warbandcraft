@@ -47,6 +47,7 @@ public class RaidData extends SavedData {
             raid.lastNearTick = c.getLong("LastNear");
             raid.initialGarrison = Math.max(1, c.getInt("Initial"));
             raid.killed = c.getInt("Killed");
+            if (c.hasUUID("Defender")) raid.defender = c.getUUID("Defender");
             raid.state = c.getBoolean("Won") ? RaidManager.State.WON : RaidManager.State.FIGHTING;
             for (Tag g : c.getList("Gear", Tag.TAG_COMPOUND)) {
                 ItemStack s = ItemStack.of((CompoundTag) g);
@@ -72,6 +73,7 @@ public class RaidData extends SavedData {
             c.putLong("LastNear", raid.lastNearTick);
             c.putInt("Initial", raid.initialGarrison);
             c.putInt("Killed", raid.killed);
+            if (raid.defender != null) c.putUUID("Defender", raid.defender);
             c.putBoolean("Won", raid.state == RaidManager.State.WON);
             ListTag gear = new ListTag();
             for (ItemStack s : raid.fallenGear) gear.add(s.save(new CompoundTag()));

@@ -136,7 +136,7 @@ public final class BattleGeneral {
         if (raid.state != RaidManager.State.FIGHTING || !level.isPositionEntityTicking(raid.center)) return;
         Memory m = MEMORY.computeIfAbsent(key(level, raid.center), k -> new Memory());
 
-        List<AbstractRecruitEntity> defenders = VillageManager.garrison(level, raid.center);
+        List<AbstractRecruitEntity> defenders = RaidManager.defenders(level, raid);
         List<AbstractRecruitEntity> yours = attackerSoldiers(level, raid);
         Player player = RaidManager.attackerEntity(level, raid);
         List<LivingEntity> attackers = new ArrayList<>(yours);
@@ -242,7 +242,7 @@ public final class BattleGeneral {
         Memory mem = MEMORY.remove(key(level, raid.center));
         SiegePush.forget(key(level, raid.center));
         SiegeLanes.end(level, siegeHost(level, raid), mem == null ? null : mem.siege);
-        SiegeDefenders.end(siegeKey(level, raid), level.isPositionEntityTicking(raid.center) ? VillageManager.garrison(level, raid.center) : List.of());
+        SiegeDefenders.end(siegeKey(level, raid), level.isPositionEntityTicking(raid.center) ? RaidManager.defenders(level, raid) : List.of());
         if (!level.isPositionEntityTicking(raid.center)) return;
         for (AbstractRecruitEntity s : attackerSoldiers(level, raid)) {
             if (s.getPersistentData().getBoolean(TAG_BATTLE)) {
@@ -252,10 +252,12 @@ public final class BattleGeneral {
                 s.setFollowState(FOLLOW_OWNER);
             }
         }
-        for (AbstractRecruitEntity s : VillageManager.garrison(level, raid.center)) {
+        for (AbstractRecruitEntity s : RaidManager.defenders(level, raid)) {
             s.setShouldBlock(false);
             s.setTarget(null);
-            s.setFollowState(WANDER);
+            // Asedio entre jugadores: los del cuartel vuelven solos a lo suyo (Quarters); el resto queda donde está
+            if (!raid.pvp()) s.setFollowState(WANDER);
+            else if (com.ale.warbandcraft.village.Quarters.villageOf(s) == null) s.setFollowState(2);
         }
     }
 

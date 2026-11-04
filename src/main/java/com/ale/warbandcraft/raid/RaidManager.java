@@ -97,6 +97,15 @@ public final class RaidManager {
         @Nullable ServerBossEvent bar;
         /** El atacante que empezó (sirve si no está en la lista de jugadores, p. ej. en las pruebas). */
         @Nullable Player attackerRef;
+        /**
+         * Asedio entre jugadores ({@link PvpSiege}): el dueño de la aldea al empezar. Null = ataque a una aldea/castillo de
+         * una facción de la IA (la guarnición defiende).
+         */
+        @Nullable public UUID defender;
+
+        public boolean pvp() {
+            return defender != null;
+        }
 
         Raid(ResourceKey<Level> dimension, BlockPos center, ResourceLocation faction,
              UUID attacker, long startTick) {
@@ -134,6 +143,14 @@ public final class RaidManager {
     @Nullable
     public static Raid get(ServerLevel level, BlockPos center) {
         return RAIDS.get(key(level.dimension(), center));
+    }
+
+    /**
+     * Los que defienden: la guarnición de la facción, o en un asedio entre jugadores los soldados del dueño y su facción
+     * que están en la aldea ({@link PvpSiege#DEFEND_RADIUS}).
+     */
+    public static List<AbstractRecruitEntity> defenders(ServerLevel level, Raid raid) {
+        return raid.pvp() ? PvpSiege.defenders(level, raid) : VillageManager.garrison(level, raid.center);
     }
 
     public static List<Raid> all() {
@@ -246,6 +263,19 @@ public final class RaidManager {
         return raid;
     }
 
+    /** Asedio entre jugadores ({@link PvpSiege#start}): la aldea es de {@code village.owner()}. */
+    public static Raid startPvp(ServerLevel level, VillageData.Village village, UUID playerId, @Nullable Player attacker) {
+        Raid existing = get(level, village.center());
+        if (existing != null) return existing;
+        Raid raid = new Raid(level.dimension(), village.center(), village.faction(), playerId, level.getGameTime());
+        raid.attackerRef = attacker;
+        raid.defender = village.owner();
+        raid.initialGarrison = Math.max(1, defenders(level, raid).size());
+        RAIDS.put(key(level.dimension(), village.center()), raid);
+        changed();
+        return raid;
+    }
+
     // ------------------------------------------------------------------ durante el ataque
 
     /** Un soldado de guarnición murió: si había un ataque a su aldea, su equipo pasa a ser botín. */
@@ -294,6 +324,15 @@ public final class RaidManager {
             boolean canWin = attacker != null && attacker.level() == level
                     && VillageData.horizontalDistSq(attacker.blockPosition(), raid.center) <= (double) VICTORY_DISTANCE * VICTORY_DISTANCE
                     && level.isPositionEntityTicking(raid.center);
+            if (raid.pvp()) {
+                if (!PvpSiege.stillValid(level, raid)) {
+                    discard(level, raid.center);
+                    continue;
+                }
+                PvpSiege.tick(level, raid);
+                if (canWin && PvpSiege.defeated(level, raid)) win(level, raid, List.of());
+                continue;
+            }
             if (canWin) {
                 List<AbstractRecruitEntity> garrison = VillageManager.garrison(level, raid.center);
                 VillageData.Village village = VillageData.get(level).at(raid.center);
@@ -317,10 +356,14 @@ public final class RaidManager {
     private static void updateBar(ServerLevel level, Raid raid, @Nullable Player attacker, boolean near) {
         if (!level.isPositionEntityTicking(raid.center)) return;
         int yours = BattleGeneral.attackerSoldiers(level, raid).size() + (near && attacker != null && attacker.isAlive() ? 1 : 0);
-        int theirs = VillageManager.garrison(level, raid.center).size() + com.ale.warbandcraft.village.GarrisonReserve.remaining(level, raid.center);
+        int theirs = defenders(level, raid).size() + (raid.pvp() ? PvpSiege.defendingPlayers(level, raid).size()
+                : com.ale.warbandcraft.village.GarrisonReserve.remaining(level, raid.center));
         Faction f = FactionManager.INSTANCE.get(raid.factionId());
-        Component them = f == null ? Component.literal("?") : Component.literal(f.name()).withStyle(f.color());
-        java.util.List<ServerPlayer> viewers = attacker instanceof ServerPlayer sp && near ? java.util.List.of(sp) : java.util.List.of();
+        Component them = raid.pvp() ? Component.literal(com.ale.warbandcraft.faction.Allies.playerName(raid.defender)).withStyle(ChatFormatting.RED)
+                : f == null ? Component.literal("?") : Component.literal(f.name()).withStyle(f.color());
+        java.util.List<ServerPlayer> viewers = new java.util.ArrayList<>();
+        if (attacker instanceof ServerPlayer sp && near) viewers.add(sp);
+        if (raid.pvp()) for (Player p : PvpSiege.defendingPlayers(level, raid)) if (p instanceof ServerPlayer sp) viewers.add(sp);
         com.ale.warbandcraft.battle.BattleBar.update(barKey(raid),
                 new com.ale.warbandcraft.battle.BattleBar.Side(Component.translatable("msg.warbandcraft.bar.yours"), yours),
                 new com.ale.warbandcraft.battle.BattleBar.Side(them, theirs), true, viewers);
@@ -382,7 +425,8 @@ public final class RaidManager {
         List<AbstractRecruitEntity> captives = new ArrayList<>(standing);
         for (UUID id : raid.surrendered) {
             if (!(level.getEntity(id) instanceof AbstractRecruitEntity s) || !s.isAlive()) continue;
-            if (VillageManager.isGarrison(s)) captives.add(s);
+            if (VillageManager.isGarrison(s) || (raid.pvp() && s.getIsOwned()
+                    && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), raid.defender))) captives.add(s);
             else Surrender.standUp(s);
         }
         raid.surrendered.clear();
@@ -394,6 +438,12 @@ public final class RaidManager {
                 Prisoners.release(s);
                 freed++;
             }
+        }
+        if (raid.pvp()) {   // asedio entre jugadores: ganarlo es quedarse con la aldea (y su claim)
+            RAIDS.remove(key(raid.dimension, raid.center));
+            changed();
+            PvpSiege.conquer(level, raid, taken);
+            return;
         }
         // Ejército de prueba: no hay nada que saquear ni conquistar, se borra y listo
         boolean test = VillageData.get(level).isTest(raid.center);
@@ -423,7 +473,7 @@ public final class RaidManager {
 
     /** Abre la pantalla Saquear/Conquistar si el ganador está conectado y todavía no la vio desde que entró. */
     private static void offerChoice(ServerLevel level, Raid raid) {
-        if (raid.choiceShown) return;
+        if (raid.choiceShown || raid.pvp()) return;
         ServerPlayer player = onlinePlayer(level, raid);
         if (player == null) return;
         raid.choiceShown = true;
@@ -450,6 +500,7 @@ public final class RaidManager {
         }
         changed();
         if (!raid.fallenGear.isEmpty() && !VillageData.get(level).isTest(raid.center)) CampRegistry.get(level).deliver(level, raid.attacker, raid.fallenGear, raid.center);
+        if (raid.pvp()) PvpSiege.repelled(level, raid);
         ServerPlayer player = onlinePlayer(level, raid);
         if (player != null) {
             player.sendSystemMessage(Component.translatable("msg.warbandcraft.raid_abandoned").withStyle(ChatFormatting.GRAY));

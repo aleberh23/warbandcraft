@@ -6,7 +6,7 @@
   "mixins": [
     "NoRecruitLimitMixin",
     "SafeGateMixin",
-    "NoNpcClaimSiegeMixin"
+    "NoClaimSiegeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

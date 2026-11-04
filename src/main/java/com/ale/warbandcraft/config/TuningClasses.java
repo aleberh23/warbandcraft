@@ -71,6 +71,7 @@ final class TuningClasses {
             "market.Schedules",
             "nav.Mover",
             "nav.NavCaps",
+            "raid.PvpSiege",
             "raid.RaidManager",
             "route.RoadPlanner",
             "route.Roads",

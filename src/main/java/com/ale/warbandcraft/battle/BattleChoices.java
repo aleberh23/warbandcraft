@@ -65,12 +65,23 @@ public final class BattleChoices {
             offerSiege(player, v);
             return;
         }
+        if (v != null && !com.ale.warbandcraft.faction.Allies.same(player.getUUID(), v.owner())) {   // aldea de otro jugador
+            com.ale.warbandcraft.raid.PvpSiege.offer(player, v);
+            return;
+        }
         player.displayClientMessage(Component.translatable("msg.warbandcraft.choice.nothing").withStyle(ChatFormatting.GRAY), true);
     }
 
     public static void answer(ServerPlayer player, String kind, String id, int option) {
         switch (kind) {
             case KIND_JOIN -> AiWars.answer(player, id, option);
+            case com.ale.warbandcraft.raid.PvpSiege.KIND -> {
+                if (option != 0) return;
+                try {
+                    player.sendSystemMessage(com.ale.warbandcraft.raid.PvpSiege.start(player, BlockPos.of(Long.parseLong(id))));
+                } catch (NumberFormatException ignored) {
+                }
+            }
             case KIND_SIEGE -> {
                 if (option != 0) return;
                 try {
@@ -115,7 +126,7 @@ public final class BattleChoices {
     }
 
     /** Tus soldados cerca que pueden entrar en modo Batalla. */
-    private static List<AbstractRecruitEntity> soldiersNear(ServerPlayer player) {
+    public static List<AbstractRecruitEntity> soldiersNear(ServerPlayer player) {
         double r = SIEGE_SOLDIER_RADIUS;
         return player.serverLevel().getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(player.blockPosition()).inflate(r),
                 s -> s.isAlive() && com.ale.warbandcraft.faction.Allies.same(s.getOwnerUUID(), player.getUUID()) && s.getListen() && Soldiers.isSoldier(s));

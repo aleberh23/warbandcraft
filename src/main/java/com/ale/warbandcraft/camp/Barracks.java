@@ -575,6 +575,7 @@ public final class Barracks {
         if (quarters != null) {   // del cuartel: se guarda cuando el dueño se aleja de la aldea, no del soldado
             com.ale.warbandcraft.village.VillageData.Village qv = com.ale.warbandcraft.village.VillageData.get(level).at(quarters);
             if (!com.ale.warbandcraft.village.Quarters.factionAway(level, qv != null ? qv.owner() : soldier.getOwnerUUID(), quarters)) return null;
+            if (com.ale.warbandcraft.village.Quarters.underInvasion(level, quarters)) return null;   // en pleno asedio no se guardan
         } else if (ownerPos != null && ownerPos.distanceToSqr(soldier.position()) <= (double) AUTO_STORE_DISTANCE * AUTO_STORE_DISTANCE) return null;
         BlockPos camp = campOf(level, soldier);
         if (camp == null) return null;

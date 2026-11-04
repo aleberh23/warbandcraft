@@ -537,6 +537,8 @@ public final class Quarters {
 
     /** Hay una invasión peleándose en la aldea: el cuartel queda a tus órdenes. */
     public static boolean underInvasion(ServerLevel level, BlockPos center) {
+        com.ale.warbandcraft.raid.RaidManager.Raid raid = com.ale.warbandcraft.raid.RaidManager.get(level, center);
+        if (raid != null && raid.pvp() && raid.state == com.ale.warbandcraft.raid.RaidManager.State.FIGHTING) return true;   // asedio de otro jugador
         com.ale.warbandcraft.invasion.InvasionData.Invasion inv = com.ale.warbandcraft.invasion.InvasionData.get(level).at(center);
         return inv != null && inv.state == com.ale.warbandcraft.invasion.InvasionData.State.FIGHTING;
     }
@@ -707,11 +709,16 @@ public final class Quarters {
      * la aldea (el cuartel) y caminan a su lugar (pedido de Ale: no aparecen en cualquier lado).
      */
     public static int deployIfNear(ServerLevel level, VillageData.Village v) {
+        return deploy(level, v, false);
+    }
+
+    /** {@code force}: salen aunque no haya nadie de la facción cerca (un asedio de otro jugador). */
+    public static int deploy(ServerLevel level, VillageData.Village v, boolean force) {
         BlockPos camp = VillageCamps.campOf(level, v);
         if (camp == null || !level.isPositionEntityTicking(camp)) return 0;
         BarracksData.Barracks b = BarracksData.get(level).at(camp);
         if (b == null || b.quarters.isEmpty()) return 0;
-        if (!factionNear(level, v.owner(), v.center(), DEPLOY_DISTANCE)) return 0;   // vos o alguien de tu facción cerca
+        if (!force && !factionNear(level, v.owner(), v.center(), DEPLOY_DISTANCE)) return 0;   // vos o alguien de tu facción cerca
         int out = 0;
         for (BarracksData.Soldier sheet : new ArrayList<>(b.quarters)) {
             b.quarters.remove(sheet);

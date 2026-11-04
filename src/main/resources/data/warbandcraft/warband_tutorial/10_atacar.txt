@@ -28,5 +28,13 @@ Los que se rindieron y los que quedaron en pie van presos a tu Campamento.
 ## Si perdés
 Tus soldados rendidos pasan a la guarnición enemiga.
 
+---
+## Aldeas de otro jugador
+Una aldea o castillo de otro jugador se gana igual: parado ahí, B y confirmá. Tu facción tiene que estar en guerra con la suya (Diplomacia de Recruits) y tiene que haber alguien de su facción conectado.
+
+Defienden sus soldados que están en la aldea; su cuartel sale solo. Ganás cuando no queda ningún soldado ni jugador de ese lado a 64 bloques del centro: la aldea, su Campamento con todo lo de adentro y su territorio pasan a ser tuyos. Si te alejás, el asedio se levanta.
+
+Tener soldados de otro bando adentro de tu territorio no te lo quita: solo un asedio ganado.
+
 ## Meterse en batallas ajenas
 Si dos facciones pelean cerca tuyo, te avisan. Con B elegís a quién ayudar (o nada). El que gana te paga y te quiere más; el otro te quiere menos.
