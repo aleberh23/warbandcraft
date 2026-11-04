@@ -140,6 +140,8 @@ public final class SiegeLanes {
         long bestTick = Long.MIN_VALUE;
         /** Los lugares por donde el plan cruza el muro cuando cree que hay hueco (si no pasan, se cierran en la malla). */
         List<BlockPos> crossCells = List.of();
+        /** Desde cuándo espera cada guía a su grupo. */
+        final java.util.Map<java.util.UUID, Long> waiting = new java.util.HashMap<>();
 
         Lane(int index, double angle, BlockPos stage) {
             this.index = index;
@@ -312,6 +314,8 @@ public final class SiegeLanes {
 
     /** Diagnóstico (pedido de Ale: se quedaban contra una muralla lisa): un carril que no avanza en 30 s va al log. */
     public static int STALL_LOG_TICKS = 20 * 30;
+    /** Lo más que un guía espera a su grupo antes de seguir solo (ticks). */
+    public static int SQUAD_MAX_WAIT = 20 * 10;
 
     private static void watchProgress(ServerLevel level, Host host, Lane lane, List<AbstractRecruitEntity> outside, BlockPos center, long now) {
         if (outside.isEmpty()) {   // todos peleando o adentro: eso es avanzar
@@ -341,6 +345,17 @@ public final class SiegeLanes {
         log(host, lane, "no avanzan hace " + STALL_LOG_TICKS / 20 + " s (" + outside.size() + " afuera, entrada " + lane.entry + "); el más adelantado en "
                 + lead.blockPosition().toShortString() + " a " + Math.round(best) + " del centro, " + run
                 + ", estado " + lead.getFollowState() + ", objetivo " + (lead.getTarget() == null ? "-" : lead.getTarget().getName().getString()));
+        StringBuilder others = new StringBuilder();
+        int n = 0;
+        for (AbstractRecruitEntity s : outside) {
+            if (s == lead || n++ >= 6) continue;
+            Mover.Run o = Mover.run(s);
+            others.append(s.blockPosition().toShortString()).append(' ')
+                    .append(o == null ? "sin camino" : o.failed ? "falló" : o.done ? "llegó" : o.paused ? "pausa" : o.path == (r == null ? null : r.path) ? "sigue al guía" : "solo")
+                    .append(o != null && o.active() && o.i < o.path.size() ? " -> " + o.path.get(o.i).kind() + " " + blocksAt(level, o.path.get(o.i).blockPos()) : "")
+                    .append(s.getTarget() == null ? "" : " (objetivo)").append(" | ");
+        }
+        if (others.length() > 0) log(host, lane, "los demás: " + others);
         // Pedido de Ale (se quedaban contra una muralla lisa): el hueco que ve la malla no sirve. Se cierra un rato y se
         // vuelve a planear: escaleras, o romper con el zapador.
         if (lane.entry == Entry.OPEN && !lane.crossCells.isEmpty()) {
@@ -830,16 +845,31 @@ public final class SiegeLanes {
             r = Mover.run(lead);
         }
         if (r == null) return;
+        // Pedido de Ale (el guía quedaba contra la muralla esperando para siempre a uno que no llegaba): se espera hasta
+        // SQUAD_MAX_WAIT; después el guía sigue y el que quedó atrás busca su propio camino.
+        Long since = lane.waiting.get(lead.getUUID());
+        boolean waitedEnough = since != null && now - since >= SQUAD_MAX_WAIT;
         double straggler = 0;
         for (int i = 1; i < squad.size(); i++) {
             AbstractRecruitEntity s = squad.get(i);
+            double gap = horizontal(s.position(), lead.position());
             Mover.Run fr = Mover.run(s);
-            if (fr == null || !fr.active() || fr.path != r.path) Mover.start(s, r.path, goal, NavCaps.INVADER, BY);
+            if (waitedEnough && gap > SQUAD_WAIT) {
+                if (fr == null || !fr.active() || fr.path == r.path) {
+                    if (!Mover.go(s, goal, goalReach(w), NavCaps.INVADER, bounds(center, w), BY)) Mover.start(s, r.path, goal, NavCaps.INVADER, BY);
+                }
+                continue;
+            }
+            if (fr == null || !fr.active() || (fr.path != r.path && gap <= SQUAD_WAIT)) Mover.start(s, r.path, goal, NavCaps.INVADER, BY);
             fr = Mover.run(s);
-            if (fr != null) fr.paused = fr.i > r.i;   // no se adelanta al guía
-            straggler = Math.max(straggler, horizontal(s.position(), lead.position()));
+            if (fr == null || fr.path != r.path) continue;   // va por su cuenta: no se lo espera
+            fr.paused = fr.i > r.i;   // no se adelanta al guía
+            straggler = Math.max(straggler, gap);
         }
-        r.paused = straggler > SQUAD_WAIT && !onLadder(lead) && !lead.isPassenger();
+        boolean wait = straggler > SQUAD_WAIT && !onLadder(lead) && !lead.isPassenger() && !waitedEnough;
+        if (wait && since == null) lane.waiting.put(lead.getUUID(), now);
+        if (!wait && straggler <= SQUAD_WAIT) lane.waiting.remove(lead.getUUID());
+        r.paused = wait;
         for (AbstractRecruitEntity s : squad) s.setShouldBlock(false);
     }
 

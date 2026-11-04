@@ -1167,6 +1167,8 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   radio medio, del lado donde la muralla está más cerca los de afuera "ya estaban adentro" (iban derecho al centro contra el muro)
   y tus defensores salían a pelearlos. Los defensores de a pie sueltan un objetivo que está afuera (salvo a ≤`CONTACT`).
   Log "entró X por x, y, z" la primera vez que cada atacante pasa adentro.
+  El guía de un grupo espera a los de atrás hasta `SQUAD_MAX_WAIT` (10 s): después sigue y el que quedó busca su camino solo (antes
+  quedaba contra la muralla "esperando al grupo" para siempre). El log de carril trabado lista también a los demás.
 - Tus soldados a ≤64 de la aldea invadida que no son del cuartel, no te siguen (estado 1/5) ni están en Batalla se suman
   a `SiegeDefenders` (`SiegeDefense.helpers`, marca `warbandcraft:defense_helper` con su orden) y al terminar la recuperan.
 - **Barra de quién va ganando** (`battle/BattleBar`, estilo Total War): una barra que se llena con la parte de soldados
