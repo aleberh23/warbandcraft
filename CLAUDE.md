@@ -1393,7 +1393,9 @@ Entidades de Recruits útiles: `recruit`, `recruit_shieldman`, `bowman`, `crossb
 - **Sin tope de soldados** (pedido de Ale): `mixin/NoRecruitLimitMixin` (único mixin propio, `warbandcraft.mixins.json`,
   `remap = false`; jar = `MixinConfigs` del manifiesto, dev = `-mixin.config` en `build.gradle`, solo client/server: en gameTestServer no arranca) hace que
   `RecruitsPlayerUnitManager.canPlayerRecruit` dé siempre true y `getRemainingRecruitSlots` 1.000.000.000. Por ahí pasan
-  todas las contrataciones (recluta, noble, cambio de dueño). Ojo: `RecruitsFaction.npcs` sube con cada `updateTeam` y
+  todas las contrataciones (recluta, noble, cambio de dueño).
+  `mixin/SafeGateMixin` (crash del 4/11 en un asedio): `RecruitsDoorInteractGoal.useGate` no hace nada si ya no hay un bloque
+  con `open` ahí (un portón roto a golpes mientras un soldado de Recruits lo tenía abierto tiraba el servidor). Ojo: `RecruitsFaction.npcs` sube con cada `updateTeam` y
   solo baja al morir (lo que se borra con `discard()` queda contado); ya no importa porque no se chequea.
 - Patrullas NPC: `world/RecruitsPatrolSpawn` (base para las facciones NPC de H2).
 - Facciones y diplomacia: `world/RecruitsFactionManager`, `RecruitsDiplomacyManager`.
