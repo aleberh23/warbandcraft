@@ -285,10 +285,12 @@ public final class SiegeLanes {
         // Pedido de Ale (se quedaban contra la muralla): afuera solo se pelea con lo que está afuera (o pegado); al de
         // adentro no se llega caminando derecho: se sigue por el carril
         List<LivingEntity> reachable = new ArrayList<>();
-        for (LivingEntity e : enemies) if (!w.walled() || dist(e, center) >= w.inside()) reachable.add(e);
+        for (LivingEntity e : enemies) if (!w.walled() || !w.isIn(center, e.position())) reachable.add(e);
         for (AbstractRecruitEntity s : foot) {
-            boolean in = st.inside.contains(s.getUUID()) || dist(s, center) < w.inside();
-            if (in && w.walled()) st.inside.add(s.getUUID());
+            boolean in = st.inside.contains(s.getUUID()) || w.isIn(center, s.position());
+            if (in && w.walled() && st.inside.add(s.getUUID())) {
+                log(host, lane, "entró " + s.getName().getString() + " por " + s.blockPosition().toShortString());
+            }
             boolean busy = Mover.moving(s) && (onLadder(s) || s.isPassenger());
             if (!busy && in) {
                 // Adentro (pedido de Ale): enemigos cerca, después aldeanos cerca, después el centro; ahí, a buscar al enemigo
@@ -299,7 +301,7 @@ public final class SiegeLanes {
                 engageOrCenter(s, reachable.isEmpty() ? enemies : reachable, objective);
             } else {
                 LivingEntity t = s.getTarget();
-                if (t != null && w.walled() && dist(t, center) < w.inside() && s.distanceTo(t) > CONTACT) s.setTarget(null);
+                if (t != null && w.walled() && w.isIn(center, t.position()) && s.distanceTo(t) > CONTACT) s.setTarget(null);
                 outside.add(s);
             }
         }
@@ -355,12 +357,12 @@ public final class SiegeLanes {
 
     /** Los lugares del camino del lado de afuera del muro hasta el de adentro (lo que se cierra si no pasan). */
     private static List<BlockPos> crossingCells(List<Step> path, BlockPos center, Breach.Walls w) {
-        double outer = (w.walled() ? w.bandMax() : w.radius()) + 1, inner = w.inside() - 1;
         List<BlockPos> out = new ArrayList<>();
         for (Step s : path) {
-            double d = Math.sqrt(horizontalSq(s.blockPos(), center));
-            if (d <= inner) break;
-            if (d <= outer && s.kind() != Step.Kind.LADDER && s.kind() != Step.Kind.DOOR) out.add(s.blockPos());
+            BlockPos p = s.blockPos();
+            double d = Math.sqrt(horizontalSq(p, center));
+            if (d <= w.insideToward(center, p.getX() + 0.5, p.getZ() + 0.5) - 1) break;
+            if (d <= w.outerToward(center, p.getX() + 0.5, p.getZ() + 0.5) + 1 && s.kind() != Step.Kind.LADDER && s.kind() != Step.Kind.DOOR) out.add(s.blockPos());
         }
         return out;
     }
@@ -368,11 +370,11 @@ public final class SiegeLanes {
     /** Diagnóstico: los pasos del camino alrededor del muro, con qué bloque hay en los pies, la cabeza y abajo. */
     private static String describeCrossing(ServerLevel level, List<Step> path, BlockPos center, Breach.Walls w) {
         int first = -1, last = -1;
-        double outer = (w.walled() ? w.bandMax() : w.radius()) + 3, inner = w.inside() - 1;
         for (int i = 0; i < path.size(); i++) {
-            double d = Math.sqrt(horizontalSq(path.get(i).blockPos(), center));
-            if (first < 0 && d <= outer) first = i;
-            if (d <= inner) {
+            BlockPos p = path.get(i).blockPos();
+            double d = Math.sqrt(horizontalSq(p, center));
+            if (first < 0 && d <= w.outerToward(center, p.getX() + 0.5, p.getZ() + 0.5) + 3) first = i;
+            if (d <= w.insideToward(center, p.getX() + 0.5, p.getZ() + 0.5) - 1) {
                 last = i;
                 break;
             }
@@ -380,7 +382,7 @@ public final class SiegeLanes {
         if (first < 0) return "? (el camino no se acerca al muro)";
         if (last < 0) last = path.size() - 1;
         StringBuilder b = new StringBuilder();
-        for (int i = first; i <= last && i - first < 10; i++) {
+        for (int i = first; i <= last && i - first < 16; i++) {
             Step s = path.get(i);
             b.append(s.blockPos().toShortString()).append(' ').append(s.kind()).append(' ').append(blocksAt(level, s.blockPos())).append(" | ");
         }
@@ -452,7 +454,7 @@ public final class SiegeLanes {
         double bestD = Double.MAX_VALUE;
         for (AbstractRecruitEntity s : members) {
             double d = dist(s, center);
-            if (d > w.inside() + 1 && d < bestD && !s.isPassenger() && !SapperRules.isSapper(s)) {
+            if (!w.isIn(center, s.position()) && d < bestD && !s.isPassenger() && !SapperRules.isSapper(s)) {
                 bestD = d;
                 from = s.blockPosition();
             }
@@ -672,9 +674,10 @@ public final class SiegeLanes {
         }
         lane.outside = lane.inside = null;
         for (int i = 1; i < path.size(); i++) {
-            double d = Math.sqrt(horizontalSq(path.get(i).blockPos(), center));
-            if (lane.outside == null && d <= (w.walled() ? w.bandMax() + 2 : w.radius())) lane.outside = path.get(i).blockPos();
-            if (d <= w.inside()) {
+            BlockPos p = path.get(i).blockPos();
+            double d = Math.sqrt(horizontalSq(p, center));
+            if (lane.outside == null && d <= (w.walled() ? w.outerToward(center, p.getX() + 0.5, p.getZ() + 0.5) + 2 : w.radius())) lane.outside = p;
+            if (w.isIn(center, p)) {
                 lane.inside = path.get(i).blockPos();
                 return;
             }

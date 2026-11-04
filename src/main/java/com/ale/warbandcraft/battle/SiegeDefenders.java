@@ -148,6 +148,12 @@ public final class SiegeDefenders {
                 engage(s, inside);
                 continue;
             }
+            // Pedido de Ale ("mis soldados salieron a pelearle"): los de a pie no persiguen afuera de la muralla
+            LivingEntity t = s.getTarget();
+            if (a.job() != Job.ARCHER && w.walled() && t != null && s.distanceTo(t) > SiegeLanes.CONTACT
+                    && horizontal(t.position(), Vec3.atBottomCenterOf(center)) > w.insideToward(center, t.getX(), t.getZ()) + 1) {
+                s.setTarget(null);
+            }
             switch (a.job()) {
                 case ARCHER -> archer(s, a, m, enemies, center, caps);
                 case PUSHER -> pusher(level, host, s, a, m, enemies, center, w, caps);
@@ -528,7 +534,7 @@ public final class SiegeDefenders {
         double bd = Double.MAX_VALUE;
         for (LivingEntity e : enemies) {
             if (!e.isAlive() || Surrender.is(e)) continue;
-            if (horizontal(e.position(), Vec3.atBottomCenterOf(center)) > w.inside() + 1) continue;
+            if (horizontal(e.position(), Vec3.atBottomCenterOf(center)) > w.insideToward(center, e.getX(), e.getZ()) + 1) continue;
             double d = s.distanceToSqr(e);
             if (d < bd) {
                 bd = d;

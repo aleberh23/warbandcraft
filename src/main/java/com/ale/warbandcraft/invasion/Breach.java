@@ -41,7 +41,41 @@ public final class Breach {
      * obstáculo entre {@code bandMin} y {@code bandMax} del centro es el muro (más afuera es un árbol, más adentro una
      * casa); a menos de {@code inside} ya entró; {@code inner}: a dónde va al entrar.
      */
-    public record Walls(int radius, boolean walled, double bandMin, double bandMax, double inside, double inner) {
+    public record Walls(int radius, boolean walled, double bandMin, double bandMax, double inside, double inner, double[] radii) {
+        public Walls(int radius, boolean walled, double bandMin, double bandMax, double inside, double inner) {
+            this(radius, walled, bandMin, bandMax, inside, inner, null);
+        }
+
+        /**
+         * Pedido de Ale (se trancaban en el muro este): hasta dónde es "adentro" en la dirección de {@code p}. Con una
+         * muralla dibujada, la de esa tajada (no es un círculo: el radio medio dejaba "adentro" a los de afuera del lado
+         * donde la muralla está más cerca).
+         */
+        public double insideToward(BlockPos c, double x, double z) {
+            if (radii == null) return inside;
+            double r = radii[com.ale.warbandcraft.village.InsideWalls.binOf(x - (c.getX() + 0.5), z - (c.getZ() + 0.5))];
+            return r > 0 ? r - 1.5 : inside;
+        }
+
+        /** Hasta dónde llega el muro (de ahí para afuera ya es afuera) en la dirección de {@code p}. */
+        public double outerToward(BlockPos c, double x, double z) {
+            if (radii == null) return walled ? bandMax : radius;
+            return insideToward(c, x, z) + 4;
+        }
+
+        public boolean isIn(BlockPos c, Vec3 p) {
+            return horizontalTo(c, p.x, p.z) < insideToward(c, p.x, p.z);
+        }
+
+        public boolean isIn(BlockPos c, BlockPos p) {
+            return isIn(c, Vec3.atBottomCenterOf(p));
+        }
+
+        private static double horizontalTo(BlockPos c, double x, double z) {
+            double dx = x - (c.getX() + 0.5), dz = z - (c.getZ() + 0.5);
+            return Math.sqrt(dx * dx + dz * dz);
+        }
+
         public double probeFrom() {
             return radius + 8;
         }
@@ -64,7 +98,7 @@ public final class Breach {
         TownData.Town t = TownData.get(level).at(v.center());
         if (t != null && !t.defense.isEmpty()) {   // H22c: muralla dibujada: su radio medio
             int r = Math.max(6, com.ale.warbandcraft.upgrade.Works.radius(t));
-            return new Walls(r, true, r - 4, r + 2.5, r - 1.5, Math.max(3, r - 8));
+            return new Walls(r, true, r - 4, r + 2.5, r - 1.5, Math.max(3, r - 8), com.ale.warbandcraft.village.InsideWalls.radii(level, v));
         }
         if (t != null && (t.has(Upgrade.PALISADE) || t.has(Upgrade.WALL)) && t.ringRadius > 0) {
             int r = t.ringRadius;

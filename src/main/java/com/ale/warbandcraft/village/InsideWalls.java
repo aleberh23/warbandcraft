@@ -96,6 +96,20 @@ public final class InsideWalls {
         return floor.is(BlockTags.LOGS) || floor.is(BlockTags.FENCES) || floor.is(BlockTags.WALLS) || floor.is(BlockTags.FENCE_GATES);
     }
 
+    /**
+     * La distancia del centro a la muralla en cada tajada ({@link #binOf}), o null si no tiene muralla o es un castillo
+     * (redondo). Para los asedios: una muralla dibujada no es un círculo.
+     */
+    public static double[] radii(ServerLevel level, VillageData.Village v) {
+        if (v.castle()) return null;
+        Shape s = shape(level, v);
+        return s.walled() ? s.radius().clone() : null;
+    }
+
+    public static int binOf(double dx, double dz) {
+        return bin(dx, dz);
+    }
+
     private static int bin(double dx, double dz) {
         double a = Math.atan2(dz, dx);
         int b = (int) Math.floor((a + Math.PI) / (2 * Math.PI) * BINS);
