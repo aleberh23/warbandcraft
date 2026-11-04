@@ -13,6 +13,7 @@ final class TuningClasses {
             "battle.BattleChoices",
             "battle.BattleEscape",
             "battle.BattleGeneral",
+            "battle.BattleLog",
             "battle.BattleLoot",
             "battle.BattleSize",
             "battle.SiegeDefenders",

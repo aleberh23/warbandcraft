@@ -152,6 +152,8 @@ public class WarReports extends SavedData {
         WarbandCraft.LOGGER.info("Parte de guerra: {} {} ({}, {}) de {} contra {} ({}): {} atacantes contra {} defensores, cayeron {} guardias",
                 outcome, place.isEmpty() ? (v != null && v.castle() ? "castillo" : "aldea") : place, inv.target.getX(), inv.target.getZ(), Allies.playerName(inv.owner), inv.faction, fought ? "peleada" : "autoresuelta",
                 attackers, defenders, guardsLost);
+        com.ale.warbandcraft.battle.BattleLog.end(level, "invasión " + inv.target.getX() + "," + inv.target.getZ(), outcome + " (" + (fought ? "peleada" : "autoresuelta") + "): "
+                + attackers + " atacantes contra " + defenders + " defensores, cayeron " + guardsLost + " guardias");
         for (UUID id : List.copyOf(r.unread)) {
             ServerPlayer p = server.getPlayerList().getPlayer(id);
             if (p == null) continue;

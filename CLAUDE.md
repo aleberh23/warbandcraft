@@ -1198,6 +1198,13 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   Prueba: `H16GameTests.siegeArchersGoMeleeWhenLosing`.
 - Operadores (pedido de Ale, `command/AdminCommand`): `/warband huestes cancelar` (`Hosts.cancelAll`: todas se van al pozo, sus
   soldados cargados desaparecen) y `/warband paz forzar <facción>` (`Peace.make` gratis para vos y tu facción).
+- **Registro de batallas** (pedido de Ale, 4/11, para mejorarlas después): `battle/BattleLog` escribe en
+  `logs/warbandcraft-batallas.txt` (al pasar `MAX_MB` va a `-viejo.txt`). Cada batalla con clave y centro: `begin` (tu ataque
+  `RaidManager.start` "ataque x,z", invasión `Invasions.startFight` "invasión x,z", IA contra IA `AiWars.startBattle` "ia x,z",
+  Hueste `Hosts.startBattle`, batalla de campo `Ambush.spring`), `line`/`lineAt` (carriles de `SiegeLanes.log`, tácticas de
+  `TeamAI`, planes de `BattleGeneral`), cada caído a ≤`RANGE` (quién, dónde, quién lo mató, con qué), cada `SNAPSHOT_SECONDS`
+  cuántos en pie de cada bando, y `end` (`win/abandon`, `WarReports.record`, `AiWars.finish`, `Hosts.end`; sin novedades
+  `IDLE_SECONDS` se cierra sola). El diagnóstico (`diagnostico.yml`) muestra las últimas 400 líneas.
 - `/warband prueba invasion [incursion|ejercito] [cantidad]`: llega en el acto (también `prueba reconquista`).
   Cada decisión de carril va al log ("Asedio a ...: carril N").
 - Pruebas: `H17GameTests` (asedio) y `NavGameTests` (hueco, muro cerrado → escalera/romper, escalera puesta es camino,

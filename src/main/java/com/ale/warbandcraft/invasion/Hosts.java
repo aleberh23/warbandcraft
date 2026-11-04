@@ -494,6 +494,7 @@ public final class Hosts {
     }
 
     private static void end(ServerLevel level, InvasionData.Host h) {
+        com.ale.warbandcraft.battle.BattleLog.end(level, "hueste " + h.id.toString().substring(0, 8), "se termina (ganada, desbandada o siguió de marcha)");
         com.ale.warbandcraft.battle.tactics.TeamAI.forget(aiKey(h));
         InvasionData.get(level).removeHost(h.id);
         MEMORY.remove(h.id);
@@ -596,6 +597,8 @@ public final class Hosts {
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             p.playNotifySound(SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 1.0F, 1.0F);
         }
+        com.ale.warbandcraft.battle.BattleLog.begin(level, "hueste " + h.id.toString().substring(0, 8), "Hueste de " + h.faction.getPath() + " contra " + com.ale.warbandcraft.faction.Allies.playerName(h.owner),
+                BlockPos.containing(center.add(trigger).scale(0.5)), out.size() + " formados, " + h.reserve + " de reserva");
         return out;
     }
 

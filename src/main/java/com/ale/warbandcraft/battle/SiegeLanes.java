@@ -1041,6 +1041,7 @@ public final class SiegeLanes {
     }
 
     private static void log(Host host, Lane lane, String what) {
+        com.ale.warbandcraft.battle.BattleLog.lineAt(host.center(), "carril " + lane.index + " (" + Math.round(Math.toDegrees(lane.angle)) + "°): " + what);
         com.ale.warbandcraft.WarbandCraft.LOGGER.info("Asedio a {}: carril {} ({}°): {}", host.name(), lane.index,
                 Math.round(Math.toDegrees(lane.angle)), what);
     }

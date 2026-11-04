@@ -176,6 +176,7 @@ public final class BattleGeneral {
         Plan dp = defenderPlan(defPower / Math.max(0.1, attPower));
         if (dp != m.defenderPlan) {
             m.defenderPlan = dp;
+            com.ale.warbandcraft.battle.BattleLog.line(RaidManager.logKey(raid.center), "defensores: " + dp + " (fuerza " + Math.round(defPower) + " contra " + Math.round(attPower) + ")");
             tell(level, raid, Component.translatable("msg.warbandcraft.battle.enemy_" + dp.name().toLowerCase()).withStyle(ChatFormatting.RED));
         }
         commandDefenders(level, raid, m, defenders, attackers, dp, castle);
@@ -197,6 +198,7 @@ public final class BattleGeneral {
             Plan ap = attackerPlan(attPower / Math.max(0.1, defPower));
             if (ap != m.attackerPlan) {
                 m.attackerPlan = ap;
+                com.ale.warbandcraft.battle.BattleLog.line(RaidManager.logKey(raid.center), "tus soldados: " + ap + " (" + battle.size() + " en Batalla)");
                 tell(level, raid, Component.translatable("msg.warbandcraft.battle.ours_" + ap.name().toLowerCase()).withStyle(ChatFormatting.AQUA));
             }
             commandAttackers(level, m, battle, new ArrayList<>(defenders), ap);

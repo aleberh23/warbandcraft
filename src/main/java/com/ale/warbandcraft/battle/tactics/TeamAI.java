@@ -159,7 +159,11 @@ public final class TeamAI {
         if (forced != null || tactic == null || urgent || now - lastThink >= Tactics.thinkTicks()) {
             Tactic next = forced != null ? forced : Tactics.choose(view, tactic, ctx.defendPoint() != null, hill != null, ctx.canRetreat(),
                     now - startTick, level.getRandom());
-            if (next != tactic) apply(next, view, ctx, now);
+            if (next != tactic) {
+                com.ale.warbandcraft.battle.BattleLog.lineAt(net.minecraft.core.BlockPos.containing(view.ownCenter), "general " + key + ": táctica " + next
+                        + (view.underFire ? " (bajo fuego)" : "") + ", " + own.size() + " propios contra " + enemies.size());
+                apply(next, view, ctx, now);
+            }
             else assignNew(view, ctx, now);
             tactic = next;
             lastThink = now;

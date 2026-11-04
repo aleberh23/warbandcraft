@@ -257,6 +257,8 @@ public final class Invasions {
         List<AbstractRecruitEntity> out = Assault.spawn(level, inv, v, f);
         inv.state = InvasionData.State.FIGHTING;
         inv.size = out.size() + inv.reserve;
+        com.ale.warbandcraft.battle.BattleLog.begin(level, "invasión " + inv.target.getX() + "," + inv.target.getZ(), "Invasión de " + inv.faction.getPath() + " a " + (v.castle() ? "castillo" : "aldea")
+                + " de " + com.ale.warbandcraft.faction.Allies.playerName(inv.owner), inv.target, out.size() + " aparecen, " + inv.reserve + " de reserva");
         InvasionData.get(level).changed();
         ServerPlayer p = level.getServer().getPlayerList().getPlayer(inv.owner);
         if (p != null) {

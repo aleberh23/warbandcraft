@@ -323,6 +323,8 @@ public final class AiWars {
             p.sendSystemMessage(msg);
             offer(level, m, p, false);   // H23: la pantalla para meterse
         }
+        com.ale.warbandcraft.battle.BattleLog.begin(level, "ia " + m.target.getX() + "," + m.target.getZ(), "Batalla " + m.attacker.getPath() + " contra " + v.faction().getPath()
+                + " (" + (v.castle() ? "castillo" : "aldea") + ")", m.target, out.size() + " atacantes aparecen");
         return out;
     }
 
@@ -833,6 +835,7 @@ public final class AiWars {
      * Se llama antes de que la aldea cambie de dueño.
      */
     private static void finish(ServerLevel level, InvasionData.March m, VillageData.Village v, boolean attackerWon) {
+        com.ale.warbandcraft.battle.BattleLog.end(level, "ia " + m.target.getX() + "," + m.target.getZ(), attackerWon ? "ganó " + m.attacker.getPath() + " (toma la aldea)" : "resistió " + v.faction().getPath());
         ResourceLocation winner = attackerWon ? m.attacker : v.faction();
         java.util.Set<UUID> players = attackerWon ? m.helpedAttack : m.helpedDefense;
         if (!players.isEmpty()) {

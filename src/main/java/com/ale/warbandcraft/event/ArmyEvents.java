@@ -29,6 +29,7 @@ public class ArmyEvents {
         int tick = server.getTickCount();
         if (tick % TICK_INTERVAL == 0) {
             for (ServerLevel level : server.getAllLevels()) Armies.tick(level);
+            com.ale.warbandcraft.battle.BattleLog.tick(server.overworld());   // registro de batallas: cuenta de cada bando
         }
         if (tick % SWEEP_INTERVAL == 5) {
             for (ServerLevel level : server.getAllLevels()) Armies.sweepOrphans(level);
@@ -37,6 +38,7 @@ public class ArmyEvents {
 
     @SubscribeEvent
     public void onDeath(LivingDeathEvent event) {
+        if (!event.getEntity().level().isClientSide()) com.ale.warbandcraft.battle.BattleLog.onDeath(event.getEntity(), event.getSource());
         if (event.getEntity() instanceof AbstractRecruitEntity s && s.level() instanceof ServerLevel level) {
             Armies.onDeath(level, s);
             com.ale.warbandcraft.battle.tactics.Morale.onDeath(level, s);   // H24: a los compañeros cerca les baja la moral
@@ -66,5 +68,6 @@ public class ArmyEvents {
     @SubscribeEvent
     public void onStopped(ServerStoppedEvent event) {
         Armies.clear();
+        com.ale.warbandcraft.battle.BattleLog.close();
     }
 }

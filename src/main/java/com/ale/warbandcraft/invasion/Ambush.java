@@ -92,6 +92,7 @@ public final class Ambush {
             player.sendSystemMessage(Component.translatable("msg.warbandcraft.ambush", AiWars.name(f), out.size())
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
         }
+        com.ale.warbandcraft.battle.BattleLog.begin(level, "campo " + at.getX() + "," + at.getZ(), "Batalla de campo contra " + t.faction().getPath(), at, out.size() + " enemigos");
         return out;
     }
 

@@ -226,6 +226,8 @@ public final class RaidManager {
         // la barra la arma updateBar (H17: quién va ganando)
         RAIDS.put(key(level.dimension(), village.center()), raid);
         changed();
+        com.ale.warbandcraft.battle.BattleLog.begin(level, logKey(village.center()), "Ataque de " + com.ale.warbandcraft.faction.Allies.playerName(playerId) + " a " + (village.castle() ? "castillo" : "aldea")
+                + " de " + village.faction().getPath(), village.center(), raid.initialGarrison + " de guarnición");
         boolean test = VillageData.get(level).isTest(village.center());
         if (!test) {
             com.ale.warbandcraft.faction.Peace.breakTruce(level, playerId, village.faction());
@@ -366,7 +368,13 @@ public final class RaidManager {
      * caído) van como prisioneros a tu Campamento más cercano; tus rendidos se levantan. Después se abre la
      * pantalla Saquear/Conquistar (modal, no se puede cerrar sin elegir).
      */
+    /** Clave del registro de batallas de un ataque tuyo. */
+    public static String logKey(BlockPos center) {
+        return "ataque " + center.getX() + "," + center.getZ();
+    }
+
     private static void win(ServerLevel level, Raid raid, List<AbstractRecruitEntity> standing) {
+        com.ale.warbandcraft.battle.BattleLog.end(level, logKey(raid.center), "ganó el atacante (" + standing.size() + " defensores en pie, " + raid.surrendered.size() + " rendidos)");
         raid.state = State.WON;
         closeBar(raid);
         BattleGeneral.end(level, raid);
@@ -431,6 +439,7 @@ public final class RaidManager {
      * equipo); los enemigos rendidos se levantan. El equipo de los caídos igual llega a tu Campamento.
      */
     private static void abandon(ServerLevel level, Raid raid) {
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) com.ale.warbandcraft.battle.BattleLog.end(level, logKey(raid.center), "el atacante abandonó o perdió");
         RAIDS.remove(key(raid.dimension, raid.center));
         closeBar(raid);
         BattleGeneral.end(level, raid);

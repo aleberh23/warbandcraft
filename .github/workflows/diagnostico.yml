@@ -42,7 +42,10 @@ jobs:
           lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30;
                    open --env-password -u $SFTP_USER -p $SFTP_PORT sftp://$SFTP_HOST;
                    mirror -I 'crash-*' --newer-than=now-1day /crash-reports srv/crash;
-                   mirror -I '*.log.gz' --newer-than=now-1day /logs srv/oldlogs" || true
+                   mirror -I '*.log.gz' --newer-than=now-1day /logs srv/oldlogs;
+                   get /logs/warbandcraft-batallas.txt -o srv/batallas.txt" || true
+          echo "=== registro de batallas (últimas 400 líneas) ==="
+          tail -400 srv/batallas.txt 2>/dev/null || echo "todavía no hay"
           echo "=== informes de crash (último día) ==="
           ls -l srv/crash 2>/dev/null || echo "ninguno"
           last=$(ls -t srv/crash/* 2>/dev/null | head -1)
