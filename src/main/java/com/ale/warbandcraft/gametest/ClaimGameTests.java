@@ -107,6 +107,52 @@ public class ClaimGameTests {
         h.succeed();
     }
 
+    /**
+     * Bug de Ale (4/11): Recruits le "capturó" con su asedio el claim de una aldea conquistada a la facción de la IA.
+     * Un claim así vuelve solo a la facción de Recruits del dueño.
+     */
+    @GameTest(template = TEMPLATE)
+    public static void stolenClaimComesBack(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Faction f = FactionManager.INSTANCE.ordered().get(0);
+        RecruitsClaimManager m = ClaimEvents.recruitsClaimManager;
+        com.talhanation.recruits.world.RecruitsFactionManager fm = com.talhanation.recruits.FactionEvents.recruitsFactionManager;
+        check(m != null && fm != null, "Recruits no tiene claims o facciones");
+        BlockPos center = h.absolutePos(CENTER);
+        GameProfile profile = new GameProfile(UUID.nameUUIDFromBytes("stolen-claim".getBytes()), "stolen-claim");
+        String team = "wbtest_stolen";
+        if (fm.getFactionByStringID(team) == null) {
+            fm.addTeam(team, "Prueba", profile.getId(), profile.getName(), new net.minecraft.nbt.CompoundTag(), (byte) 0,
+                    net.minecraft.ChatFormatting.WHITE);
+        }
+        com.talhanation.recruits.world.RecruitsFaction valdren = new com.talhanation.recruits.world.RecruitsFaction();
+        valdren.setStringID(f.teamName());
+        valdren.setTeamDisplayName(f.name());
+        RecruitsClaim claim = new RecruitsClaim("robado", valdren);
+        claim.setCenter(new ChunkPos(center));
+        claim.addChunk(new ChunkPos(center));
+        claim.setBlockInteractionAllowed(false);
+        claim.isUnderSiege = true;
+        VillageData data = VillageData.get(level);
+        VillageData.Village v = new VillageData.Village(center, f.id(), 0).withOwner(profile.getId());
+        data.add(v);
+        try {
+            m.addOrUpdateClaim(level, claim);
+            // En el juego lo hace Territory.ensure con el equipo del dueño (acá no hay caché de perfiles)
+            com.ale.warbandcraft.village.Territory.recoverStolenClaim(level, v, team);
+            RecruitsClaim now = m.getClaim(new ChunkPos(center));
+            check(now != null && team.equals(now.getOwnerFactionStringID()),
+                    "el claim sigue a nombre de " + (now == null ? "nadie" : now.getOwnerFactionStringID()));
+            check(!now.isUnderSiege, "sigue el asedio de Recruits");
+            check(now.getPlayerInfo() != null && profile.getId().equals(now.getPlayerInfo().getUUID()), "el claim no es del dueño");
+        } finally {
+            RecruitsClaim left = m.getClaim(new ChunkPos(center));
+            if (left != null) m.removeClaim(level, left.getUUID());
+            data.remove(center);
+        }
+        h.succeed();
+    }
+
     private static void check(boolean condition, String message) {
         if (!condition) throw new GameTestAssertException(message);
     }

@@ -87,6 +87,7 @@ public class Territory extends SavedData {
     public static void ensure(ServerLevel level, VillageData.Village v) {
         Territory t = get(level);
         long key = v.center().asLong();
+        recoverStolenClaim(level, v);
         // Si la aldea ya está dentro de un claim de tu facción de Recruits, ese claim ES su territorio (y manda: si lo
         // cambiás desde Recruits, el territorio lo sigue)
         RecruitsClaim own = factionClaimAt(level, v, new ChunkPos(v.center()));
@@ -147,6 +148,51 @@ public class Territory extends SavedData {
             t.setDirty();
         }
         t.syncClaim(level, v);
+    }
+
+    /**
+     * Bug de Ale (4/11): antes del arreglo ({@code NoNpcClaimSiegeMixin}) Recruits dejaba que los soldados de una facción
+     * de la IA "capturaran" con su asedio el claim de una aldea tuya: quedaba a nombre de la facción (sin admin) y no
+     * podías abrir ni el Campamento ni los portones. Un claim así en el centro de una aldea tuya vuelve a la facción
+     * de Recruits del dueño (y se corta el asedio de Recruits si sigue).
+     */
+    static void recoverStolenClaim(ServerLevel level, VillageData.Village v) {
+        recoverStolenClaim(level, v, null);
+    }
+
+    /** {@code ownerFaction}: la facción de Recruits del dueño (null = la de su equipo del marcador). */
+    public static void recoverStolenClaim(ServerLevel level, VillageData.Village v, @Nullable String ownerFaction) {
+        RecruitsClaimManager m = ClaimEvents.recruitsClaimManager;
+        if (m == null || v.owner() == null || level != level.getServer().overworld()) return;
+        RecruitsClaim claim = m.getClaim(new ChunkPos(v.center()));
+        if (claim == null || claim.isRemoved || claim.isAdmin || claim.getOwnerFaction() == null) return;
+        if (!com.ale.warbandcraft.faction.FactionManager.INSTANCE.isFactionTeam(claim.getOwnerFactionStringID())) return;
+        String fid = ownerFaction != null ? ownerFaction : factionOf(level, v.owner());
+        RecruitsFaction faction = fid == null || com.talhanation.recruits.FactionEvents.recruitsFactionManager == null ? null
+                : com.talhanation.recruits.FactionEvents.recruitsFactionManager.getFactionByStringID(fid);
+        if (faction == null) return;
+        String stolenBy = claim.getOwnerFactionStringID();
+        try {
+            claim.setOwnerFaction(faction);
+            claim.setPlayer(null);
+            ensurePlayer(level, claim, v.owner());
+            claim.setBlockInteractionAllowed(false);
+            claim.setBlockPlacementAllowed(false);
+            claim.setBlockBreakingAllowed(false);
+            if (claim.isUnderSiege || m.isActiveSiege(claim)) {
+                claim.isUnderSiege = false;
+                claim.attackingParties.clear();
+                claim.defendingParties.clear();
+                m.removeActiveSiege(claim);
+            }
+            m.addOrUpdateClaim(level, claim);
+            m.broadcastClaimUpdateToAll(level, claim);
+            m.save(level);
+            WarbandCraft.LOGGER.info("Claim de la aldea {} recuperado: Recruits se lo había dado a {}; vuelve a {}",
+                    v.center().toShortString(), stolenBy, fid);
+        } catch (RuntimeException e) {
+            WarbandCraft.LOGGER.warn("No se pudo recuperar el claim de la aldea {}", v.center().toShortString(), e);
+        }
     }
 
     /** Agregar el chunk {@code c} (pegado al territorio, libre), pagando {@link #CHUNK_COST} esmeraldas. */

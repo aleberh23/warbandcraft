@@ -62,6 +62,13 @@ public class FactionManager extends SimpleJsonResourceReloadListener {
         return ordered;
     }
 
+    /** ¿Es el equipo del marcador de una facción nuestra (incluidos los Bandidos)? */
+    public boolean isFactionTeam(@Nullable String team) {
+        if (team == null) return false;
+        for (Faction f : factions.values()) if (team.equals(f.teamName())) return true;
+        return false;
+    }
+
     /** La facción que ocupa las aldeas de ese bioma, o null si ninguna lo reclama. */
     @Nullable
     public Faction forBiome(Holder<Biome> biome) {

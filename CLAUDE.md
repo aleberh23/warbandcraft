@@ -1422,7 +1422,14 @@ Entidades de Recruits útiles: `recruit`, `recruit_shieldman`, `bowman`, `crossb
   `RecruitsPlayerUnitManager.canPlayerRecruit` dé siempre true y `getRemainingRecruitSlots` 1.000.000.000. Por ahí pasan
   todas las contrataciones (recluta, noble, cambio de dueño).
   `mixin/SafeGateMixin` (crash del 4/11 en un asedio): `RecruitsDoorInteractGoal.useGate` no hace nada si ya no hay un bloque
-  con `open` ahí (un portón roto a golpes mientras un soldado de Recruits lo tenía abierto tiraba el servidor). Ojo: `RecruitsFaction.npcs` sube con cada `updateTeam` y
+  con `open` ahí (un portón roto a golpes mientras un soldado de Recruits lo tenía abierto tiraba el servidor).
+  `mixin/NoNpcClaimSiegeMixin` (bug de Ale, 4/11: aldea conquistada que "quedó a nombre de Valdren", sin poder abrir el Campamento
+  ni los portones): Recruits pone ENEMY solo entre equipos que se pegan (`RecruitEvents.setTeamsAsEnemies`) y nuestras facciones
+  están registradas en Recruits (`RecruitsFactionBridge`), así que sus soldados que quedaban en el claim (sin admin desde la
+  conquista) arrancaban **el asedio de Recruits** y lo capturaban (dueño = la facción, permisos de interacción cerrados).
+  `ClaimEvents.classifyEntities` ya no cuenta a los equipos `wb_*` (`FactionManager.isFactionTeam`). Los claims ya robados:
+  `Territory.recoverStolenClaim` (en `ensure`, cada 5 s) devuelve el claim del centro de tu aldea a tu facción de Recruits y corta
+  el asedio. Prueba: `ClaimGameTests.stolenClaimComesBack`. Ojo: `RecruitsFaction.npcs` sube con cada `updateTeam` y
   solo baja al morir (lo que se borra con `discard()` queda contado); ya no importa porque no se chequea.
 - Patrullas NPC: `world/RecruitsPatrolSpawn` (base para las facciones NPC de H2).
 - Facciones y diplomacia: `world/RecruitsFactionManager`, `RecruitsDiplomacyManager`.

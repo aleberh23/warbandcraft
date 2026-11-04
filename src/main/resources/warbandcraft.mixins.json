@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "NoRecruitLimitMixin",
-    "SafeGateMixin"
+    "SafeGateMixin",
+    "NoNpcClaimSiegeMixin"
   ],
   "injectors": {
     "defaultRequire": 1
