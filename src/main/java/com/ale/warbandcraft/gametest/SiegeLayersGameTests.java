@@ -32,15 +32,15 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public class SiegeLayersGameTests {
     private static final ResourceLocation FACTION = new ResourceLocation(WarbandCraft.MODID, "norte");
-    private static final int INNER = 10, OUTER = 17, HEIGHT = 4, AREA = 70, FLAT = 50;
+    private static final int INNER = 10, OUTER = 17, HEIGHT = 4, AREA = 56, FLAT = 34;
 
-    @GameTest(template = "empty", timeoutTicks = 20 * 60 * 4)
+    @GameTest(template = "empty", timeoutTicks = 20 * 60 * 4, batch = "siege_layers")
     public static void invadersCrossTwoWalls(GameTestHelper h) {
         site(h, 9000, 9000, "ARMY");
     }
 
     /** Sin zapadores (incursión): solo escaleras, una muralla después de la otra. */
-    @GameTest(template = "empty", timeoutTicks = 20 * 60 * 4)
+    @GameTest(template = "empty", timeoutTicks = 20 * 60 * 4, batch = "siege_layers")
     public static void raidersClimbTwoWalls(GameTestHelper h) {
         site(h, 9700, 9000, "RAID");
     }
@@ -48,7 +48,7 @@ public class SiegeLayersGameTests {
     private static void site(GameTestHelper h, int cx, int cz, String kind) {
         ServerLevel level = h.getLevel();
         List<ChunkPos> forced = new ArrayList<>();
-        for (int x = (cx - AREA) >> 4; x <= (cx + AREA + 220) >> 4; x++) {
+        for (int x = (cx - AREA) >> 4; x <= (cx + AREA) >> 4; x++) {
             for (int z = (cz - AREA) >> 4; z <= (cz + AREA) >> 4; z++) {
                 level.setChunkForced(x, z, true);
                 forced.add(new ChunkPos(x, z));
@@ -58,7 +58,7 @@ public class SiegeLayersGameTests {
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
         for (int dx = -FLAT; dx <= FLAT; dx++) {
             for (int dz = -FLAT; dz <= FLAT; dz++) {
-                for (int k = -6; k <= 30; k++) {
+                for (int k = -3; k <= 16; k++) {
                     BlockPos p = new BlockPos(cx + dx, y + k, cz + dz);
                     level.setBlock(p, k < 0 ? Blocks.STONE.defaultBlockState() : k == 0 ? Blocks.GRASS_BLOCK.defaultBlockState()
                             : Blocks.AIR.defaultBlockState(), 2);

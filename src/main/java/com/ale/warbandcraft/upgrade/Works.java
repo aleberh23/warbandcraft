@@ -722,6 +722,8 @@ public final class Works {
         }
         BASH.remove(key);
         level.destroyBlockProgress(id, g, -1);
+        com.ale.warbandcraft.battle.BattleLog.near(g, "rompieron a golpes el portón de " + g.toShortString() + " (" + at.size() + " golpeando: "
+                + at.get(0).getName().getString() + (at.size() > 1 ? " y otros" : "") + ")");
         level.destroyBlock(g, false);
         if (level.getBlockState(g.above()).getBlock() instanceof FenceGateBlock) level.destroyBlock(g.above(), false);
     }

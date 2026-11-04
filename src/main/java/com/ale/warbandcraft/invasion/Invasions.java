@@ -397,6 +397,9 @@ public final class Invasions {
         double attack = inv.size * INVADER_POWER * com.ale.warbandcraft.battle.AutoPower.faction(inv.faction, false)
                 * (army ? GENERAL_POWER : 1) * (0.8 + 0.4 * r.nextDouble());
         double defense = defense(level, v, guards, army) * (0.8 + 0.4 * r.nextDouble());
+        com.ale.warbandcraft.battle.BattleLog.line("invasión " + inv.target.getX() + "," + inv.target.getZ(), "se autoresuelve (" + (level.isPositionEntityTicking(inv.target) ? "" : "aldea sin cargar, ")
+                + inv.size + " invasores " + inv.kind + ", " + guards.size() + " fichas de guardia): ataque " + Math.round(attack) + " contra defensa " + Math.round(defense)
+                + " -> " + (defense >= attack ? "resiste" : "cae"));
         // Los invasores que habían aparecido (pelea real que quedó a medias) se van o se quedan según el resultado
         if (defense >= attack) {
             int lost = (int) Math.round(guards.size() * Math.min(1.0, attack / Math.max(defense, 1e-6)) * 0.5);

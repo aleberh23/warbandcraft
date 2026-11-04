@@ -144,6 +144,8 @@ public final class GarrisonReserve {
         if (out > 0) {
             TownData.get(level).changed();
             WarbandCraft.LOGGER.debug("Aldea {}: salen {} de la reserva (quedan {})", v.center().toShortString(), out, remaining(level, v));
+            com.ale.warbandcraft.battle.BattleLog.lineAt(v.center(), "salen " + out + " de la reserva de la aldea desde " + from.toShortString()
+                    + " (quedan " + remaining(level, v) + ", " + onField + " defendiendo)");
         }
     }
 

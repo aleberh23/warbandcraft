@@ -248,6 +248,8 @@ public final class SiegeLanes {
         int before = lane.ladders.size();
         lane.ladders.removeIf(l -> ladderAt(level, l.base()) == null);
         if (lane.ladders.size() < before) {
+            log(host, lane, "tumbaron " + (before - lane.ladders.size()) + " escalera(s); quedan " + lane.ladders.size()
+                    + " (vuelven a ponerla en " + LADDER_RETRY / 20 + " s)");
             lane.ladderLost = now;
             host.ladders().removeIf(k -> ladderAt(level, BlockPos.of(k)) == null);
             host.changed();

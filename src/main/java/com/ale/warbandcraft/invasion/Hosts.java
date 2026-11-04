@@ -713,6 +713,7 @@ public final class Hosts {
                 if (s.getLastHurtByMob() != null || nearest(s.position(), enemies, ENGAGE) != null) contact = true;
             }
             if (!contact) return;
+            com.ale.warbandcraft.battle.BattleLog.line("hueste " + h.id.toString().substring(0, 8), "la hueste termina de formar: avanza (" + mine.size() + " contra " + enemies.size() + ")");
             m.phase = Phase.ADVANCE;
         }
         // H24: el general de la hueste (tácticas como en Bannerlord: avanzar en línea, rodear, hostigar, retirarse...)
@@ -740,6 +741,8 @@ public final class Hosts {
     private static void rout(ServerLevel level, InvasionData.Host h, Memory m, List<AbstractRecruitEntity> mine, Vec3 facing,
                              @Nullable ServerPlayer p) {
         m.phase = Phase.ROUT;
+        com.ale.warbandcraft.battle.BattleLog.line("hueste " + h.id.toString().substring(0, 8), "LA HUESTE SE DESBANDA: " + mine.size() + " huyen, " + h.reserve + " de reserva no entran, "
+                + m.fled + " ya se habían ido");
         m.routSince = level.getGameTime();
         m.fled += h.reserve;
         h.reserve = 0;
@@ -762,6 +765,7 @@ public final class Hosts {
      * se cansa de la guerra y por unos días no manda otra. Los que huyeron vuelven a juntarse.
      */
     private static void victory(ServerLevel level, InvasionData.Host h, Memory m) {
+        com.ale.warbandcraft.battle.BattleLog.line("hueste " + h.id.toString().substring(0, 8), "¡ganaste! la hueste no existe más (" + h.startSize + " al empezar, " + m.fled + " huyeron)");
         end(level, h);
         InvasionData data = InvasionData.get(level);
         data.setHostCooldown(h.faction, h.owner, level.getDayTime() / 24000L + DEFEAT_COOLDOWN_DAYS);

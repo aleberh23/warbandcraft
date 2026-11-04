@@ -202,6 +202,8 @@ public final class AiWars {
                 * (0.8 + 0.4 * r.nextDouble());
         double defense = (m.fighting ? defense(level, v, m.defenders) : defense(level, v)) * (0.8 + 0.4 * r.nextDouble());
         Faction att = FactionManager.INSTANCE.get(m.attacker), def = FactionManager.INSTANCE.get(v.faction());
+        com.ale.warbandcraft.battle.BattleLog.line("ia " + m.target.getX() + "," + m.target.getZ(), "se autoresuelve " + m.attacker.getPath() + " (" + m.size + ") contra " + v.faction().getPath()
+                + (m.fighting ? " (pelea a medias)" : "") + ": ataque " + Math.round(attack) + " contra defensa " + Math.round(defense) + " -> " + (attack > defense ? "cae" : "resiste"));
         if (attack > defense) {
             finish(level, m, v, true);
             take(level, v, m.attacker, Math.max(1, (int) Math.round(m.size * (1 - defense / attack))));
@@ -437,7 +439,7 @@ public final class AiWars {
             else if (m.helpedDefense.contains(p.getUUID())) defenders.add(p);
         }
         // Pedido de Ale: que nunca se queden parados. Sin daño un rato, todos a buscarse; mucho más, se decide con lo que hay.
-        SiegePush.Stage stage = SiegePush.watch("march:" + m.id, now, att, def);
+        SiegePush.Stage stage = SiegePush.watch("march:" + m.id, m.target, now, att, def);
         List<AbstractRecruitEntity> laneAtt = att;
         if (stage == SiegePush.Stage.GIVE_UP) {
             boolean attackersWin = SiegePush.aWins(att, def);

@@ -220,6 +220,8 @@ public final class Assault {
             out.add(s);
         }
         InvasionData.get(level).changed();
+        if (!out.isEmpty()) com.ale.warbandcraft.battle.BattleLog.lineAt(inv.target, "llegan " + out.size() + " invasores de refuerzo (" + onField + " en el campo, quedan "
+                + inv.reserve + " de reserva)");
         return out;
     }
 
@@ -260,6 +262,7 @@ public final class Assault {
         if (army && general == null && !m.generalDead) {
             m.generalDead = true;
             for (Map.Entry<UUID, Float> e : m.morale.entrySet()) e.setValue(e.getValue() - MORALE_GENERAL);
+            com.ale.warbandcraft.battle.BattleLog.lineAt(inv.target, "cayó el general de los invasores: a todos les baja la moral " + MORALE_GENERAL + " (" + invaders.size() + " en pie)");
             tell(level, inv, Component.translatable("msg.warbandcraft.assault.general_down", Invasions.factionName(inv.faction))
                     .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         }
@@ -269,6 +272,10 @@ public final class Assault {
             double left = (invaders.size() + inv.reserve) / (double) Math.max(1, inv.startSize);
             double limit = !army ? RETREAT_RAID : m.generalDead ? RETREAT_NO_GENERAL : RETREAT_ARMY;
             if (inv.startSize > 0 && left <= limit || m.phase == Phase.ASSAULT && now - m.assaultSince > SIEGE_TIMEOUT) {
+                com.ale.warbandcraft.battle.BattleLog.lineAt(inv.target, "RETIRADA de los invasores: " + (inv.startSize > 0 && left <= limit
+                        ? "les queda el " + Math.round(left * 100) + "% (se van con " + Math.round(limit * 100) + "%" + (m.generalDead ? ", sin general" : "") + ")"
+                        : "el asalto lleva " + (now - m.assaultSince) / 20 + " s sin ganar") + "; " + invaders.size() + " en pie, " + m.fleeing.size() + " ya huían, "
+                        + inv.reserve + " de reserva vuelven a la leva");
                 m.phase = Phase.RETREAT;
                 m.since = now;
                 if (inv.reserve > 0) {   // H23: los que esperaban ni llegan a entrar: vuelven a la leva
@@ -296,6 +303,8 @@ public final class Assault {
             boolean contact = false;
             for (AbstractRecruitEntity s : fighting) if (SiegeLanes.nearestDistance(s, enemies) <= SiegeLanes.ENGAGE * 2) contact = true;
             if (now - m.since >= FORM_TICKS || contact) {
+                com.ale.warbandcraft.battle.BattleLog.lineAt(inv.target, "terminan de formar (" + (contact ? "contacto con el enemigo" : (now - m.since) / 20 + " s") + "): ¡al asalto! "
+                        + fighting.size() + " soldados");
                 m.phase = Phase.ASSAULT;
                 m.assaultSince = now;
                 tell(level, inv, Component.translatable("msg.warbandcraft.assault.charge", Invasions.factionName(inv.faction))
@@ -305,7 +314,7 @@ public final class Assault {
 
         // Pedido de Ale: que no se queden parados. Sin daño un rato, todos a buscar al enemigo; mucho más, se retiran.
         if (m.phase == Phase.ASSAULT) {
-            com.ale.warbandcraft.battle.SiegePush.Stage stage = com.ale.warbandcraft.battle.SiegePush.watch(key(level, center), now, fighting, enemies);
+            com.ale.warbandcraft.battle.SiegePush.Stage stage = com.ale.warbandcraft.battle.SiegePush.watch(key(level, center), center, now, fighting, enemies);
             if (stage == com.ale.warbandcraft.battle.SiegePush.Stage.GIVE_UP) {
                 m.assaultSince = now - SIEGE_TIMEOUT - 1;   // el próximo segundo, retirada
                 return false;
@@ -453,6 +462,8 @@ public final class Assault {
             if (general != null && general != s && s.distanceToSqr(general) <= GENERAL_AURA * GENERAL_AURA) mo = Math.min(MORALE_START, mo + MORALE_GENERAL_AURA);
             m.morale.put(s.getUUID(), mo);
             if (mo <= MORALE_BREAK && !m.fleeing.contains(s.getUUID()) && !s.getPersistentData().getBoolean(TAG_GENERAL)) {
+                com.ale.warbandcraft.battle.BattleLog.lineAt(center, s.getName().getString() + " huye (moral " + Math.round(mo) + ", vida " + Math.round(s.getHealth()) + "/"
+                        + Math.round(s.getMaxHealth()) + ") en " + s.blockPosition().toShortString());
                 flee(level, m, s, center, w);
             }
         }

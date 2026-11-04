@@ -82,6 +82,12 @@ public final class BattleLog {
         line(b != null ? b.key : "?", what);
     }
 
+    /** Como {@link #lineAt}, pero solo si hay una batalla cerca (para cosas que pasan también fuera de las batallas). */
+    public static void near(BlockPos at, String what) {
+        Battle b = nearest(Vec3.atCenterOf(at));
+        if (b != null) line(b.key, what);
+    }
+
     /** Terminó: cuánto duró, cuántos cayeron cerca y cómo. */
     public static void end(ServerLevel level, String key, String result) {
         Battle b = ACTIVE.remove(key);
@@ -176,7 +182,7 @@ public final class BattleLog {
                     Files.move(file, dir.resolve("warbandcraft-batallas-viejo.txt"), StandardCopyOption.REPLACE_EXISTING);
                 out = Files.newBufferedWriter(file, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             }
-            out.write(ZonedDateTime.now(ZONE).format(TIME) + " " + text);
+            out.write(ZonedDateTime.now(ZONE).format(TIME) + " " + text.replaceAll("entity[.][a-z_]+[.]([a-z_]+)", "$1"));   // sin nombre: el tipo
             out.newLine();
             out.flush();
         } catch (IOException e) {

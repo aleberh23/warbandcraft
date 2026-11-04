@@ -115,6 +115,7 @@ public final class Surrender {
         soldier.setHealth(Math.max(2.0F, soldier.getMaxHealth() * HEALTH_LEFT));
         if (soldier.isPassenger()) soldier.stopRiding();
         raid.surrendered.add(soldier.getUUID());
+        com.ale.warbandcraft.battle.BattleLog.lineAt(raid.center, soldier.getName().getString() + " se rinde en " + soldier.blockPosition().toShortString());
         RaidManager.changed();
         freeze(soldier);
         if (soldier.level() instanceof ServerLevel level) {

@@ -1214,6 +1214,12 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   `TeamAI`, planes de `BattleGeneral`), cada caído a ≤`RANGE` (quién, dónde, quién lo mató, con qué), cada `SNAPSHOT_SECONDS`
   cuántos en pie de cada bando, y `end` (`win/abandon`, `WarReports.record`, `AiWars.finish`, `Hosts.end`; sin novedades
   `IDLE_SECONDS` se cierra sola). El diagnóstico (`diagnostico.yml`) muestra las últimas 400 líneas.
+  Más detalle (pedido de Ale): fin de formar y retirada con el motivo (`Assault`), general caído, cada uno que huye por moral
+  (`Assault.morale`, `Morale` de campo: huye / se junta / se va), refuerzos (invasores, tu cuartel/barracón, reserva de la aldea),
+  etapas del destrabe (`SiegePush.watch(key, at, ...)`), escaleras tumbadas, portón roto a golpes (`Works.bash`), lo que abre cada
+  TNT de asedio (`SapperRules.openHole`), rendidos, arqueros que sacan la espada, autoresoluciones con ataque/defensa, fases de la
+  Hueste, y los que se traban por la malla y aparecen adelante (`Mover`; `BattleLog.near` = solo si hay una batalla cerca).
+  Los "entity.recruits.x" sin nombre se escriben como "x".
 - `/warband prueba invasion [incursion|ejercito] [cantidad]`: llega en el acto (también `prueba reconquista`).
   Cada decisión de carril va al log ("Asedio a ...: carril N").
 - Pruebas: `H17GameTests` (asedio) y `NavGameTests` (hueco, muro cerrado → escalera/romper, escalera puesta es camino,

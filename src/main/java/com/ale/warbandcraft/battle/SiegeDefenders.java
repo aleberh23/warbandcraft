@@ -180,6 +180,8 @@ public final class SiegeDefenders {
             }
             if (!losing || BattleGeneral.roleOf(s) != BattleGeneral.Role.RANGED || !hasSword(s)) continue;
             m.melee.add(s.getUUID());
+            com.ale.warbandcraft.battle.BattleLog.near(s.blockPosition(), s.getName().getString() + " deja el arco y saca la espada (quedan " + defenders.size()
+                    + " defensores de " + m.peak + ")");
             m.jobs.remove(s.getUUID());
             Mover.stop(s);
             s.getPersistentData().putLong(TAG_MELEE, now);

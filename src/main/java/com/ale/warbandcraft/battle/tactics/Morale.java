@@ -147,6 +147,8 @@ public final class Morale {
             if (general != null && general != s && s.distanceToSqr(general) <= AURA_RADIUS * AURA_RADIUS) d += GENERAL_AURA;
             add(s, d);
             if (get(s) <= BREAK && general != s) {
+                com.ale.warbandcraft.battle.BattleLog.near(s.blockPosition(), s.getName().getString() + " huye (moral " + Math.round(get(s)) + ", vida "
+                        + Math.round(s.getHealth()) + "/" + Math.round(s.getMaxHealth()) + (ratio < 0.6 ? ", su bando va perdiendo" : "") + ")");
                 FLEEING.put(s.getUUID(), now);
                 s.setTarget(null);
                 s.setShouldBlock(false);
@@ -162,11 +164,13 @@ public final class Morale {
         if (dist >= FLEE_SAFE || fleeingFor >= FLEE_TICKS) {
             FLEEING.remove(s.getUUID());
             if (!s.getIsOwned() && !Armies.inArmy(s)) {
+                com.ale.warbandcraft.battle.BattleLog.near(s.blockPosition(), s.getName().getString() + " huyó y se va del campo");
                 if (s.getVehicle() instanceof AbstractHorse h) h.discard();
                 s.discard();
                 return true;
             }
             VALUES.put(s.getUUID(), RALLY);
+            com.ale.warbandcraft.battle.BattleLog.near(s.blockPosition(), s.getName().getString() + " se junta de nuevo después de huir");
             return false;
         }
         Vec3 away = near == null ? s.position() : s.position().add(Formation.flat(s.position().subtract(near.position())).scale(12));

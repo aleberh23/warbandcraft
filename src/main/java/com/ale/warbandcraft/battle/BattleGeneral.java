@@ -151,7 +151,7 @@ public final class BattleGeneral {
 
         // Pedido de Ale: que nunca se queden parados. Si nadie pierde vida un rato, la guarnición (y tus soldados en
         // Batalla) salen a buscar al enemigo más cercano por la malla.
-        if (SiegePush.watch(key(level, raid.center), level.getGameTime(), defenders, attackers) != SiegePush.Stage.NORMAL) {
+        if (SiegePush.watch(key(level, raid.center), raid.center, level.getGameTime(), defenders, attackers) != SiegePush.Stage.NORMAL) {
             List<AbstractRecruitEntity> battle = new ArrayList<>();
             for (AbstractRecruitEntity s : yours) if (inBattle(s)) battle.add(s);
             SiegePush.huntAll(level, defenders, attackers, raid.center, com.ale.warbandcraft.nav.NavCaps.SOLDIER);

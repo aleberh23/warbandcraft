@@ -179,6 +179,8 @@ public final class SiegeDefense {
         BarracksData.get(level).changed();
         m.lastReinforce = now;
         if (s == null) return;
+        com.ale.warbandcraft.battle.BattleLog.lineAt(inv.target, "refuerzo de " + (fromQuarters ? "tu cuartel" : "tu barracón") + ": " + s.getName().getString()
+                + " (nv " + s.getXpLevel() + "; " + defenders.size() + " defendiendo, meta " + m.target + ")");
         s.getPersistentData().putLong(Quarters.TAG_QUARTERS, v.center().asLong());
         if (!fromQuarters) s.getPersistentData().putBoolean(TAG_REINFORCEMENT, true);
         ServerPlayer p = level.getServer().getPlayerList().getPlayer(inv.owner);

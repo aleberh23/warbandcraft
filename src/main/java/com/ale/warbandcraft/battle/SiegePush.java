@@ -54,6 +54,7 @@ public final class SiegePush {
         int count = -1;
         long last;
         Stage stage = Stage.NORMAL;
+        @javax.annotation.Nullable net.minecraft.core.BlockPos at;
     }
 
     private static final Map<String, Watch> WATCHES = new HashMap<>();
@@ -67,6 +68,12 @@ public final class SiegePush {
      * Una vuelta (1 s) de la pelea {@code key}: mira si alguien perdió vida (o cayó). Devuelve en qué está: normal, a
      * buscarse (PUSH) o decidir con lo que queda (GIVE_UP).
      */
+    /** Igual, y anota en el registro de batallas cuando cambia de etapa. */
+    public static Stage watch(String key, net.minecraft.core.BlockPos at, long now, List<? extends LivingEntity> a, List<? extends LivingEntity> b) {
+        WATCHES.computeIfAbsent(key, k -> new Watch()).at = at;
+        return watch(key, now, a, b);
+    }
+
     public static Stage watch(String key, long now, List<? extends LivingEntity> a, List<? extends LivingEntity> b) {
         Watch w = WATCHES.computeIfAbsent(key, k -> new Watch());
         double hp = 0;
@@ -77,7 +84,13 @@ public final class SiegePush {
         w.hp = hp;
         w.count = count;
         long idle = now - w.last;
+        Stage before = w.stage;
         w.stage = idle >= GIVE_UP_SECONDS * 20L ? Stage.GIVE_UP : idle >= STALL_SECONDS * 20L ? Stage.PUSH : Stage.NORMAL;
+        if (before != w.stage && w.at != null) {
+            com.ale.warbandcraft.battle.BattleLog.lineAt(w.at, w.stage == Stage.NORMAL ? "vuelve a haber daño: sigue la pelea normal"
+                    : w.stage == Stage.PUSH ? "nadie pierde vida hace " + STALL_SECONDS + " s: los que entraron salen a buscar al enemigo"
+                    : "nadie pierde vida hace " + GIVE_UP_SECONDS + " s: se da por trabada (" + a.size() + " contra " + b.size() + ")");
+        }
         return w.stage;
     }
 

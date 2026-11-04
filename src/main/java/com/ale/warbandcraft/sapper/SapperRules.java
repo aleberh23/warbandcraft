@@ -118,14 +118,27 @@ public final class SapperRules {
     /** Explotó un TNT de asedio en {@code at}: si fue al lado del muro, se abre su paso (lo que se pueda romper). */
     public static void openHole(ServerLevel level, PrimedTnt tnt, Vec3 at) {
         long[] a = tnt.getPersistentData().getLongArray(TAG_HOLE);
-        if (a.length == 0 || Vec3.atCenterOf(net.minecraft.core.BlockPos.of(a[0])).distanceTo(at) > HOLE_REACH) return;
+        net.minecraft.core.BlockPos first = a.length == 0 ? net.minecraft.core.BlockPos.containing(at) : net.minecraft.core.BlockPos.of(a[0]);
+        if (a.length == 0 || Vec3.atCenterOf(first).distanceTo(at) > HOLE_REACH) {
+            com.ale.warbandcraft.battle.BattleLog.near(first, "TNT de asedio explotó lejos del muro (a " + Math.round(Vec3.atCenterOf(first).distanceTo(at))
+                    + " bloques de " + first.toShortString() + "): no abre nada");
+            return;
+        }
+        int opened = 0, tooHard = 0;
         for (long l : a) {
             net.minecraft.core.BlockPos p = net.minecraft.core.BlockPos.of(l);
             var s = level.getBlockState(p);
             float hard = s.getDestroySpeed(level, p);
-            if (s.isAir() || hard < 0 || hard > HOLE_HARDNESS || level.getBlockEntity(p) != null) continue;
+            if (s.isAir()) continue;
+            if (hard < 0 || hard > HOLE_HARDNESS || level.getBlockEntity(p) != null) {
+                tooHard++;
+                continue;
+            }
             level.destroyBlock(p, false, tnt.getOwner());
+            opened++;
         }
+        com.ale.warbandcraft.battle.BattleLog.near(first, "TNT de asedio en " + first.toShortString() + ": abre " + opened + " bloque(s)"
+                + (tooHard > 0 ? ", " + tooHard + " muy duros quedan" : ""));
     }
 
     /** Cobra el cañón: primero de la mochila del Zapador, si no del Campamento más cercano. */

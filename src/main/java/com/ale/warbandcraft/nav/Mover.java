@@ -328,12 +328,17 @@ public final class Mover {
         } else if (stuck >= TELEPORT_AFTER) {
             if (++r.teleports > MAX_TELEPORTS) {
                 r.failed = true;
+                com.ale.warbandcraft.battle.BattleLog.near(s.blockPosition(), s.getName().getString() + " se rinde trabado en " + s.blockPosition().toShortString()
+                        + " (" + r.by + ", yendo a " + BlockPos.containing(np).toShortString() + " " + level.getBlockState(BlockPos.containing(np)).getBlock() + ")");
                 com.ale.warbandcraft.WarbandCraft.LOGGER.info("Malla: {} ({}) se rinde trabado en {} yendo a {} ({} {}), paso {}/{}",
                         s.getName().getString(), r.by, s.blockPosition().toShortString(), BlockPos.containing(np).toShortString(),
                         r.path.get(Math.min(r.i, r.path.size() - 1)).kind(), level.getBlockState(BlockPos.containing(np)).getBlock(), r.i, r.path.size());
                 return;
             }
             Entity body = s.getVehicle() != null ? s.getVehicle() : s;
+            com.ale.warbandcraft.battle.BattleLog.near(s.blockPosition(), s.getName().getString() + " trabado " + stuck / 20 + " s en "
+                    + s.blockPosition().toShortString() + " (" + r.by + ", paso " + r.i + "/" + r.path.size() + " " + r.path.get(Math.min(r.i, r.path.size() - 1)).kind()
+                    + "): aparece en el próximo lugar " + BlockPos.containing(np).toShortString() + " (" + r.teleports + "/" + MAX_TELEPORTS + ")");
             body.teleportTo(np.x, np.y, np.z);
             r.i++;
             r.best = Double.MAX_VALUE;
