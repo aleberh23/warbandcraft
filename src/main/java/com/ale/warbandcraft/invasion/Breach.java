@@ -63,6 +63,24 @@ public final class Breach {
             return insideToward(c, x, z) + 4;
         }
 
+        /**
+         * La muralla más cerca del centro (de todas las tajadas). Pedido de Ale (3/11: se quedaban parados a ~45 del centro
+         * con la muralla a ~35): el radio medio de una muralla dibujada larga cae afuera de sus lados cortos, y "llegar al
+         * centro" a ese radio era llegar estando afuera.
+         */
+        public double nearest() {
+            double best = Double.MAX_VALUE;
+            if (radii != null) for (double r : radii) if (r > 0) best = Math.min(best, r);
+            return best == Double.MAX_VALUE ? bandMin + 4 : best;
+        }
+
+        /** La muralla más lejos del centro (para el área donde se buscan caminos). */
+        public double farthest() {
+            double best = radius;
+            if (radii != null) for (double r : radii) best = Math.max(best, r);
+            return best;
+        }
+
         public boolean isIn(BlockPos c, Vec3 p) {
             return horizontalTo(c, p.x, p.z) < insideToward(c, p.x, p.z);
         }

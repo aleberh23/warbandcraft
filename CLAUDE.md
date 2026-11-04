@@ -1166,6 +1166,10 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   `insideToward/outerToward/isIn`: quién ya entró, contra quién se pelea, qué cuenta como enemigo adentro para los defensores. Con el
   radio medio, del lado donde la muralla está más cerca los de afuera "ya estaban adentro" (iban derecho al centro contra el muro)
   y tus defensores salían a pelearlos. Los defensores de a pie sueltan un objetivo que está afuera (salvo a ≤`CONTACT`).
+  **Meta adentro de verdad** (4/11: se quedaban parados a ~45 del centro, en el pasto, con la muralla a ~35): con muralla dibujada
+  `goalReach` = la muralla más cerca (`Walls.nearest`, de las tajadas) − 6, no el radio medio (el medio de una muralla larga caía
+  afuera de sus lados cortos: "llegaban" estando afuera y el plan decía "hueco abierto"). El área de caminos usa `Walls.farthest`.
+  El hueco falso cierra solo lugares en la franja del muro (`nearWall`), nunca pasto del campo.
   Log "entró X por x, y, z" la primera vez que cada atacante pasa adentro.
   El guía de un grupo espera a los de atrás hasta `SQUAD_MAX_WAIT` (10 s): después sigue y el que quedó busca su camino solo (antes
   quedaba contra la muralla "esperando al grupo" para siempre). El log de carril trabado lista también a los demás.

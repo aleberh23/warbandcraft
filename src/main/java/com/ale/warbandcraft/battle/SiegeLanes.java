@@ -219,11 +219,11 @@ public final class SiegeLanes {
 
     /** Hasta dónde hay que llegar para estar "adentro". */
     public static double goalReach(Breach.Walls w) {
-        return w.walled() ? Math.max(2, w.bandMin() - 2) : Math.max(4, w.radius() * 0.5);
+        return w.walled() ? Math.max(2, (w.radii() != null ? w.nearest() - 4 : w.bandMin()) - 2) : Math.max(4, w.radius() * 0.5);
     }
 
     public static NavPath.Bounds bounds(BlockPos center, Breach.Walls w) {
-        return NavPath.Bounds.around(center, w.radius() + AREA_MARGIN);
+        return NavPath.Bounds.around(center, (int) Math.ceil(w.farthest()) + AREA_MARGIN);
     }
 
     /**
@@ -309,7 +309,7 @@ public final class SiegeLanes {
         }
         Vec3 goal = groundCenter(level, center);
         for (List<AbstractRecruitEntity> squad : squads(outside)) squad(level, lane, squad, goal, w, center, now);
-        watchProgress(level, host, lane, outside, center, now);
+        watchProgress(level, host, lane, outside, center, w, now);
     }
 
     /** Diagnóstico (pedido de Ale: se quedaban contra una muralla lisa): un carril que no avanza en 30 s va al log. */
@@ -317,7 +317,7 @@ public final class SiegeLanes {
     /** Lo más que un guía espera a su grupo antes de seguir solo (ticks). */
     public static int SQUAD_MAX_WAIT = 20 * 10;
 
-    private static void watchProgress(ServerLevel level, Host host, Lane lane, List<AbstractRecruitEntity> outside, BlockPos center, long now) {
+    private static void watchProgress(ServerLevel level, Host host, Lane lane, List<AbstractRecruitEntity> outside, BlockPos center, Breach.Walls w, long now) {
         if (outside.isEmpty()) {   // todos peleando o adentro: eso es avanzar
             lane.bestDist = Double.MAX_VALUE;
             lane.bestTick = now;
@@ -360,10 +360,14 @@ public final class SiegeLanes {
         // Pedido de Ale (se quedaban contra una muralla lisa): el hueco que ve la malla no sirve. Se cierra un rato y se
         // vuelve a planear: escaleras, o romper con el zapador.
         // Lo que el guía tiene por delante en su camino también (el plan puede cruzar por otro lado que el que tomó)
+        // Solo lo que está en el muro: cerrar pasto en el campo abierto los dejaba sin camino (3/11)
         List<BlockPos> ahead = new ArrayList<>(lane.crossCells);
-        if (r != null && r.active()) for (int k = r.i; k < Math.min(r.path.size(), r.i + 4); k++) ahead.add(r.path.get(k).blockPos());
-        if (lane.entry == Entry.OPEN && ahead.isEmpty()) ahead.add(lead.blockPosition().relative(net.minecraft.core.Direction.getNearest(
-                center.getX() - lead.getX(), 0, center.getZ() - lead.getZ())));
+        if (r != null && r.active()) for (int k = r.i; k < Math.min(r.path.size(), r.i + 4); k++) {
+            BlockPos p = r.path.get(k).blockPos();
+            if (nearWall(p, center, w)) ahead.add(p);
+        }
+        BlockPos toward = lead.blockPosition().relative(net.minecraft.core.Direction.getNearest(center.getX() - lead.getX(), 0, center.getZ() - lead.getZ()));
+        if (lane.entry == Entry.OPEN && ahead.isEmpty() && nearWall(toward, center, w)) ahead.add(toward);
         lane.crossCells = ahead;
         if (lane.entry == Entry.OPEN && !lane.crossCells.isEmpty()) {
             com.ale.warbandcraft.nav.NavGrid.block(level, lane.crossCells, FALSE_GAP_TICKS);
@@ -372,6 +376,12 @@ public final class SiegeLanes {
             lane.planned = Long.MIN_VALUE / 2;
             for (AbstractRecruitEntity s : outside) Mover.stop(s);
         }
+    }
+
+    /** ¿{@code p} está en la franja del muro (entre adentro y afuera, en su dirección)? */
+    private static boolean nearWall(BlockPos p, BlockPos center, Breach.Walls w) {
+        double d = Math.sqrt(horizontalSq(p, center)), x = p.getX() + 0.5, z = p.getZ() + 0.5;
+        return d >= w.insideToward(center, x, z) - 1 && d <= w.outerToward(center, x, z) + 1;
     }
 
     /** Un hueco por el que el carril no pudo pasar queda cerrado en la malla tanto tiempo (ticks). */
