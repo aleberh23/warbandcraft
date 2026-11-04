@@ -356,8 +356,15 @@ public final class SiegeLanes {
                     .append(s.getTarget() == null ? "" : " (objetivo)").append(" | ");
         }
         if (others.length() > 0) log(host, lane, "los demás: " + others);
+        log(host, lane, "alrededor del guía: " + around(level, lead.blockPosition(), center));
         // Pedido de Ale (se quedaban contra una muralla lisa): el hueco que ve la malla no sirve. Se cierra un rato y se
         // vuelve a planear: escaleras, o romper con el zapador.
+        // Lo que el guía tiene por delante en su camino también (el plan puede cruzar por otro lado que el que tomó)
+        List<BlockPos> ahead = new ArrayList<>(lane.crossCells);
+        if (r != null && r.active()) for (int k = r.i; k < Math.min(r.path.size(), r.i + 4); k++) ahead.add(r.path.get(k).blockPos());
+        if (lane.entry == Entry.OPEN && ahead.isEmpty()) ahead.add(lead.blockPosition().relative(net.minecraft.core.Direction.getNearest(
+                center.getX() - lead.getX(), 0, center.getZ() - lead.getZ())));
+        lane.crossCells = ahead;
         if (lane.entry == Entry.OPEN && !lane.crossCells.isEmpty()) {
             com.ale.warbandcraft.nav.NavGrid.block(level, lane.crossCells, FALSE_GAP_TICKS);
             log(host, lane, "por ese hueco no pasan: se cierra " + FALSE_GAP_TICKS / 20 + " s y se busca otra entrada");
@@ -400,6 +407,27 @@ public final class SiegeLanes {
         for (int i = first; i <= last && i - first < 16; i++) {
             Step s = path.get(i);
             b.append(s.blockPos().toShortString()).append(' ').append(s.kind()).append(' ').append(blocksAt(level, s.blockPos())).append(" | ");
+        }
+        return b.toString();
+    }
+
+    /** Diagnóstico: los bloques que no son aire en 3×3 alrededor, de los pies a 3 arriba, y la entidad que haya pegada. */
+    private static String around(ServerLevel level, BlockPos feet, BlockPos center) {
+        StringBuilder b = new StringBuilder();
+        for (int dy = -1; dy <= 3; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos p = feet.offset(dx, dy, dz);
+                    var st = level.getBlockState(p);
+                    if (st.isAir() || dy == -1 && st.isCollisionShapeFullBlock(level, p)) continue;
+                    b.append(dx).append(',').append(dy).append(',').append(dz).append('=').append(id(level, p))
+                            .append(st.getCollisionShape(level, p).isEmpty() ? "(sin choque)" : "").append(' ');
+                }
+            }
+        }
+        b.append("| hacia el centro: ").append(net.minecraft.core.Direction.getNearest(center.getX() - feet.getX(), 0, center.getZ() - feet.getZ()));
+        for (Entity e : level.getEntities((Entity) null, new net.minecraft.world.phys.AABB(feet).inflate(1.5), x -> !(x instanceof AbstractRecruitEntity))) {
+            b.append(" | entidad ").append(e.getType().toShortString());
         }
         return b.toString();
     }
