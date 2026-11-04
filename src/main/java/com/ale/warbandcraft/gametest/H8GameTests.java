@@ -94,7 +94,7 @@ public class H8GameTests {
 
     // ------------------------------------------------------------------ guardar y sacar
 
-    /** El soldado vuelve con nivel, nombre, equipo, mochila, clase y versión de kit, siguiéndote. */
+    /** El soldado vuelve con nivel, nombre, equipo, clase y versión de kit, siguiéndote (la mochila queda en el almacén). */
     @GameTest(template = TEMPLATE)
     public static void storeAndDeployKeepsSheet(GameTestHelper h) {
         CampBlockEntity camp = placeCamp(h);
@@ -117,7 +117,8 @@ public class H8GameTests {
         check(out.getXpLevel() == 4, "perdió el nivel");
         check("Gonzalo".equals(out.getName().getString()), "perdió el nombre");
         check(out.getMainHandItem().is(Items.IRON_SWORD), "perdió la espada");
-        check(countIn(out.getInventory(), Items.BREAD) == 7, "perdió la mochila");
+        // Pedido de Ale (soldados de "mochila"): lo que no es de su kit quedó en el almacén
+        check(countIn(out.getInventory(), Items.BREAD) == 0 && camp.count(Items.BREAD) == 7, "el pan de la mochila no pasó al almacén");
         CompoundTag d = out.getPersistentData();
         check("warbandcraft:infante".equals(d.getString(ClassAssigner.TAG_CLASS)) && d.getInt(ClassAssigner.TAG_TIER) == 1
                 && d.getInt(ClassAssigner.TAG_KIT_VERSION) == 3, "perdió la clase, el nivel de kit o la versión");

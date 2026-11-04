@@ -26,6 +26,11 @@ Cada soldado pertenece a un Campamento (el más cercano cuando lo armaste o guar
 
 Los prisioneros también están en el barracón. No comen. Ver libro 3 (reclutar o rescate).
 ---
+## Soldados de mochila
+Lo que le pongas en la mochila a un soldado (abrí su inventario de Recruits) pasa al almacén del Campamento cuando se guarda en su barracón. Su equipo y las flechas de su clase se quedan con él.
+
+Sirve para mandar soldados cargados de cosas: llenalos, mandalos al barracón y lo que llevan aparece en el almacén.
+---
 ## Compañeros de facción
 Todo lo de una facción de Recruits es de todos sus miembros por igual: Campamentos, barracones, aldeas, castillos, rutas, envíos, ejércitos y soldados.
 

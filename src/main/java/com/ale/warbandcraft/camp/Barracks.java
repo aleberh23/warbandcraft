@@ -173,7 +173,10 @@ public final class Barracks {
         BarracksData.Soldier sheet = new BarracksData.Soldier(tag, horseTag, guard, post, soldier.getYRot(), follow,
                 soldier.getName().getString(), kit, pd.getInt(ClassAssigner.TAG_TIER), soldier.getXpLevel());
 
-        UUID campOwner = level.getBlockEntity(camp) instanceof CampBlockEntity c && c.getOwner() != null ? c.getOwner() : owner;
+        CampBlockEntity campBe = level.isLoaded(camp) && level.getBlockEntity(camp) instanceof CampBlockEntity c ? c : null;
+        // Pedido de Ale (soldados de "mochila"): lo que lleva que no es de su kit pasa al almacén. Descargado: después (tick).
+        if (campBe != null) unpack(level, tag, kit, pd.getInt(ClassAssigner.TAG_TIER), owner, campBe);
+        UUID campOwner = campBe != null && campBe.getOwner() != null ? campBe.getOwner() : owner;
         BarracksData.Barracks b = data.getOrCreate(camp, campOwner);
         if (b.eaters() == 0) {   // barracón vacío: empieza a comer mañana
             b.lastFedDay = today(level);
@@ -186,6 +189,69 @@ public final class Barracks {
         if (horse != null) horse.discard();
         recount(level, owner);
         return StoreResult.OK;
+    }
+
+    /** Inventario de Recruits: desde este espacio es la mochila (0-5 es el equipo puesto). */
+    private static final int BACKPACK_START = 6;
+
+    /**
+     * Pedido de Ale (soldados de "mochila"): saca de la mochila de una ficha ({@code entity} = NBT de Recruits) todo lo que
+     * no es de su kit y lo mete en el almacén de {@code camp}. Se queda con lo del inventario del kit (flechas...) y las piezas
+     * de su equipo guardadas en la mochila (el arco de un arquero que sacó la espada). Lo que no entra queda en la mochila.
+     *
+     * @return cuántos ítems pasaron al almacén
+     */
+    public static int unpack(ServerLevel level, CompoundTag entity, @Nullable ResourceLocation kit, int tier,
+                             @Nullable UUID owner, CampBlockEntity camp) {
+        net.minecraft.nbt.ListTag items = entity.getList("Items", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        if (items.isEmpty()) return 0;
+        Map<Item, Integer> keep = new java.util.HashMap<>();
+        if (kit != null && owner != null) {
+            com.ale.warbandcraft.kit.ClassKit k = com.ale.warbandcraft.kit.PlayerKits.resolve(level.getServer(), owner, kit);
+            if (k != null && tier >= 0 && tier < k.tiers().size()) {
+                com.ale.warbandcraft.kit.ClassKit.Tier t = k.tiers().get(tier);
+                for (ItemStack s : t.inventory()) keep.merge(s.getItem(), s.getCount(), Integer::sum);
+                for (Item i : t.equipment().values()) keep.merge(i, 1, Integer::sum);
+            }
+        }
+        int moved = 0;
+        net.minecraft.nbt.ListTag out = new net.minecraft.nbt.ListTag();
+        for (net.minecraft.nbt.Tag x : items) {
+            CompoundTag t = (CompoundTag) x;
+            int slot = t.getByte("Slot") & 255;
+            ItemStack s = ItemStack.of(t);
+            if (slot < BACKPACK_START || s.isEmpty()) {
+                out.add(t);
+                continue;
+            }
+            // Sin clase nuestra (contratado directo en Recruits): no sabemos su kit, las flechas se quedan
+            int allowed = kit == null && s.getItem() instanceof net.minecraft.world.item.ArrowItem ? s.getCount()
+                    : keep.getOrDefault(s.getItem(), 0);
+            int stay = Math.min(allowed, s.getCount());
+            if (allowed > 0) keep.put(s.getItem(), allowed - stay);
+            int left = stay;
+            if (s.getCount() > stay) {
+                ItemStack rest = camp.insert(s.copyWithCount(s.getCount() - stay));
+                left += rest.getCount();
+            }
+            moved += s.getCount() - left;
+            if (left > 0) {
+                CompoundTag nt = s.copyWithCount(left).save(new CompoundTag());
+                nt.putByte("Slot", (byte) slot);
+                out.add(nt);
+            }
+        }
+        if (moved > 0) entity.put("Items", out);
+        return moved;
+    }
+
+    /** Las fichas de un barracón cargado que todavía tienen mochila (se guardaron con el Campamento descargado, envíos). */
+    static void unpackAll(ServerLevel level, BarracksData.Barracks b, CampBlockEntity camp) {
+        int moved = 0;
+        for (List<BarracksData.Soldier> list : List.of(b.soldiers, b.quarters)) {
+            for (BarracksData.Soldier s : list) moved += unpack(level, s.entity, s.kit, s.tier, b.owner, camp);
+        }
+        if (moved > 0) BarracksData.get(level).changed();
     }
 
     /** "Guardar a los de cerca": tus soldados a {@link #STORE_RADIUS} bloques que no estén peleando. */
@@ -636,6 +702,7 @@ public final class Barracks {
             }
             if (level.isLoaded(campPos) && level.getBlockEntity(campPos) instanceof CampBlockEntity camp) {
                 feed(level, campPos, camp, today);
+                if (b != null) unpackAll(level, b, camp);
             }
         }
 

@@ -347,6 +347,27 @@ public class H10GameTests {
         h.succeed();
     }
 
+    /** Pedido de Ale (soldados de "mochila"): al guardarlo, lo de la mochila pasa al almacén; el equipo y las flechas quedan. */
+    @GameTest(template = TEMPLATE)
+    public static void storedSoldierEmptiesBackpack(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CampBlockEntity camp = placeCamp(h);
+        AbstractRecruitEntity r = spawnRecruit(h);
+        r.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+        r.getInventory().setItem(6, new ItemStack(Items.COBBLESTONE, 20));
+        r.getInventory().setItem(7, new ItemStack(Items.BREAD, 10));
+        r.getInventory().setItem(8, new ItemStack(Items.ARROW, 16));
+        check(Barracks.store(level, r, camp.getBlockPos(), false) == Barracks.StoreResult.OK, "no se guardó");
+        check(camp.count(Items.COBBLESTONE) == 20, "la piedra no pasó al almacén: " + camp.count(Items.COBBLESTONE));
+        check(camp.count(Items.BREAD) == 10, "el pan no pasó al almacén: " + camp.count(Items.BREAD));
+        check(camp.count(Items.ARROW) == 0 && camp.count(Items.IRON_SWORD) == 0, "se llevó el equipo o las flechas al almacén");
+        var sheet = com.ale.warbandcraft.camp.BarracksData.get(level).at(camp.getBlockPos()).soldiers.get(0);
+        String items = sheet.entity.getList("Items", net.minecraft.nbt.Tag.TAG_COMPOUND).toString();
+        check(items.contains("iron_sword") && items.contains("arrow") && !items.contains("cobblestone"),
+                "la ficha quedó mal: " + items);
+        h.succeed();
+    }
+
     /** "Zona de trabajo": crea una zona de almacén de Workers que cubre al Campamento y su cofre; la 2ª vez no. */
     @GameTest(template = TEMPLATE)
     public static void workerZoneCoversCamp(GameTestHelper h) {

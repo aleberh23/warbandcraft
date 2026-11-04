@@ -249,6 +249,11 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   vista aérea lo siguen reconociendo), caballo aparte sin `Passengers`, si era guardia y su puesto.
   Guardia = estado 2/3/4 de Recruits y a ≤3 bloques de su `HoldPos`. Al sacar: `setFollowState` antes que
   `setHoldPos` (el 2 pisa el puesto). Los demás salen siguiéndote (estado 1).
+- **Soldados de "mochila"** (pedido de Ale, a probar): al guardarse (`Barracks.store`, cualquier camino: al barracón, automático,
+  cuartel) lo de la mochila (espacios 6+) que no es de su kit pasa al almacén de ese Campamento (`Barracks.unpack`): se quedan
+  el inventario del kit (flechas...) y las piezas del equipo del kit; sin clase nuestra, todas las flechas. Campamento descargado o
+  lleno: queda en la ficha y `Barracks.tick` (10 s, `unpackAll`) lo pasa cuando se carga (también lo que llega por envíos).
+  Prueba: `H10GameTests.storedSoldierEmptiesBackpack`.
 - Comida: 4 puntos por soldado y día, del almacén entero, la más barata, nada dañino; días atrasados (máx. 7) al
   cargarse el Campamento; sin nadie de la facción del dueño conectado no comen (`Barracks.tick` corre `lastFedDay`, pedido de Ale).
 - **Sin nadie de la facción conectado no se produce ni se consume nada** (pedido de Ale, 26/10): `faction/OnlineDays` (días con alguien
