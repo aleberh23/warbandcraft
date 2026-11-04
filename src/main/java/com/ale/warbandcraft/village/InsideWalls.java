@@ -137,33 +137,41 @@ public final class InsideWalls {
         }
         TownData.Town t = TownData.get(level).at(c);
         if (t == null) return new Shape(now, false, r);
-        if (!t.defense.isEmpty()) {   // H22c: muralla dibujada
-            for (long l : t.defense.keySet()) {
+        // Pedido de Ale (4/11: "si capturo una aldea con anillo y le agrego o cambio muralla, ¿qué pasa?"): el anillo de H12
+        // y lo dibujado cuentan juntos. En cada tajada manda la muralla más cerca del centro (la primera que hay que pasar);
+        // donde se cortó el anillo a mano (cutColumns), solo lo dibujado.
+        boolean ring = t.ringRadius > 0 && (t.ringWalls || t.has(Upgrade.PALISADE) || t.has(Upgrade.WALL));
+        boolean[] cut = new boolean[BINS];
+        if (ring) {
+            for (long l : t.cutColumns) {
                 BlockPos p = BlockPos.of(l);
-                double dx = p.getX() + 0.5 - (c.getX() + 0.5), dz = p.getZ() + 0.5 - (c.getZ() + 0.5);
-                double d = Math.sqrt(dx * dx + dz * dz);
-                if (d < 3) continue;
-                int b = bin(dx, dz);
-                if (r[b] < 0 || d < r[b]) r[b] = d;
+                cut[bin(p.getX() - c.getX(), p.getZ() - c.getZ())] = true;
             }
+            for (int b = 0; b < BINS; b++) if (!cut[b]) r[b] = t.ringRadius;
+        }
+        for (long l : t.defense.keySet()) {   // H22c: muralla dibujada
+            BlockPos p = BlockPos.of(l);
+            double dx = p.getX() + 0.5 - (c.getX() + 0.5), dz = p.getZ() + 0.5 - (c.getZ() + 0.5);
+            double d = Math.sqrt(dx * dx + dz * dz);
+            if (d < 3) continue;
+            int b = bin(dx, dz);
+            if (r[b] < 0 || d < r[b]) r[b] = d;
+        }
+        if (!t.defense.isEmpty() || ring) {
             for (BlockPos g : t.gates) {   // los portones también cierran (no son un hueco)
                 double dx = g.getX() + 0.5 - (c.getX() + 0.5), dz = g.getZ() + 0.5 - (c.getZ() + 0.5);
                 double d = Math.sqrt(dx * dx + dz * dz);
                 int b = bin(dx, dz);
                 if (d >= 3 && (r[b] < 0 || d < r[b])) r[b] = d;
             }
-            int covered = 0;
-            for (double x : r) if (x > 0) covered++;
-            if (covered >= BINS * MIN_COVER) {
-                fill(r);
-                return new Shape(now, true, r);
-            }
-            java.util.Arrays.fill(r, -1);
         }
-        if (t.ringRadius > 0 && (t.ringWalls || t.has(Upgrade.PALISADE) || t.has(Upgrade.WALL))) {   // anillo de H12
-            java.util.Arrays.fill(r, t.ringRadius);
+        int covered = 0;
+        for (double x : r) if (x > 0) covered++;
+        if (covered > 0 && (ring || covered >= BINS * MIN_COVER)) {
+            fill(r);
             return new Shape(now, true, r);
         }
+        java.util.Arrays.fill(r, -1);
         return new Shape(now, false, r);
     }
 

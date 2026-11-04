@@ -1166,6 +1166,10 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
   `insideToward/outerToward/isIn`: quién ya entró, contra quién se pelea, qué cuenta como enemigo adentro para los defensores. Con el
   radio medio, del lado donde la muralla está más cerca los de afuera "ya estaban adentro" (iban derecho al centro contra el muro)
   y tus defensores salían a pelearlos. Los defensores de a pie sueltan un objetivo que está afuera (salvo a ≤`CONTACT`).
+  **Anillo + muralla dibujada** (pedido de Ale, 4/11: aldea conquistada con anillo a la que le agregás o cambiás muralla):
+  `InsideWalls.measure` junta las dos: en cada tajada manda la muralla más cerca del centro; donde cortaste el anillo
+  (`Town.cutColumns`), solo la dibujada. `Breach.walls` usa siempre esa forma (`InsideWalls.radii`) para tus aldeas y las de
+  facción (antes, con un tramo dibujado se ignoraba el anillo). Prueba: `KeepInsideGameTests.ringPlusDrawnWall`.
   **Meta adentro de verdad** (4/11: se quedaban parados a ~45 del centro, en el pasto, con la muralla a ~35): con muralla dibujada
   `goalReach` = la muralla más cerca (`Walls.nearest`, de las tajadas) − 6, no el radio medio (el medio de una muralla larga caía
   afuera de sus lados cortos: "llegaban" estando afuera y el plan decía "hueco abierto"). El área de caminos usa `Walls.farthest`.

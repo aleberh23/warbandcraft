@@ -70,6 +70,42 @@ public class KeepInsideGameTests {
     }
 
     /**
+     * Pedido de Ale (4/11): aldea con el anillo de H12 a la que le dibujás muralla. En cada dirección manda la primera
+     * muralla (la más cerca del centro); donde cortaste el anillo, la dibujada; y el asedio usa esa misma forma.
+     */
+    @GameTest(template = BIG)
+    public static void ringPlusDrawnWall(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        VillageData.Village v = village(h);
+        try {
+            BlockPos c = v.center();
+            TownData.Town t = TownData.get(level).getOrCreate(c);
+            t.ringRadius = WALL;
+            t.ringWalls = true;
+            InsideWalls.clear();
+            check(InsideWalls.inside(level, v, c.east(WALL - 2)), "con el anillo solo, a " + (WALL - 2) + " no es adentro");
+            check(!InsideWalls.inside(level, v, c.west(WALL + 1)), "con el anillo solo, afuera cuenta como adentro");
+            // Un tramo dibujado más adentro, al este
+            for (int y = 0; y < 3; y++) t.defense.put(c.east(WALL - 2).above(y).asLong(), Blocks.STONE_BRICKS.defaultBlockState());
+            // El anillo cortado al sur y una muralla dibujada más afuera
+            t.cutColumns.add(c.south(WALL).atY(0).asLong());
+            for (int y = 0; y < 3; y++) t.defense.put(c.south(WALL + 3).above(y).asLong(), Blocks.STONE_BRICKS.defaultBlockState());
+            InsideWalls.clear();
+            check(InsideWalls.walled(level, v), "con anillo y dibujada no hay muralla");
+            check(!InsideWalls.inside(level, v, c.east(WALL - 1)), "detrás del tramo dibujado del este cuenta como adentro");
+            check(InsideWalls.inside(level, v, c.west(WALL - 2)), "al oeste (anillo) no es adentro");
+            check(!InsideWalls.inside(level, v, c.west(WALL + 1)), "al oeste, afuera del anillo cuenta como adentro");
+            check(InsideWalls.inside(level, v, c.south(WALL + 1)), "al sur (anillo cortado) no cuenta la dibujada de más afuera");
+            com.ale.warbandcraft.invasion.Breach.Walls w = com.ale.warbandcraft.invasion.Breach.walls(level, v);
+            check(w.walled() && w.radii() != null, "el asedio no usa la forma de la muralla");
+            check(!w.isIn(c, c.east(WALL - 1)) && w.isIn(c, c.west(WALL - 3)), "el asedio no ve adentro/afuera igual");
+        } finally {
+            cleanup(h, v);
+        }
+        h.succeed();
+    }
+
+    /**
      * Cuartel: un zombi afuera de la muralla no lo van a buscar (se queda en su lugar); adentro, sí. El arquero le tira al
      * de afuera sin cambiar de orden (no sale a pelear). Si le das otra orden, la respeta.
      */

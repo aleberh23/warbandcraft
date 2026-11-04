@@ -114,9 +114,14 @@ public final class Breach {
             return new Walls(s.radius(), true, s.bandMin(), s.bandMax(), s.inside(), s.inner());
         }
         TownData.Town t = TownData.get(level).at(v.center());
-        if (t != null && !t.defense.isEmpty()) {   // H22c: muralla dibujada: su radio medio
-            int r = Math.max(6, com.ale.warbandcraft.upgrade.Works.radius(t));
-            return new Walls(r, true, r - 4, r + 2.5, r - 1.5, Math.max(3, r - 8), com.ale.warbandcraft.village.InsideWalls.radii(level, v));
+        // Muralla dibujada, anillo de H12 o las dos juntas (aldea conquistada a la que le agregaste muralla): la forma de
+        // InsideWalls (en cada dirección, la primera muralla que hay que pasar).
+        double[] radii = t == null ? null : com.ale.warbandcraft.village.InsideWalls.radii(level, v);
+        if (radii != null) {
+            double sum = 0;
+            for (double x : radii) sum += x;
+            int r = Math.max(6, (int) Math.round(sum / radii.length));
+            return new Walls(r, true, r - 4, r + 2.5, r - 1.5, Math.max(3, r - 8), radii);
         }
         if (t != null && (t.has(Upgrade.PALISADE) || t.has(Upgrade.WALL)) && t.ringRadius > 0) {
             int r = t.ringRadius;
