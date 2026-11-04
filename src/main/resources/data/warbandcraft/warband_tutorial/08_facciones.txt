@@ -31,6 +31,15 @@ Un favor: limpiar una guarida o túmulo para ellos.
 ---
 Con la paz, la opinión sube, se vuelven sus ejércitos en camino y sus huestes, y hay 10 días de tregua para toda tu facción. Si los atacás, la tregua se rompe.
 
+## Paz con otro jugador
+Si tu facción está en guerra con la de otro jugador (Diplomacia de Recruits), en el Tabernero ("Negociar la paz") le proponés la paz.
+
+Le llega un aviso. Cualquiera de su facción, en un Tabernero, le pone precio en esmeraldas (o gratis) o la rechaza.
+
+Después vos, en un Tabernero, pagás y se firma, o la rechazás. Lo que pagás va al Campamento del que puso el precio.
+---
+Firmada: quedan en paz en Recruits y hay 10 días de tregua sin asedios entre ustedes. Una propuesta sin contestar vence a los 3 días.
+
 ## Guerras entre ellas
 Las facciones se declaran la guerra entre sí y mandan ejércitos (se ven en el mapa M como rombos). Si estás cerca podés ver la batalla o meterte (tecla B, libro 10).
 ---

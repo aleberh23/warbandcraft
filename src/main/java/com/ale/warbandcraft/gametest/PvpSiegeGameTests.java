@@ -62,10 +62,15 @@ public class PvpSiegeGameTests {
             data.setStorehouse(center, villageCamp);
             camp(h, otherCamp, defender);
 
-            // Uno guardado en el barracón de la aldea y uno defendiendo
+            // Uno guardado en el barracón de la aldea, uno defendiendo y un trabajador de la aldea
             AbstractRecruitEntity stored = soldier(h, defender, new BlockPos(3, 2, 5));
-            check(Barracks.store(level, stored, villageCamp, false) != null, "no se pudo guardar al soldado en el barracón de la aldea");
+            check(Barracks.store(level, stored, villageCamp, false) == Barracks.StoreResult.OK, "no se pudo guardar al soldado en el barracón de la aldea");
             AbstractRecruitEntity guard = soldier(h, defender, new BlockPos(5, 2, 5));
+            EntityType<?> farmerType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation("workers", "farmer"));
+            check(farmerType != null, "Villager Workers no está cargado");
+            AbstractRecruitEntity worker = (AbstractRecruitEntity) h.spawn(farmerType, new BlockPos(2, 2, 6));
+            worker.setOwnerUUID(Optional.of(defender));
+            worker.setIsOwned(true);
 
             attacker.moveTo(center.getX() + 0.5, center.getY(), center.getZ() + 0.5);
             RaidManager.Raid raid = RaidManager.startPvp(level, v, attacker.getUUID(), attacker);
@@ -74,8 +79,13 @@ public class PvpSiegeGameTests {
 
             RaidManager.tick(level);
             check(RaidManager.get(level, center) != null, "con un defensor en pie se ganó el asedio");
+            // El del barracón sale a defender (pedido de Ale: "como contra la IA")
+            BarracksData.Barracks vb = BarracksData.get(level).at(villageCamp);
+            check(vb == null || vb.soldiers.isEmpty(), "el soldado del barracón de la aldea no salió a defender");
+            java.util.List<AbstractRecruitEntity> defending = PvpSiege.defenders(level, raid);
+            check(defending.size() == 2, "defensores después del refuerzo: " + defending.size() + " (tenía que ser 2)");
 
-            guard.kill();
+            for (AbstractRecruitEntity s : defending) s.kill();
             RaidManager.tick(level);
             check(RaidManager.get(level, center) == null, "sin defensores el asedio no terminó");
             VillageData.Village now = data.at(center);
@@ -84,8 +94,8 @@ public class PvpSiegeGameTests {
             check(reg.isCampOf(attacker.getUUID(), villageCamp) && !reg.campsOf(defender).contains(villageCamp),
                     "el Campamento de la aldea no pasó al atacante");
             check(BarracksData.get(level).at(villageCamp) == null, "quedó el barracón del que perdió en la aldea");
-            BarracksData.Barracks moved = BarracksData.get(level).at(otherCamp);
-            check(moved != null && moved.soldiers.size() == 1, "el soldado guardado no se mudó al otro Campamento del que perdió");
+            check(attacker.getUUID().equals(worker.getOwnerUUID()), "el trabajador de la aldea sigue siendo del que la perdió");
+            worker.discard();
         } finally {
             RaidManager.discard(level, center);
             Territory.remove(level, center);

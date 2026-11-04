@@ -32,7 +32,9 @@ Tus soldados rendidos pasan a la guarnición enemiga.
 ## Aldeas de otro jugador
 Una aldea o castillo de otro jugador se gana igual: parado ahí, B y confirmá. Tu facción tiene que estar en guerra con la suya (Diplomacia de Recruits) y tiene que haber alguien de su facción conectado.
 
-Defienden sus soldados que están en la aldea; su cuartel sale solo. Ganás cuando no queda ningún soldado ni jugador de ese lado a 64 bloques del centro: la aldea, su Campamento con todo lo de adentro y su territorio pasan a ser tuyos. Si te alejás, el asedio se levanta.
+Defienden sus soldados que están en la aldea; su cuartel sale solo y los del barracón de la aldea van saliendo de a uno. Ganás cuando no queda ningún soldado ni jugador de ese lado a 64 bloques del centro (ni en el cuartel ni en el barracón): la aldea, su Campamento con todo lo de adentro, su territorio y sus trabajadores pasan a ser tuyos. Si te alejás, el asedio se levanta.
+
+Con tregua (paz firmada, libro 8) no se puede asediar.
 
 Tener soldados de otro bando adentro de tu territorio no te lo quita: solo un asedio ganado.
 

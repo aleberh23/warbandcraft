@@ -96,6 +96,7 @@ public class InvasionEvents {
     public void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         com.ale.warbandcraft.invasion.WarReports.onLogin(player);   // lo que pasó mientras no estabas
+        com.ale.warbandcraft.faction.PlayerPeace.onLogin(player);   // propuestas de paz de otros jugadores
         for (ServerLevel level : player.getServer().getAllLevels()) {
             for (InvasionData.Invasion inv : InvasionData.get(level).all()) {
                 if (com.ale.warbandcraft.faction.Allies.same(inv.owner, player.getUUID()) && inv.state == InvasionData.State.MARCHING) Invasions.warn(level, inv);

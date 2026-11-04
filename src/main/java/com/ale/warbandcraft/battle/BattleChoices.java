@@ -95,6 +95,8 @@ public final class BattleChoices {
             case com.ale.warbandcraft.village.TavernWorkers.KIND_HIRE -> com.ale.warbandcraft.village.TavernWorkers.answer(player, id, option);
             case com.ale.warbandcraft.faction.Peace.KIND_LIST, com.ale.warbandcraft.faction.Peace.KIND_OFFER ->
                     com.ale.warbandcraft.faction.Peace.answer(player, kind, id, option);
+            case com.ale.warbandcraft.faction.PlayerPeace.KIND_PRICE, com.ale.warbandcraft.faction.PlayerPeace.KIND_ACCEPT ->
+                    com.ale.warbandcraft.faction.PlayerPeace.answer(player, kind, id, option);
             case com.ale.warbandcraft.camp.CampWorkers.KIND -> com.ale.warbandcraft.camp.CampWorkers.answer(player, id, option);
             default -> {
             }

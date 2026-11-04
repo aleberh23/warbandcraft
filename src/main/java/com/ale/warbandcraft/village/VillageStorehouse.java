@@ -255,8 +255,10 @@ public final class VillageStorehouse {
         for (VillageData.Village v : new ArrayList<>(data.all())) {
             if (v.isConquered()) Territory.ensure(level, v);   // territorio (y claim de Recruits)
             if (!level.isPositionEntityTicking(v.center())) continue;
-            if (v.isConquered()) flush(level, v);
-            else {
+            if (v.isConquered()) {
+                flush(level, v);
+                com.ale.warbandcraft.raid.PvpSiege.adoptWorkers(level, v);   // los de una aldea ganada que no estaban cargados
+            } else {
                 if (Territory.get(level).has(v.center())) Territory.remove(level, v.center());
                 lose(level, v, data.storehouse(v.center()));
             }

@@ -54,6 +54,7 @@ final class TuningClasses {
             "event.VillageEvents",
             "faction.Doctrine",
             "faction.Peace",
+            "faction.PlayerPeace",
             "faction.RecruitsClaimBridge",
             "faction.Relations",
             "invasion.AiWars",

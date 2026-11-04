@@ -284,14 +284,24 @@ guerra y no entendía por qué no lo invadían ni su cuartel atacaba a la patrul
 - Empieza con B / `/warband asediar` parado en la aldea (`BattleChoices.onKey` → `PvpSiege.offer` → kind `pvp_siege`): facciones
   de Recruits en guerra (ENEMY en su Diplomacia, `atWar`) y alguien de la facción del dueño conectado (`Allies.anyOnline`). Avisa a
   los defensores. El cuartel sale aunque no haya nadie cerca (`Quarters.deploy(..., true)`), no se guarda (`Barracks.autoStore`) y
-  queda a cargo de la defensa (`Quarters.underInvasion` cuenta el asedio).
-- Se gana (`defeated`) sin soldados ni jugadores de ese lado a `DEFEND_RADIUS` ni cuartel guardado → `win` (rendidos presos) →
+  queda a cargo de la defensa (`Quarters.underInvasion` cuenta el asedio). Como contra la IA (`SiegeDefense`), sale uno del barracón
+  de la aldea cada `SiegeDefense.REINFORCE_EVERY` (el de más nivel; marcas `TAG_QUARTERS` + `TAG_REINFORCEMENT`) hasta
+  `BattleSize.MAX_PER_SIDE` defensores; si el asedio se levanta vuelven caminando al barracón (`sendBack`).
+- Se gana (`defeated`) sin soldados ni jugadores de ese lado a `DEFEND_RADIUS` ni cuartel ni barracón guardado → `win` (rendidos presos) →
   `PvpSiege.conquer`: sin pantalla de Saquear/Conquistar. La aldea pasa al ganador (`withOwner`), su Campamento también (con todo
   lo de adentro; `CampRegistry`), el barracón y el cuartel guardado del que pierde se mudan a su Campamento más cercano con lugar
   (si no hay, se pierden), el claim de Recruits pasa entero (`Territory.handOver` + `RecruitsClaimBridge.claimVillage` +
   `Territory.ensure`; si no se pudo, el claim viejo se saca). Mejoras, murallas y edificios (`TownData`) quedan.
-- No hecho (a revisar): trabajadores de Villager Workers del que perdió (siguen siendo suyos), reconquista, opinión/tregua entre
-  jugadores, el barracón de la aldea (no del cuartel) no sale a defender. Prueba: `PvpSiegeGameTests`.
+  Trabajadores (pedido de Ale: "pasan a ser del ganador"): los cargados (`VillageManagement.workers`) con `Barracks.handTo`;
+  `PvpSiege.adoptWorkers` (también cada 5 s desde `VillageStorehouse.tick`, para los que no estaban cargados): los de
+  `WorkerOutput` con esa aldea y las zonas de Workers adentro del territorio que son de otro bando pasan al dueño.
+- **Paz entre jugadores** (`faction/PlayerPeace`, SavedData del overworld; pedido de Ale: "se envía la propuesta desde el tabernero,
+  y el que recibe la propuesta pone precio, el otro acepta o no"): en "Negociar la paz" (`Peace.open`, ids con `	`: "n:" facción de
+  la IA, "p:" proponer, "s:" poner precio, "a:" aceptar) salen las facciones de jugadores en guerra (ENEMY) sin tregua. Propuesta
+  "de|a" (vence a `OFFER_DAYS`), precio de la lista 0..250 (kind `pvp_peace_price`), aceptar = `Peace.pay` y las esmeraldas al
+  Campamento del que puso el precio (kind `pvp_peace_accept`). `sign`: NEUTRAL en las dos direcciones de Recruits + tregua
+  `TRUCE_DAYS` (`truce`, la mira `PvpSiege.problem`). Avisos a la otra facción conectada y al entrar. Prueba: `PlayerPeaceGameTests`.
+- No hecho (a revisar): reconquista, opinión entre jugadores. Prueba: `PvpSiegeGameTests`.
 
 ## Compañeros de facción (pedido de Ale, a probar: "todos los campamentos, aldeas y soldados de una facción tienen que ser manejables por todos los miembros por igual")
 

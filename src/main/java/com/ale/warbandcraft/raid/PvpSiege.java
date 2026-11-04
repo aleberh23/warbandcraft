@@ -64,6 +64,11 @@ public final class PvpSiege {
         if (VillageData.get(level).isTest(v.center())) return Component.translatable("msg.warbandcraft.pvp_siege.not_enemy");
         RaidManager.Raid raid = RaidManager.get(level, v.center());
         if (raid != null) return Component.translatable("msg.warbandcraft.pvp_siege.already");
+        String fa = Territory.factionOf(level, player.getUUID()), fb = Territory.factionOf(level, v.owner());
+        if (com.ale.warbandcraft.faction.PlayerPeace.get(level.getServer()).truce(level, fa, fb)) {
+            return Component.translatable("msg.warbandcraft.pvp_siege.truce", Allies.playerName(v.owner()),
+                    com.ale.warbandcraft.faction.PlayerPeace.get(level.getServer()).truceUntil(fa, fb) - level.getDayTime() / 24000L);
+        }
         if (!atWar(level, player.getUUID(), v.owner())) {
             return Component.translatable("msg.warbandcraft.pvp_siege.no_war", Allies.playerName(v.owner()));
         }
@@ -156,10 +161,59 @@ public final class PvpSiege {
         return v != null && v.isConquered() && Allies.same(v.owner(), raid.defender);
     }
 
-    /** Cada segundo: el cuartel guardado sale a defender (aunque no haya nadie de la facción cerca). */
+    /** Última vez que salió uno del barracón, por aldea (en memoria). */
+    private static final java.util.Map<Long, Long> LAST_REINFORCE = new java.util.HashMap<>();
+
+    /**
+     * Cada segundo: el cuartel guardado sale a defender (aunque no haya nadie de la facción cerca) y, como contra la IA
+     * ({@code SiegeDefense}), sale uno del barracón de la aldea cada {@code SiegeDefense.REINFORCE_EVERY} (el de más nivel
+     * primero) mientras los defensores sean menos que {@code BattleSize.MAX_PER_SIDE}.
+     */
     public static void tick(ServerLevel level, RaidManager.Raid raid) {
         VillageData.Village v = VillageData.get(level).at(raid.center);
-        if (v != null && level.isPositionEntityTicking(raid.center)) Quarters.deploy(level, v, true);
+        if (v == null || !level.isPositionEntityTicking(raid.center)) return;
+        Quarters.deploy(level, v, true);
+        BlockPos camp = VillageCamps.campOf(level, v);
+        BarracksData.Barracks b = camp == null ? null : BarracksData.get(level).at(camp);
+        if (b == null || b.soldiers.isEmpty() || !level.isPositionEntityTicking(camp)) return;
+        long now = level.getGameTime();
+        Long last = LAST_REINFORCE.get(raid.center.asLong());
+        if (last != null && now - last < com.ale.warbandcraft.invasion.SiegeDefense.REINFORCE_EVERY) return;
+        List<AbstractRecruitEntity> defenders = defenders(level, raid);
+        if (defenders.size() >= com.ale.warbandcraft.battle.BattleSize.MAX_PER_SIDE) return;
+        BarracksData.Soldier sheet = null;
+        for (BarracksData.Soldier x : b.soldiers) if (sheet == null || x.xpLevel > sheet.xpLevel) sheet = x;
+        if (sheet == null) return;
+        b.soldiers.remove(sheet);
+        BarracksData.get(level).changed();
+        LAST_REINFORCE.put(raid.center.asLong(), now);
+        AbstractRecruitEntity s = Barracks.create(level, sheet, Barracks.standable(level, camp, null, camp), camp, 3, b.hungryDays);
+        if (s == null) return;
+        s.getPersistentData().putLong(Quarters.TAG_QUARTERS, v.center().asLong());
+        s.getPersistentData().putBoolean(com.ale.warbandcraft.invasion.SiegeDefense.TAG_REINFORCEMENT, true);
+        com.ale.warbandcraft.battle.BattleLog.lineAt(raid.center, "refuerzo del barracón: " + s.getName().getString()
+                + " (nv " + s.getXpLevel() + "; " + defenders.size() + " defendiendo)");
+        for (UUID id : Allies.members(raid.defender)) {
+            ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
+            if (p != null) p.displayClientMessage(Component.translatable("msg.warbandcraft.defense.reinforcement", s.getName()).withStyle(ChatFormatting.AQUA), true);
+        }
+    }
+
+    /** Terminó el asedio: los que salieron del barracón vuelven caminando a él (como contra la IA). */
+    private static void sendBack(ServerLevel level, RaidManager.Raid raid) {
+        LAST_REINFORCE.remove(raid.center.asLong());
+        VillageData.Village v = VillageData.get(level).at(raid.center);
+        BlockPos camp = v == null ? null : VillageCamps.campOf(level, v);
+        if (camp == null || !level.isPositionEntityTicking(raid.center)) return;
+        double r = DEFEND_RADIUS + 32;
+        for (AbstractRecruitEntity s : level.getEntitiesOfClass(AbstractRecruitEntity.class, new AABB(raid.center).inflate(r, 64, r),
+                e -> e.isAlive() && e.getPersistentData().getBoolean(com.ale.warbandcraft.invasion.SiegeDefense.TAG_REINFORCEMENT)
+                        && e.getPersistentData().getLong(Quarters.TAG_QUARTERS) == raid.center.asLong())) {
+            s.getPersistentData().remove(com.ale.warbandcraft.invasion.SiegeDefense.TAG_REINFORCEMENT);
+            s.getPersistentData().remove(Quarters.TAG_QUARTERS);
+            s.setTarget(null);
+            if (!Barracks.sendHome(level, s, null) && Barracks.store(level, s, camp, true) != Barracks.StoreResult.OK) s.setFollowState(0);
+        }
     }
 
     /** ¿No queda nadie defendiendo? (ni soldados ni jugadores de ese lado en la aldea, ni cuartel guardado). */
@@ -168,7 +222,7 @@ public final class PvpSiege {
         VillageData.Village v = VillageData.get(level).at(raid.center);
         BlockPos camp = v == null ? null : VillageCamps.campOf(level, v);
         BarracksData.Barracks b = camp == null ? null : BarracksData.get(level).at(camp);
-        return b == null || b.quarters.isEmpty();
+        return b == null || (b.quarters.isEmpty() && b.soldiers.isEmpty());   // quedan en el barracón: todavía van a salir
     }
 
     // ------------------------------------------------------------------ resultado
@@ -180,6 +234,7 @@ public final class PvpSiege {
     public static void conquer(ServerLevel level, RaidManager.Raid raid, int prisoners) {
         VillageData data = VillageData.get(level);
         VillageData.Village v = data.at(raid.center);
+        LAST_REINFORCE.remove(raid.center.asLong());
         if (v == null || !v.isConquered()) return;
         UUID loser = v.owner(), winner = raid.attacker;
         Component name = VillageCamps.displayName(level, v, Component.literal(VillageCamps.nameFor(v)));
@@ -219,9 +274,18 @@ public final class PvpSiege {
             else CampRegistry.get(level).register(winner, camp);
         }
 
+        // Los trabajadores de la aldea (pedido de Ale: "pasan a ser del ganador"); los que no están cargados, al cargarse
+        List<com.talhanation.workers.entities.AbstractWorkerEntity> workers = com.ale.warbandcraft.village.VillageManagement.workers(level, v.center(), loser);
+
         // La aldea es tuya
         VillageData.Village won = v.withOwner(winner).withLootedUntil(0);
         data.add(won);
+        int handed = 0;
+        for (com.talhanation.workers.entities.AbstractWorkerEntity w : workers) {
+            Barracks.handTo(level, w, winner);
+            handed++;
+        }
+        handed += adoptWorkers(level, won);
 
         // El claim de Recruits: el que tenía la aldea pasa a tu facción entero
         Territory.handOver(level, v.center());
@@ -255,7 +319,8 @@ public final class PvpSiege {
         }
 
         com.ale.warbandcraft.battle.BattleLog.end(level, RaidManager.logKey(v.center()), "ganó el atacante: la aldea pasa a "
-                + Allies.playerName(winner) + " (" + prisoners + " presos, barracón: " + moved + " mudados, " + lost + " perdidos)");
+                + Allies.playerName(winner) + " (" + prisoners + " presos, barracón: " + moved + " mudados, " + lost + " perdidos, "
+                + handed + " trabajadores)");
         WarbandCraft.LOGGER.info("Asedio entre jugadores: {} conquistó {} de {} ({} presos, {} mudados, {} perdidos)",
                 Allies.playerName(winner), v.center().toShortString(), Allies.playerName(loser), prisoners, moved, lost);
         ServerPlayer w = level.getServer().getPlayerList().getPlayer(winner);
@@ -272,8 +337,43 @@ public final class PvpSiege {
         }
     }
 
+    /**
+     * Los trabajadores de una aldea (los anotados en {@code WorkerOutput} con esa aldea) y las zonas de Workers adentro de su
+     * territorio que son de alguien de otro bando pasan al dueño de la aldea. Lo usa la conquista y, cada 5 s, toda aldea tuya
+     * cargada ({@code VillageStorehouse.tick}): así pasan también los que no estaban cargados al ganarla.
+     */
+    public static int adoptWorkers(ServerLevel level, VillageData.Village v) {
+        UUID owner = v.owner();
+        if (owner == null) return 0;
+        int n = 0;
+        for (com.ale.warbandcraft.village.WorkerOutput.Rec r : com.ale.warbandcraft.village.WorkerOutput.get(level).of(v.center())) {
+            if (level.getEntity(r.worker) instanceof com.talhanation.workers.entities.AbstractWorkerEntity w && w.isAlive()
+                    && w.getOwnerUUID() != null && !Allies.same(w.getOwnerUUID(), owner)
+                    && !w.getPersistentData().contains(com.ale.warbandcraft.camp.CampWorkers.TAG)) {
+                Barracks.handTo(level, w, owner);
+                n++;
+            }
+        }
+        Territory t = Territory.get(level);
+        if (!t.has(v.center())) return n;
+        double r = com.ale.warbandcraft.village.VillageManagement.RADIUS + 32;
+        String name = Allies.playerName(owner);
+        for (com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity area : level.getEntitiesOfClass(
+                com.talhanation.workers.entities.workarea.AbstractWorkAreaEntity.class, new AABB(v.center()).inflate(r, 96, r))) {
+            UUID p = area.getPlayerUUID();
+            if (p == null || Allies.same(p, owner) || !t.contains(v.center(), area.blockPosition())) continue;
+            area.setPlayerUUID(owner);
+            area.setPlayerName(name);
+            com.ale.warbandcraft.camp.WorkerZone.share(area);
+            n++;
+        }
+        if (n > 0) WarbandCraft.LOGGER.info("Aldea {}: {} trabajadores/zonas pasan a {}", v.center().toShortString(), n, name);
+        return n;
+    }
+
     /** El atacante se fue: se avisa a los defensores. */
     public static void repelled(ServerLevel level, RaidManager.Raid raid) {
+        sendBack(level, raid);
         VillageData.Village v = VillageData.get(level).at(raid.center);
         if (v == null || raid.defender == null) return;
         Component name = VillageCamps.displayName(level, v, Component.literal(VillageCamps.nameFor(v)));

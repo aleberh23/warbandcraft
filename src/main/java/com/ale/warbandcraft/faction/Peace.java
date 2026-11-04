@@ -59,24 +59,24 @@ public final class Peace {
     public static void open(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         List<Faction> enemies = enemies(level, player.getUUID());
-        if (enemies.isEmpty()) {
-            player.sendSystemMessage(Component.translatable("msg.warbandcraft.peace.no_war").withStyle(ChatFormatting.GRAY));
-            return;
-        }
         Relations rel = Relations.get(level.getServer());
         List<Component> lines = new ArrayList<>();
         List<Component> options = new ArrayList<>();
-        StringBuilder ids = new StringBuilder();
+        List<String> ids = new ArrayList<>();
         for (Faction f : enemies) {
             int near = (int) Math.round(Threat.proximityTo(level, f.id(), player.getUUID()) * 100);
             lines.add(Component.translatable("gui.warbandcraft.peace.line", Component.literal(f.name()).withStyle(f.color()),
                     rel.opinion(player.getUUID(), f.id()), near));
             options.add(Component.literal(f.name()).withStyle(f.color()));
-            if (ids.length() > 0) ids.append(',');
-            ids.append(f.id());
+            ids.add("n:" + f.id());
+        }
+        PlayerPeace.addOptions(level, player, lines, options, ids);   // paz con otros jugadores
+        if (ids.isEmpty()) {
+            player.sendSystemMessage(Component.translatable("msg.warbandcraft.peace.no_war").withStyle(ChatFormatting.GRAY));
+            return;
         }
         options.add(Component.translatable("gui.warbandcraft.peace.nothing"));
-        BattleChoices.send(player, KIND_LIST, ids.toString(), Component.translatable("gui.warbandcraft.peace.title"), lines, options, true);
+        BattleChoices.send(player, KIND_LIST, String.join("\t", ids), Component.translatable("gui.warbandcraft.peace.title"), lines, options, true);
     }
 
     /** Lo que pide una facción: pagar o un favor. */
@@ -104,9 +104,14 @@ public final class Peace {
     public static void answer(ServerPlayer player, String kind, String id, int option) {
         ServerLevel level = player.serverLevel();
         if (KIND_LIST.equals(kind)) {
-            String[] ids = id.split(",");
+            String[] ids = id.split("\t");
             if (option < 0 || option >= ids.length) return;
-            Faction f = FactionManager.INSTANCE.get(ResourceLocation.tryParse(ids[option]));
+            String code = ids[option];
+            if (!code.startsWith("n:")) {
+                PlayerPeace.choose(player, code);
+                return;
+            }
+            Faction f = FactionManager.INSTANCE.get(ResourceLocation.tryParse(code.substring(2)));
             if (f != null) offer(player, f);
         } else if (KIND_OFFER.equals(kind)) {
             String[] parts = id.split("\\|");
