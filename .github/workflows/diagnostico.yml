@@ -39,6 +39,18 @@ jobs:
                    mget -O srv /mods/warbandcraft-*.jar ;
                    get /logs/latest.log -o srv/latest.log;
                    get /server.properties -o srv/server.properties" || true
+          lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30;
+                   open --env-password -u $SFTP_USER -p $SFTP_PORT sftp://$SFTP_HOST;
+                   mirror -I 'crash-*' --newer-than=now-1day /crash-reports srv/crash;
+                   mirror -I '*.log.gz' --newer-than=now-1day /logs srv/oldlogs" || true
+          echo "=== informes de crash (último día) ==="
+          ls -l srv/crash 2>/dev/null || echo "ninguno"
+          last=$(ls -t srv/crash/* 2>/dev/null | head -1)
+          if [ -n "$last" ]; then echo "=== $last ==="; head -120 "$last"; fi
+          echo "=== logs anteriores (último día) ==="
+          for f in $(ls -t srv/oldlogs/*.log.gz 2>/dev/null | head -3); do
+            echo "=== $f (final) ==="; zcat "$f" | tail -80
+          done
           LEVEL=$(grep -E '^level-name=' srv/server.properties | cut -d= -f2- | tr -d '\r')
           echo "mundo: ${LEVEL:-world}"
           lftp -c "set sftp:auto-confirm yes; set net:max-retries 3; set net:timeout 30;
