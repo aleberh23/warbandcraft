@@ -1,0 +1,38 @@
+# Manda un comando a la consola del servidor de Baires Host (por la API del panel), p. ej. "op alito23".
+# Botón "Run workflow" (o: gh workflow run consola.yml -f comando="op alito23").
+name: Comando en el servidor
+
+on:
+  workflow_dispatch:
+    inputs:
+      comando:
+        description: Comando de consola (sin la barra)
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  PANEL_URL: https://panel.baires.host
+  SERVER_ID: d607d01a-7510-4525-85ee-3eec3e17f2c8
+
+jobs:
+  consola:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mandar el comando
+        env:
+          PANEL_API_KEY: ${{ secrets.PANEL_API_KEY }}
+          COMANDO: ${{ inputs.comando }}
+        run: |
+          body=$(jq -cn --arg c "$COMANDO" '{command: $c}')
+          ok=0
+          for url in "$PANEL_URL/api/client/servers/${SERVER_ID%%-*}/command" "$PANEL_URL/api/panel/servers/$SERVER_ID/command"; do
+            code=$(curl -sS -o resp.txt -w '%{http_code}' -X POST "$url" \
+              -H "Authorization: Bearer $PANEL_API_KEY" -H "Accept: application/json" -H "Content-Type: application/json" \
+              -H "User-Agent: warbandcraft-deploy/1.0" -d "$body" || echo 000)
+            echo "== $url -> HTTP $code"; head -c 400 resp.txt; echo
+            case "$code" in 2*) ok=1; break;; esac
+          done
+          [ "$ok" = 1 ] || { echo "::error::No se pudo mandar el comando"; exit 1; }
+          echo "Mandado: $COMANDO"
