@@ -19,7 +19,7 @@ El Caballero recibe caballo ensillado. Montado, el soldado usa al caballo para m
 Los soldados suben de nivel peleando (y entrenando, libro 18). Con más nivel, mejor equipo: al re-armarlos les toca el nivel siguiente.
 ---
 ## Armas medievales
-Las facciones usan armas y armaduras de Epic Knights y sus agregados.
+Las facciones usan armas y armaduras de Epic Knights y sus agregados. También hay Spartan Weaponry (alabardas, gujas, sables, martillos), Spartan Shields, Immersive Armors y Armor of the Ages (armaduras míticas): las de hierro y cobre valen armamento y las armas de asta también pegan de lejos.
 
 - Armas de asta (picas, alabardas): doble daño contra montados y pegan de más lejos. En formación van adelante.
 - Lanza a caballo: más daño cuanto más rápido va el caballo.

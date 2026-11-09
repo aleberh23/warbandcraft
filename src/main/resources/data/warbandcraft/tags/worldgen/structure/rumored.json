@@ -10,6 +10,16 @@
     { "id": "cataclysm:sunken_city", "required": false },
     { "id": "cataclysm:acropolis", "required": false },
     { "id": "dungeonnowloading:labyrinth", "required": false },
-    { "id": "dungeonnowloading:temple_of_duality", "required": false }
+    { "id": "dungeonnowloading:temple_of_duality", "required": false },
+    { "id": "irons_spellbooks:catacombs", "required": false },
+    { "id": "irons_spellbooks:citadel", "required": false },
+    { "id": "irons_spellbooks:pyromancer_tower", "required": false },
+    { "id": "irons_spellbooks:mountain_tower", "required": false },
+    { "id": "irons_spellbooks:evoker_fort", "required": false },
+    { "id": "irons_spellbooks:ice_spider_den", "required": false },
+    { "id": "mowziesmobs:wrought_chamber", "required": false },
+    { "id": "mowziesmobs:frostmaw_spawn", "required": false },
+    { "id": "mowziesmobs:umvuthana_grove", "required": false },
+    { "id": "mowziesmobs:monastery", "required": false }
   ]
 }

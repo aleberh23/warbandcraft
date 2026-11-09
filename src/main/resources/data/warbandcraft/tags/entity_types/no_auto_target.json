@@ -4,6 +4,12 @@
     "#forge:bosses",
     { "id": "dungeonnowloading:chaos_spawner", "required": false },
     { "id": "dungeonnowloading:fairkeeper_boros", "required": false },
-    { "id": "dungeonnowloading:fairkeeper_ouros", "required": false }
+    { "id": "dungeonnowloading:fairkeeper_ouros", "required": false },
+    { "id": "mowziesmobs:frostmaw", "required": false },
+    { "id": "mowziesmobs:ferrous_wroughtnaut", "required": false },
+    { "id": "mowziesmobs:umvuthi", "required": false },
+    { "id": "mowziesmobs:sculptor", "required": false },
+    { "id": "irons_spellbooks:dead_king", "required": false },
+    { "id": "irons_spellbooks:fire_boss", "required": false }
   ]
 }

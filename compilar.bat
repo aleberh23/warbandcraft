@@ -95,6 +95,18 @@ call :copiamod "*taverns*.jar" "dungeonstaverns-3.0.3.f.jar"
 call :copiamod "structory?1*.jar" "structory-1.3.5.jar"
 call :copiamod "structory?towers*.jar" "structory_towers-1.0.7.jar"
 
+echo [10] Revisando magia, jefes miticos y mas armas/armaduras...
+call :copiamod "geckolib-*.jar" "geckolib-4.8.4.jar"
+call :copiamod "player*animation*lib*.jar" "playeranimationlib-1.0.2-rc1+1.20.jar"
+call :copiamod "irons*lib-*.jar" "ironslib-2.3.0.jar"
+call :copiamod "irons*spellbooks-*.jar" "ironsspellbooks-3.16.3.jar"
+call :copiamod "mowziesmobs-*.jar" "mowziesmobs-1.8.2.jar"
+call :copiamod "SpartanWeaponry-*.jar" "spartanweaponry-3.2.1.jar"
+call :copiamod "SpartanShields-*.jar" "spartanshields-3.1.1.jar"
+call :copiamod "immersive*armors-*.jar" "immersivearmors-1.7.2.jar"
+call :copiamod "yet*another*config*lib*.jar" "yetanotherconfiglib-3.6.6.jar"
+call :copiamod "armor*of*the*ages*.jar" "armoroftheages-1.3.16.jar"
+
 echo.
 echo ================================================
 echo   LISTO. Abri Minecraft con el perfil de Forge 1.20.1.

@@ -52,7 +52,7 @@ public final class WeaponRules {
 
     private static final UUID WEIGHT_ID = UUID.fromString("6f1d5a2e-3c8b-4e0a-9d1f-2a6b7c8d9e26");
     private static final String[] POLEARMS = {"pike", "ranseur", "ahlspiess", "guisarme", "halberd", "lochaber",
-            "lucern", "sarissa", "doru", "spear", "pitchfork"};
+            "lucern", "sarissa", "doru", "spear", "pitchfork", "glaive"};
     private static final String[] PAVISES = {"pavese", "pavise"};
     private static final String[] BLUNT = {"mace", "warhammer", "morgenstern", "club", "lucern", "hammer"};
 

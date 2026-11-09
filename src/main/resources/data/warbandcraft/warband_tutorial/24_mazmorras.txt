@@ -23,3 +23,8 @@ Tienen guardias que pelean con quien moleste, mercenarios para contratar y un Ta
 
 ## Entrás como quieras
 Solo o con los soldados que te sigan. Llevá antorchas.
+---
+## Magia y jefes míticos
+Iron's Spells 'n Spellbooks trae magia: libros de hechizos, pergaminos y magos (piromantes, criomantes, nigromantes) en torres, catacumbas y ciudadelas. Es solo tuya: tus soldados no la usan.
+Mowzie's Mobs trae jefes únicos: el Frostmaw en la nieve, el caballero de hierro en su cámara bajo tierra, la tribu de máscaras en la sabana. Tus soldados no los atacan solos.
+El Tabernero también da rumores de estas guaridas.

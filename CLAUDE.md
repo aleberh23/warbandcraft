@@ -36,6 +36,14 @@ Si una decisión de diseño cambia, actualizar ese documento.
   Como los de mazmorras (`dungeon_mods`, `pack/mods.json` both). `compat/FallingTreeSetup` (setup común, por reflexión) le pone
   `tools.speedMultiplicand` = `SPEED` (0,25: tarda × 0,25 × troncos) si sigue en 0 y apaga siempre `forceToolUsage` (pedido de Ale:
   sin herramienta se rompe el tronco de a uno); el servidor manda su config.
+- Rol y más armas (H27 paso 1, pedido de Ale; plan en `plan-h27-rol.md`): **Iron's Spells 'n Spellbooks** 3.16.3 (+ Iron's Lib,
+  playerAnimator, GeckoLib; Curios ya estaba), **Mowzie's Mobs** 1.8.2, **Spartan Weaponry** 3.2.1, **Spartan Shields** 3.1.1,
+  **Immersive Armors** 1.7.2, **Armor of the Ages** 1.3.16 (+ YACL). Igual que los de mazmorras (`dungeon_mods` en libs/ con nombres
+  `nombre-versión` sin guiones en el nombre, `pack/mods.json` both, paso [10] de `compilar.bat`). No les llamamos código. Lo nuestro:
+  `warband_armament/more_arms.json` (hierro/cobre de Spartan, pesada/guerrero de Immersive, placas/centurión de Armor of the Ages; lo
+  mítico/oro no), `glaive` es arma de asta en `WeaponRules`, sus jefes en `no_auto_target` (el `forge:bosses` de Mowzie's está en la
+  carpeta `entity_type` de 1.21 y en 1.20.1 no carga) y sus guaridas en `#warbandcraft:rumored`. Sus estructuras NO pasan por
+  `StructureDensity` (a revisar si salen demasiadas en lo llano). La magia es solo del jugador: ningún kit ni tropa la usa.
 - Minimapa de la vista aérea (H5): **Xaero's Minimap** (`xaerominimap-forge-1.20.1-26.6.0`, Modrinth).
   Mod aparte que corre solo — no le llamamos nada de su código. NO es una dependencia de Gradle: se
   baja a `libs/` en el primer build (igual que Recruits) pero solo para que `compilar.bat` lo copie
